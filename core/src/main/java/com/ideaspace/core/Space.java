@@ -24,7 +24,7 @@ public class Space {
     private IdeaSpace ideaSpace;
 
     private SceneManager sceneManager;
-    private PerspectiveCamera camera;
+    public PerspectiveCamera camera;
 
     private Cubemap diffuseCubeMap, environmentCubeMap, specularCubeMap;
     private Texture brdfLUT;
@@ -36,6 +36,9 @@ public class Space {
 
     public ArrayList<Panel> panels;
     public Panel selectedPanel;
+
+    public float cameraMoveRemaining = 0f;   // total distance left to move
+    public float cameraMoveSpeed = 1.5f;     // units per second
 
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
@@ -51,7 +54,7 @@ public class Space {
     private void setupCamera() {
         camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 20f / 1000f;
-        camera.far = 200;
+        camera.far = 80f;
         sceneManager.setCamera(camera);
         camera.position.set(0,0.5f, 4f);
 
@@ -89,8 +92,26 @@ public class Space {
 
     public void render(float deltaTime) {
         time += deltaTime;
-
         cameraController.update();
+
+        float delta = Gdx.graphics.getDeltaTime();
+
+        if (Math.abs(cameraMoveRemaining) > 0.0001f) {
+            float direction = Math.signum(cameraMoveRemaining);
+            float move = direction * cameraMoveSpeed * delta;
+
+            if (Math.abs(move) > Math.abs(cameraMoveRemaining)) {
+                move = cameraMoveRemaining;
+            }
+
+            camera.translate(0, 0, move);
+            cameraMoveRemaining -= move;
+
+            if (Math.abs(cameraMoveRemaining) < 0.0001f) {
+                cameraMoveRemaining = 0f;
+            }
+        }
+
     }
 
     public void dispose() {
@@ -108,7 +129,7 @@ public class Space {
     }
 
 
-    public void addPanel(String name) {
+    public void addPanel() {
         Panel panel = new Panel(this);
         panels.add(panel);
 
