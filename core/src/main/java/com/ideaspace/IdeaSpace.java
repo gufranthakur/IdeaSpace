@@ -21,13 +21,13 @@ public class IdeaSpace extends ApplicationAdapter {
 
         space.addPanel();
 
-        space.selectedPanel.loadObject("RaspberryPi", "models/microcontrollers/raspberry_pi.glb");
+        space.selectedPanel.loadObject("ESP32", "models/microcontrollers/esp.glb");
         space.selectedPanel.loadObject("3D Printer", "models/misc/3d_printer.glb");
 
 
-        space.selectedPanel.getModelInstanceOf("RaspberryPi").transform.idt()
+        space.selectedPanel.getModelInstanceOf("ESP32").transform.idt()
             .translate(2.80f, -1.45f, 0f)
-            .scale(0.26f, 0.26f, 0.26f)
+            .scale(0.5f, 0.5f, 0.5f)
                 .rotate(0f, 1f, 0f, 42f);
 
         space.selectedPanel.getModelInstanceOf("3D Printer").transform.idt()
@@ -36,9 +36,12 @@ public class IdeaSpace extends ApplicationAdapter {
             .rotate(0f, 1f, 0f, 24f);
 
 
+        space.selectedPanel.playAnimation("ESP32", "Animation");
 
         serverThread = new Thread(server);
         serverThread.start();
+
+
     }
 
     @Override

@@ -33,6 +33,20 @@ public class Panel {
         space.getSceneManager().addScene(scene);
     }
 
+    public void playAnimation(String name, String animationName) {
+        Scene scene = objects.get(name);
+        scene.animationController.animate(animationName, -1);
+
+    }
+
+    public void resetAnimation(String name) {
+        Scene scene = objects.get(name);
+        scene.animationController.current = null;
+
+    }
+
+
+
     public void translateObject(ModelInstance instance, float x, float y, float z) {
         instance.transform.idt().translate(x, y, z);
     }

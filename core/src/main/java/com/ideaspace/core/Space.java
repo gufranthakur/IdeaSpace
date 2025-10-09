@@ -104,41 +104,11 @@ public class Space {
         time += deltaTime;
         cameraController.update();
 
-        float delta = Gdx.graphics.getDeltaTime();
-
-// Smooth position movement
-        if (Math.abs(cameraMoveX) > 0.0001f) {
-            float move = Math.signum(cameraMoveX) * cameraMoveSpeed * delta;
-            if (Math.abs(move) > Math.abs(cameraMoveX)) move = cameraMoveX;
-            camera.translate(move, 0f, 0f);
-            cameraMoveX -= move;
-        }
-
-        if (Math.abs(cameraMoveY) > 0.0001f) {
-            float move = Math.signum(cameraMoveY) * cameraMoveSpeed * delta;
-            if (Math.abs(move) > Math.abs(cameraMoveY)) move = cameraMoveY;
-            camera.translate(0f, move, 0f);
-            cameraMoveY -= move;
-        }
-
-        if (Math.abs(cameraMoveZ) > 0.0001f) {
-            float move = Math.signum(cameraMoveZ) * cameraMoveSpeed * delta;
-            if (Math.abs(move) > Math.abs(cameraMoveZ)) move = cameraMoveZ;
-            camera.translate(0f, 0f, move);
-            cameraMoveZ -= move;
-        }
-
-// Smooth look (direction) changes
-        if (Math.abs(cameraLookX) > 0.0001f || Math.abs(cameraLookY) > 0.0001f) {
-            Vector3 dir = camera.direction;
-            dir.add(cameraLookX * cameraLookSpeed * delta, cameraLookY * cameraLookSpeed * delta, 0f);
-            dir.nor(); // normalize direction
-            cameraLookX -= cameraLookX * delta; // decay
-            cameraLookY -= cameraLookY * delta;
-        }
+        ideaSpace.decoder.update(deltaTime);
 
         camera.update();
-
+        sceneManager.update(deltaTime);
+        sceneManager.render();
     }
 
     public void dispose() {
