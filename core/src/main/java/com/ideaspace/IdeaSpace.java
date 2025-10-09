@@ -21,23 +21,18 @@ public class IdeaSpace extends ApplicationAdapter {
 
         space.addPanel();
 
-        space.selectedPanel.loadObject("Office", "models/environments/modern_office.glb");
         space.selectedPanel.loadObject("RaspberryPi", "models/microcontrollers/raspberry_pi.glb");
         space.selectedPanel.loadObject("3D Printer", "models/misc/3d_printer.glb");
 
-        space.selectedPanel.getModelInstanceOf("Office").transform.idt()
-                .translate(0f, 0f, 0f)
-                .scale(1.8f, 1.8f, 1.8f)
-        .rotate(0f, 1f, 0f, -90f);
 
         space.selectedPanel.getModelInstanceOf("RaspberryPi").transform.idt()
-            .translate(0.80f, -1.45f, 0f)
-            .scale(0.06f, 0.06f, 0.06f)
+            .translate(2.80f, -1.45f, 0f)
+            .scale(0.26f, 0.26f, 0.26f)
                 .rotate(0f, 1f, 0f, 42f);
 
         space.selectedPanel.getModelInstanceOf("3D Printer").transform.idt()
             .translate(-1f, -1.45f , 0f)
-            .scale(0.015f, 0.015f, 0.015f)
+            .scale(0.045f, 0.045f, 0.045f)
             .rotate(0f, 1f, 0f, 24f);
 
 

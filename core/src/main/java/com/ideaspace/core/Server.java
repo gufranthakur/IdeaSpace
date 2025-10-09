@@ -1,70 +1,63 @@
 package com.ideaspace.core;
 
 import com.ideaspace.IdeaSpace;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
+import java.io.*;
+import java.net.*;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-
-public class Server implements Runnable{
+public class Server implements Runnable {
 
     private IdeaSpace ideaSpace;
-    private HttpServer httpServer;
+    private ServerSocket serverSocket;
+    private volatile boolean running = true;
+
     public Server(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
     }
 
-    private void createServer() {
+    public void startServer() {
         try {
-            httpServer = HttpServer.create(new InetSocketAddress(65000), 0);
-            httpServer.setExecutor(null);
+            serverSocket = new ServerSocket(65000);
+            System.out.println("Socket Server started on port 65000");
 
-            httpServer.createContext("/", new HttpHandler() {
-                @Override
-                public void handle(HttpExchange exchange) throws IOException {
-                    byte[] bytes = exchange.getRequestBody().readAllBytes();
-                    String command = new String(bytes);
-
-                    ideaSpace.decoder.decode(command);
-
-                    try (OutputStream outputStream = exchange.getResponseBody()) {
-                        outputStream.write(command.getBytes());
-                    }
-
-                }
-            });
+            while (running) {
+                Socket client = serverSocket.accept();
+                System.out.println("Client connected: " + client.getInetAddress());
+                new Thread(() -> handleClient(client)).start();
+            }
 
         } catch (IOException e) {
-            System.out.println("Exception occurred : " + e.getMessage());
-            stopServer();
+            System.out.println("Exception occurred: " + e.getMessage());
         }
     }
 
-    public void startServer() {
-        if (httpServer != null) {
-            httpServer.start();
-            System.out.println("HTTP Server started on port 65000");
-        } else {
-            System.out.println("No existing server found. Creating a new one...");
-            createServer();
-            httpServer.start();
-            System.out.println("HTTP Server started on port 8080");
+    private void handleClient(Socket client) {
+        try (
+            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()))
+        ) {
+            String command;
+            while ((command = in.readLine()) != null) {
+                ideaSpace.decoder.decode(command);  // handle incoming command
+                out.write("ACK\n");
+                out.flush();
+            }
+        } catch (IOException e) {
+            System.out.println("Client disconnected");
         }
     }
 
     public void stopServer() {
-        if (httpServer != null) {
-            httpServer.stop(0);
-            System.out.println("HTTP Server stopped");
+        running = false;
+        try {
+            if (serverSocket != null) serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        System.out.println("Socket Server stopped");
     }
 
     @Override
     public void run() {
-        createServer();
         startServer();
     }
 }

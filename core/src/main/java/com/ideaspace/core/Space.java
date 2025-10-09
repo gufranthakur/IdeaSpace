@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
+import com.badlogic.gdx.math.Vector3;
 import com.ideaspace.IdeaSpace;
 
 import com.ideaspace.components.Panel;
@@ -38,7 +39,16 @@ public class Space {
     public Panel selectedPanel;
 
     public float cameraMoveRemaining = 0f;   // total distance left to move
-    public float cameraMoveSpeed = 1.5f;     // units per second
+
+    // Smooth movement variables
+    public float cameraMoveX = 0f;
+    public float cameraMoveY = 0f;
+    public float cameraMoveZ = 0f;     // For zoom
+    public float cameraLookX = 0f;
+    public float cameraLookY = 0f;
+    public float cameraMoveSpeed = 2f; // units/sec
+    public float cameraLookSpeed = 2f; // direction speed
+
 
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
@@ -96,21 +106,38 @@ public class Space {
 
         float delta = Gdx.graphics.getDeltaTime();
 
-        if (Math.abs(cameraMoveRemaining) > 0.0001f) {
-            float direction = Math.signum(cameraMoveRemaining);
-            float move = direction * cameraMoveSpeed * delta;
-
-            if (Math.abs(move) > Math.abs(cameraMoveRemaining)) {
-                move = cameraMoveRemaining;
-            }
-
-            camera.translate(0, 0, move);
-            cameraMoveRemaining -= move;
-
-            if (Math.abs(cameraMoveRemaining) < 0.0001f) {
-                cameraMoveRemaining = 0f;
-            }
+// Smooth position movement
+        if (Math.abs(cameraMoveX) > 0.0001f) {
+            float move = Math.signum(cameraMoveX) * cameraMoveSpeed * delta;
+            if (Math.abs(move) > Math.abs(cameraMoveX)) move = cameraMoveX;
+            camera.translate(move, 0f, 0f);
+            cameraMoveX -= move;
         }
+
+        if (Math.abs(cameraMoveY) > 0.0001f) {
+            float move = Math.signum(cameraMoveY) * cameraMoveSpeed * delta;
+            if (Math.abs(move) > Math.abs(cameraMoveY)) move = cameraMoveY;
+            camera.translate(0f, move, 0f);
+            cameraMoveY -= move;
+        }
+
+        if (Math.abs(cameraMoveZ) > 0.0001f) {
+            float move = Math.signum(cameraMoveZ) * cameraMoveSpeed * delta;
+            if (Math.abs(move) > Math.abs(cameraMoveZ)) move = cameraMoveZ;
+            camera.translate(0f, 0f, move);
+            cameraMoveZ -= move;
+        }
+
+// Smooth look (direction) changes
+        if (Math.abs(cameraLookX) > 0.0001f || Math.abs(cameraLookY) > 0.0001f) {
+            Vector3 dir = camera.direction;
+            dir.add(cameraLookX * cameraLookSpeed * delta, cameraLookY * cameraLookSpeed * delta, 0f);
+            dir.nor(); // normalize direction
+            cameraLookX -= cameraLookX * delta; // decay
+            cameraLookY -= cameraLookY * delta;
+        }
+
+        camera.update();
 
     }
 
