@@ -15,6 +15,7 @@ public class Panel {
 
     private HashMap<String, Scene> objects;
     private HashMap<String, SceneAsset> objectAssets;
+    public Scene selectedObject;
 
     public Panel(Space space) {
         this.space = space;
@@ -30,7 +31,11 @@ public class Panel {
         objects.put(name, scene);
         objectAssets.put(name, asset);
 
-        space.getSceneManager().addScene(scene);
+        selectedObject = objects.get(name);
+    }
+
+    public void addObject(String name) {
+        space.getSceneManager().addScene(objects.get(name));
     }
 
     public void playAnimation(String name, String animationName) {
@@ -41,8 +46,9 @@ public class Panel {
 
     public void resetAnimation(String name) {
         Scene scene = objects.get(name);
-        scene.animationController.current = null;
+        scene.animationController.current = null; // stops animation
 
+        scene.animationController.allowSameAnimation = true; // optional
     }
 
 
