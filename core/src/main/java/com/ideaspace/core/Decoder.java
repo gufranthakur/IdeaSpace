@@ -30,6 +30,8 @@ public class Decoder {
     private float currentLookX = 0f;
     private float currentLookY = 0f;
 
+    int i = 0;
+
     public Decoder(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
     }
@@ -68,6 +70,22 @@ public class Decoder {
             case "CAMERA LOOK BOTTOM-LEFT" -> {
                 targetLookX = -cameraLookSpeed * 0.707f;
                 targetLookY = -cameraLookSpeed * 0.707f;
+            }
+
+            case "SWIPED LEFT" -> {
+                Gdx.app.postRunnable(() -> {
+                    ideaSpace.space.selectedPanel.playAnimation("ESP32", "Animation");
+                });
+            }
+
+            case "SWIPED RIGHT" -> {
+                i++;
+                Gdx.app.postRunnable(() -> {
+                    if (i==1) ideaSpace.space.selectedPanel.swapModel("ESP32", "Rpi");
+                    else if (i == 2) ideaSpace.space.selectedPanel.swapModel("Rpi", "Iphone17");
+                    else if (i == 3) ideaSpace.space.selectedPanel.swapModel("Iphone17", "3D Printer");
+                    else if (i == 4) ideaSpace.space.selectedPanel.swapModel("3D Printer", "ESP32");
+                });
             }
 
             case "NULL" -> {

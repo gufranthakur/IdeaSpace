@@ -76,7 +76,7 @@ public class Space {
         light = new DirectionalLightEx();
         light.direction.set(1, -3, 1).nor();
         light.color.set(Color.WHITE);
-        sceneManager.environment.add(light);
+        //sceneManager.environment.add(light);
     }
 
     private void setupIBL() {
@@ -97,7 +97,7 @@ public class Space {
         sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubeMap));
 
         skybox = new SceneSkybox(environmentCubeMap);
-        sceneManager.setSkyBox(skybox);
+        //sceneManager.setSkyBox(skybox);
     }
 
     public void render(float deltaTime) {

@@ -21,22 +21,42 @@ public class IdeaSpace extends ApplicationAdapter {
 
         space.addPanel();
 
+        space.selectedPanel.loadObject("Blue Env", "models/environments/blue_cube.glb");
         space.selectedPanel.loadObject("ESP32", "models/microcontrollers/esp.glb");
         space.selectedPanel.loadObject("3D Printer", "models/misc/3d_printer.glb");
 
+        space.selectedPanel.loadObject("Rpi", "models/microcontrollers/raspberry_pi.glb");
+        space.selectedPanel.loadObject("Iphone17", "models/misc/iphone17.glb");
+
+        space.selectedPanel.getModelInstanceOf("Blue Env").transform.idt()
+            .scale(3f, 2f, 2f)
+                .translate(-53f, -55f, 0f);
 
         space.selectedPanel.getModelInstanceOf("ESP32").transform.idt()
-            .translate(2.80f, -1.45f, 0f)
+            .translate(0f, 0f, 0f)
             .scale(0.5f, 0.5f, 0.5f)
-                .rotate(0f, 1f, 0f, 42f);
+                .rotate(0f, 1f, 0f, 89f)
+            .rotate(0f, 0f, 1f, 60f);
 
         space.selectedPanel.getModelInstanceOf("3D Printer").transform.idt()
-            .translate(-1f, -1.45f , 0f)
+            .translate(0f, -0.5f , 0f)
             .scale(0.045f, 0.045f, 0.045f)
-            .rotate(0f, 1f, 0f, 24f);
+            .rotate(0f, 1f, 0f, 0f);
 
+        space.selectedPanel.getModelInstanceOf("Rpi").transform.idt()
+            .translate(0f, 0f, 0f)
+                .scale(0.4f, 0.4f, 0.4f)
+                    .rotate(0f, 1f, 0f, 30f)
+                        .rotate(0f, 0f, 1f, 80f)
+                            .rotate(1f, 0f, 0f, 30f);
 
-        space.selectedPanel.playAnimation("ESP32", "Animation");
+        //space.selectedPanel.getModelInstanceOf("Rpi").transform.idt()
+
+        space.selectedPanel.addObject("Blue Env");
+        space.selectedPanel.addObject("ESP32");
+        //space.selectedPanel.addObject("Rpi");
+        //space.selectedPanel.addObject("Iphone17");
+
 
         serverThread = new Thread(server);
         serverThread.start();

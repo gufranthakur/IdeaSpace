@@ -8,6 +8,8 @@ import net.mgsx.gltf.scene3d.scene.Scene;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Random;
 
 public class Panel {
 
@@ -15,6 +17,10 @@ public class Panel {
 
     private HashMap<String, Scene> objects;
     private HashMap<String, SceneAsset> objectAssets;
+    public Scene selectedObject;
+
+    private Iterator<String> modelIterator;
+    private String currentModel;
 
     public Panel(Space space) {
         this.space = space;
@@ -30,7 +36,11 @@ public class Panel {
         objects.put(name, scene);
         objectAssets.put(name, asset);
 
-        space.getSceneManager().addScene(scene);
+        selectedObject = objects.get(name);
+    }
+
+    public void addObject(String name) {
+        space.getSceneManager().addScene(objects.get(name));
     }
 
     public void playAnimation(String name, String animationName) {
@@ -39,13 +49,25 @@ public class Panel {
 
     }
 
-    public void resetAnimation(String name) {
-        Scene scene = objects.get(name);
-        scene.animationController.current = null;
-
+    public void swapModel(String removedModel, String newModel) {
+        space.getSceneManager().removeScene(getObjects().get(removedModel));
+        space.getSceneManager().addScene(getObjects().get(newModel));
     }
 
+    public void nextModel() {
+        if (modelIterator == null || !modelIterator.hasNext()) {
+            modelIterator = getObjects().keySet().iterator();
+        }
 
+        if (currentModel != null) {
+            space.getSceneManager().removeScene(getObjects().get(currentModel));
+        }
+
+        if (modelIterator.hasNext()) {
+            currentModel = modelIterator.next();
+            space.getSceneManager().addScene(getObjects().get(currentModel));
+        }
+    }
 
     public void translateObject(ModelInstance instance, float x, float y, float z) {
         instance.transform.idt().translate(x, y, z);
