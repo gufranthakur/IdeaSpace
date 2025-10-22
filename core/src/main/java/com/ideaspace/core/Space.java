@@ -38,16 +38,6 @@ public class Space {
     public ArrayList<Panel> panels;
     public Panel selectedPanel;
 
-    public float cameraMoveRemaining = 0f;   // total distance left to move
-
-    // Smooth movement variables
-    public float cameraMoveX = 0f;
-    public float cameraMoveY = 0f;
-    public float cameraMoveZ = 0f;     // For zoom
-    public float cameraLookX = 0f;
-    public float cameraLookY = 0f;
-    public float cameraMoveSpeed = 2f; // units/sec
-    public float cameraLookSpeed = 2f; // direction speed
 
 
     public Space(IdeaSpace ideaSpace) {
@@ -69,7 +59,7 @@ public class Space {
         camera.position.set(0,0.5f, 4f);
 
         cameraController = new FirstPersonCameraController(camera);
-        Gdx.input.setInputProcessor(cameraController);
+        //Gdx.input.setInputProcessor(cameraController);
     }
 
     private void setupLighting() {

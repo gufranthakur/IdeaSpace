@@ -69,11 +69,6 @@ public class Panel {
         }
     }
 
-    public void translateObject(ModelInstance instance, float x, float y, float z) {
-        instance.transform.idt().translate(x, y, z);
-    }
-
-
     //----------------Getters and Setters------------------//
 
     public HashMap<String, Scene> getObjects() {

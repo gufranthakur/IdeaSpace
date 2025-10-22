@@ -73,19 +73,11 @@ public class Decoder {
             }
 
             case "SWIPED LEFT" -> {
-                Gdx.app.postRunnable(() -> {
-                    ideaSpace.space.selectedPanel.playAnimation("ESP32", "Animation");
-                });
+                System.out.println("Swiped left");
             }
 
             case "SWIPED RIGHT" -> {
-                i++;
-                Gdx.app.postRunnable(() -> {
-                    if (i==1) ideaSpace.space.selectedPanel.swapModel("ESP32", "Rpi");
-                    else if (i == 2) ideaSpace.space.selectedPanel.swapModel("Rpi", "Iphone17");
-                    else if (i == 3) ideaSpace.space.selectedPanel.swapModel("Iphone17", "3D Printer");
-                    else if (i == 4) ideaSpace.space.selectedPanel.swapModel("3D Printer", "ESP32");
-                });
+                System.out.println("Swiped right i guess");
             }
 
             case "NULL" -> {
@@ -153,20 +145,5 @@ public class Decoder {
         return start + (end - start) * alpha;
     }
 
-    // Optional: Methods to adjust sensitivity on-the-fly
-    public void setCameraMoveSpeed(float speed) {
-        this.cameraMoveSpeed = speed;
-    }
 
-    public void setCameraLookSpeed(float speed) {
-        this.cameraLookSpeed = speed;
-    }
-
-    public void setMoveSmoothing(float smoothing) {
-        this.moveSmoothing = Math.max(0.01f, Math.min(1.0f, smoothing));
-    }
-
-    public void setLookSmoothing(float smoothing) {
-        this.lookSmoothing = Math.max(0.01f, Math.min(1.0f, smoothing));
-    }
 }
