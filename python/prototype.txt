@@ -1,0 +1,12 @@
+Thumb and index : Zoom out
+Thumn and middle finger : Zoom In
+
+Movement : two fingers OR 5 fingers 
+idk whichever works the best 
+
+
+
+mode 1 : mouse mode
+mode 2 : camera mode 
+mode 3 : edit mode  
+mode 4 : 2D canvas mode 
