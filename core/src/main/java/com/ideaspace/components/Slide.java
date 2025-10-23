@@ -9,9 +9,8 @@ import net.mgsx.gltf.scene3d.scene.SceneAsset;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Random;
 
-public class Panel {
+public class Slide {
 
     private Space space;
 
@@ -22,7 +21,7 @@ public class Panel {
     private Iterator<String> modelIterator;
     private String currentModel;
 
-    public Panel(Space space) {
+    public Slide(Space space) {
         this.space = space;
 
         objects = new HashMap<>();

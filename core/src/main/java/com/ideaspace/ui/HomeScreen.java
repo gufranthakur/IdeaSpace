@@ -11,19 +11,22 @@ import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.ideaspace.IdeaSpace;
-import com.kotcrab.vis.ui.VisUI;
-import com.kotcrab.vis.ui.widget.VisLabel;
+import com.ideaspace.utils.BackgroundGenerator;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
+
+import static com.ideaspace.utils.BackgroundGenerator.PRIMARY_COLOR;
 
 public class HomeScreen {
 
     private IdeaSpace ideaSpace;
 
-    private final boolean debug = false;
+    private final boolean DEBUG_MODE = false;
 
     private Stage stage;
     private VisTable root;
+
+    private LectureScreen lectureScreen;
 
     private VisTable navigationTable, contentTable;
 
@@ -31,6 +34,8 @@ public class HomeScreen {
 
     public HomeScreen(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
+
+        lectureScreen = new LectureScreen(this, DEBUG_MODE);
 
         stage = new Stage(new ScreenViewport());
         root = new VisTable();
@@ -42,8 +47,8 @@ public class HomeScreen {
 
         stage.addActor(root);
 
-        root.setDebug(debug);
-        navigationTable.setDebug(debug);
+        root.setDebug(DEBUG_MODE);
+        navigationTable.setDebug(DEBUG_MODE);
 
         createUI();
 
@@ -51,9 +56,8 @@ public class HomeScreen {
     }
 
     public void createUI() {
-        Texture imgTexture = new Texture("ideaspace_logo.jpg");
+        Texture imgTexture = new Texture("IdeaSpace_512.png");
         Image logoImage = new Image(imgTexture);
-
 
         lectureButton = new VisTextButton("Lectures");
         modelsButton = new VisTextButton("3D Models");
@@ -61,23 +65,19 @@ public class HomeScreen {
         settingsButton = new VisTextButton("Settings");
         logOutButton = new VisTextButton("Log Out");
 
-        navigationTable.defaults().pad(10);
-        navigationTable.add(logoImage).size(256f, 256f).row();
-        navigationTable.add(lectureButton).fill().height(50).row();
-        navigationTable.add(modelsButton).fill().height(50).row();
-        navigationTable.add(howToUseButton).fill().height(50).row();
-        navigationTable.add(settingsButton).fill().height(50).row();
-        navigationTable.add(logOutButton).fill().height(50).row();
+        navigationTable.pad(10);
+        navigationTable.add(logoImage).size(200f, 200f).row();
+        navigationTable.add(lectureButton).fill().height(45).pad(5).row();
+        navigationTable.add(modelsButton).fill().height(45).pad(5).row();
+        navigationTable.add(howToUseButton).fill().height(45).pad(5).row();
+        navigationTable.add(settingsButton).fill().height(45).pad(5).row();
+        navigationTable.add(logOutButton).fill().height(45).pad(5).row();
 
-        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(new Color(0.16f, 0.16f, 0.16f, 1f));
-        pixmap.fill();
-        Drawable background = new TextureRegionDrawable(new TextureRegion(new Texture(pixmap)));
-        pixmap.dispose();
-
+        Drawable background = BackgroundGenerator.getPrimaryBackground();
         navigationTable.setBackground(background);
 
         root.add(navigationTable).growY();
+        root.add(lectureScreen).expand().fill();
     }
 
     //table.add(widget)           Add widget to cell

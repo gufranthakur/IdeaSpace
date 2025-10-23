@@ -7,6 +7,7 @@ import com.ideaspace.core.Decoder;
 import com.ideaspace.core.Server;
 import com.ideaspace.core.Space;
 import com.ideaspace.ui.HomeScreen;
+import com.ideaspace.utils.BackgroundGenerator;
 import com.kotcrab.vis.ui.VisUI;
 
 public class IdeaSpace extends ApplicationAdapter {
@@ -19,7 +20,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
     @Override
     public void create() {
-        VisUI.load(VisUI.SkinScale.X2);
+        VisUI.load();
 
         homeScreen = new HomeScreen(this);
 
@@ -80,5 +81,7 @@ public class IdeaSpace extends ApplicationAdapter {
         homeScreen.dispose();
         space.getSceneManager().dispose();
         space.dispose();
+
+        BackgroundGenerator.disposeCachedBackgrounds();
     }
 }

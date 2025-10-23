@@ -6,10 +6,9 @@ import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
-import com.badlogic.gdx.math.Vector3;
 import com.ideaspace.IdeaSpace;
 
-import com.ideaspace.components.Panel;
+import com.ideaspace.components.Slide;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx;
@@ -35,15 +34,15 @@ public class Space {
     private DirectionalLightEx light;;
     private FirstPersonCameraController cameraController;
 
-    public ArrayList<Panel> panels;
-    public Panel selectedPanel;
+    public ArrayList<Slide> slides;
+    public Slide selectedSlide;
 
 
 
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
         sceneManager = new SceneManager();
-        panels = new ArrayList<>();
+        slides = new ArrayList<>();
 
         setupCamera();
         setupLighting();
@@ -108,8 +107,8 @@ public class Space {
         brdfLUT.dispose();
         skybox.dispose();
 
-        for (Panel panel : panels) {
-            for (SceneAsset sceneAsset : panel.getObjectAssets().values()) {
+        for (Slide slide : slides) {
+            for (SceneAsset sceneAsset : slide.getObjectAssets().values()) {
                 sceneAsset.dispose();
             }
         }
@@ -117,10 +116,10 @@ public class Space {
 
 
     public void addPanel() {
-        Panel panel = new Panel(this);
-        panels.add(panel);
+        Slide slide = new Slide(this);
+        slides.add(slide);
 
-        selectedPanel = panel;
+        selectedSlide = slide;
     }
 
 
