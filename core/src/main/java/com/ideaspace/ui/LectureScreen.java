@@ -1,7 +1,10 @@
 package com.ideaspace.ui;
 
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.ideaspace.utils.BackgroundGenerator;
+import com.ideaspace.utils.BackgroundUtils;
+import com.ideaspace.utils.DialogUtils;
 import com.kotcrab.vis.ui.widget.VisImageButton;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTable;
@@ -24,7 +27,7 @@ public class LectureScreen extends VisTable {
         this.top().left();
         this.pad(10);
 
-        Drawable lectureBackground = BackgroundGenerator.getPrimaryBackground();
+        Drawable lectureBackground = BackgroundUtils.getPrimaryBackground();
         this.setBackground(lectureBackground);
 
         lectureTable = new VisTable();
@@ -34,10 +37,17 @@ public class LectureScreen extends VisTable {
         historyTable.setDebug(debug);
 
         createUI();
+
     }
 
     private void createUI() {
         createSlideButton = new VisTextButton("+");
+        createSlideButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent changeEvent, Actor actor) {
+                DialogUtils.createNewLectureDialog(homeScreen.getStage());
+            }
+        });
 
         lectureTable.left().pad(10f);
         lectureTable.add(new VisLabel("Create Lecture")).width(200f);
@@ -48,7 +58,7 @@ public class LectureScreen extends VisTable {
         lectureTable.add(electronicsTemplateButton).size(LECTURE_BUTTON_WIDTH, LECTURE_BUTTON_HEIGHT);
         lectureTable.add(tdpTemplateButton).size(LECTURE_BUTTON_WIDTH, LECTURE_BUTTON_HEIGHT);
 
-        Drawable tableBG = BackgroundGenerator.getSecondaryBackground();
+        Drawable tableBG = BackgroundUtils.getSecondaryBackground();
         lectureTable.setBackground(tableBG);
         historyTable.setBackground(tableBG);
 

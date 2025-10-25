@@ -7,7 +7,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
-public class BackgroundGenerator {
+public class BackgroundUtils {
 
     public static final Color PRIMARY_COLOR = new Color(0.08f, 0.08f, 0.08f, 1);
     public static final Color SECONDARY_COLOR = new Color(0.10f, 0.10f, 0.10f, 1);

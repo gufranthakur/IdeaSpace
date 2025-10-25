@@ -1,10 +1,12 @@
 package com.ideaspace.core;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.ideaspace.IdeaSpace;
 
@@ -37,8 +39,6 @@ public class Space {
     public ArrayList<Slide> slides;
     public Slide selectedSlide;
 
-
-
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
         sceneManager = new SceneManager();
@@ -51,6 +51,8 @@ public class Space {
     }
 
     private void setupCamera() {
+       // FreeTypeFontGenerator generator = new FreeTypeFontGenerator();
+
         camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 20f / 1000f;
         camera.far = 80f;
@@ -58,7 +60,6 @@ public class Space {
         camera.position.set(0,0.5f, 4f);
 
         cameraController = new FirstPersonCameraController(camera);
-        //Gdx.input.setInputProcessor(cameraController);
     }
 
     private void setupLighting() {
@@ -126,5 +127,10 @@ public class Space {
     public SceneManager getSceneManager() {
         return sceneManager;
     }
+
+    public FirstPersonCameraController getCameraController() {
+        return cameraController;
+    }
+
 
 }

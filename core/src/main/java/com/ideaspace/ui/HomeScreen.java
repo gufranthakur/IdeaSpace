@@ -1,21 +1,15 @@
 package com.ideaspace.ui;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.ideaspace.IdeaSpace;
-import com.ideaspace.utils.BackgroundGenerator;
+import com.ideaspace.utils.BackgroundUtils;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
-
-import static com.ideaspace.utils.BackgroundGenerator.PRIMARY_COLOR;
 
 public class HomeScreen {
 
@@ -51,8 +45,6 @@ public class HomeScreen {
         navigationTable.setDebug(DEBUG_MODE);
 
         createUI();
-
-        Gdx.input.setInputProcessor(stage);
     }
 
     public void createUI() {
@@ -73,7 +65,7 @@ public class HomeScreen {
         navigationTable.add(settingsButton).fill().height(45).pad(5).row();
         navigationTable.add(logOutButton).fill().height(45).pad(5).row();
 
-        Drawable background = BackgroundGenerator.getPrimaryBackground();
+        Drawable background = BackgroundUtils.getPrimaryBackground();
         navigationTable.setBackground(background);
 
         root.add(navigationTable).growY();
@@ -104,5 +96,16 @@ public class HomeScreen {
     public void dispose() {
         stage.dispose();
     }
+
+    public Stage getStage() {
+        return stage;
+    }
+
+    public IdeaSpace getIdeaSpace() {
+        return this.ideaSpace;
+    }
+
+
+
 
 }
