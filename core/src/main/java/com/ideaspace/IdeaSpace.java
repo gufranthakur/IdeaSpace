@@ -7,11 +7,14 @@ import com.badlogic.gdx.graphics.*;
 import com.ideaspace.core.Decoder;
 import com.ideaspace.core.Server;
 import com.ideaspace.core.Space;
+import com.ideaspace.handlers.LectureHandler;
 import com.ideaspace.ui.HomeScreen;
 import com.ideaspace.utils.BackgroundUtils;
 import com.kotcrab.vis.ui.VisUI;
 
 public class IdeaSpace extends ApplicationAdapter {
+
+    private LectureHandler lectureHandler;
 
     public HomeScreen homeScreen;
     public Space space;
@@ -26,6 +29,8 @@ public class IdeaSpace extends ApplicationAdapter {
     @Override
     public void create() {
         VisUI.load();
+
+        lectureHandler = new LectureHandler(this);
 
         homeScreen = new HomeScreen(this);
 
@@ -55,7 +60,6 @@ public class IdeaSpace extends ApplicationAdapter {
             .rotate(0f, 0f, 1f, 60f);
 
         space.selectedSlide.addObject("Blue Env");
-        space.selectedSlide.addObject("ESP32");
 
         serverThread = new Thread(server);
         serverThread.start();
@@ -89,15 +93,20 @@ public class IdeaSpace extends ApplicationAdapter {
 
     @Override
     public void dispose() {
-        VisUI.dispose();
         homeScreen.dispose();
         space.getSceneManager().dispose();
         space.dispose();
 
         BackgroundUtils.disposeCachedBackgrounds();
+        VisUI.dispose();
+
     }
 
     public void setLectureFlag(boolean lectureFlag) {
         this.lectureFlag = lectureFlag;
+    }
+
+    public LectureHandler getLectureHandler() {
+        return lectureHandler;
     }
 }

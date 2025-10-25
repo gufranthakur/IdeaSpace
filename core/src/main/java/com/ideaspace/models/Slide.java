@@ -1,4 +1,4 @@
-package com.ideaspace.components;
+package com.ideaspace.models;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
