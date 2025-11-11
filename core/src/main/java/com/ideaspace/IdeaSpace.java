@@ -24,6 +24,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public Thread serverThread;
     private InputMultiplexer multiplexer;
 
+    private final boolean DEBUG_MODE = false;
     private boolean lectureFlag;
 
     @Override
@@ -108,5 +109,9 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public LectureHandler getLectureHandler() {
         return lectureHandler;
+    }
+
+    public boolean getDebugMode() {
+        return DEBUG_MODE;
     }
 }

@@ -14,10 +14,11 @@ public class HistoryLectureTable extends VisTable {
     private VisLabel lectureNameLabel, lectureInfoLabel;
     private VisTextButton openButton, editButton, deleteButton;
 
-    public HistoryLectureTable(LectureScreen lectureScreen, Lecture lecture) {
+    public HistoryLectureTable(LectureScreen lectureScreen, Lecture lecture, boolean DEBUG_MODE) {
         this.lectureScreen = lectureScreen;
         this.lecture = lecture;
         this.left();
+        this.setDebug(DEBUG_MODE);
         createUI();
         initListeners();
     }

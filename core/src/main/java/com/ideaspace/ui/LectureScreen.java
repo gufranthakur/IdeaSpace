@@ -12,6 +12,7 @@ import com.kotcrab.vis.ui.widget.*;
 public class LectureScreen extends VisTable {
 
     private HomeScreen homeScreen;
+    private boolean DEBUG_MODE;
 
     private final int LECTURE_BUTTON_WIDTH = 200;
     private final int LECTURE_BUTTON_HEIGHT = 120;
@@ -21,10 +22,11 @@ public class LectureScreen extends VisTable {
     private VisTextButton createSlideButton;
     private VisImageButton iotTemplateButton, tdpTemplateButton, electronicsTemplateButton;
 
-    public LectureScreen(HomeScreen homeScreen, boolean debug) {
+    public LectureScreen(HomeScreen homeScreen, boolean DEBUG_MODE) {
         this.homeScreen = homeScreen;
         this.top().left();
         this.pad(10);
+        this.DEBUG_MODE = DEBUG_MODE;
 
         Drawable lectureBackground = BackgroundUtils.getPrimaryBackground();
         this.setBackground(lectureBackground);
@@ -32,8 +34,8 @@ public class LectureScreen extends VisTable {
         lectureTable = new VisTable();
         historyTable = new VisTable();
 
-        lectureTable.setDebug(debug);
-        historyTable.setDebug(debug);
+        lectureTable.setDebug(DEBUG_MODE);
+        historyTable.setDebug(DEBUG_MODE);
 
         createUI();
 
@@ -118,7 +120,7 @@ public class LectureScreen extends VisTable {
                     subjectField.getText(),
                     semesterField.getText());
 
-                HistoryLectureTable table = new HistoryLectureTable(getLectureScreen(), lecture);
+                HistoryLectureTable table = new HistoryLectureTable(getLectureScreen(), lecture, DEBUG_MODE);
 
                 stage.getActors().removeIndex(dialog.getZIndex());
                 homeScreen.getIdeaSpace().getLectureHandler().createNewLecture(lecture);

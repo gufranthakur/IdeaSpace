@@ -15,7 +15,7 @@ public class HomeScreen {
 
     private IdeaSpace ideaSpace;
 
-    private final boolean DEBUG_MODE = false;
+    private boolean DEBUG_MODE;
 
     private Stage stage;
     private VisTable root;
@@ -29,6 +29,7 @@ public class HomeScreen {
     public HomeScreen(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
 
+        DEBUG_MODE = ideaSpace.getDebugMode();
         lectureScreen = new LectureScreen(this, DEBUG_MODE);
 
         stage = new Stage(new ScreenViewport());

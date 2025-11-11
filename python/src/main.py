@@ -155,7 +155,7 @@ def detect_swipe_gesture(lms):
                 # Timeout - reset
                 swipe_start_pos = (palm_x, palm_y)
                 swipe_start_time = current_time
-                return None
+                return None 
             
             # Check for valid swipe
             if abs(dx) >= SWIPE_MIN_DISTANCE and dy <= SWIPE_MAX_VERTICAL:
@@ -251,15 +251,14 @@ while True:
             
             # Zoom detection (only when not in camera mode)
             if not camera_active:
-                if utils.action_between_threshold(zoom_out_action, 0, 30) and \
-                   utils.action_between_threshold(zoom_in_action, 60, 100):
+                if utils.action_between_threshold(zoom_out_action, 0, 100):
                     zoom_out_frames += 1
                     if zoom_out_frames >= STABLE_FRAMES:
                         detected_action = "ZOOMED OUT"
                 else:
                     zoom_out_frames = 0
                 
-                if utils.action_between_threshold(zoom_in_action, 180, 300):
+                if utils.action_between_threshold(zoom_in_action, 400, 700):
                     zoom_in_frames += 1
                     if zoom_in_frames >= STABLE_FRAMES:
                         detected_action = "ZOOMED IN"
