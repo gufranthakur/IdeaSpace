@@ -14,6 +14,8 @@ import com.ideaspace.ui.components.ISButton;
 import com.ideaspace.ui.components.ISTable;
 import com.kotcrab.vis.ui.widget.*;
 
+import java.util.ArrayList;
+
 public class LectureScreen extends VisTable {
 
     private HomeScreen homeScreen;
@@ -25,7 +27,7 @@ public class LectureScreen extends VisTable {
     private ISTable lectureTable, historyTable;
 
     private ISButton createSlideButton; //285, 80
-    private VisImageButton iotTemplateButton, tdpTemplateButton, electronicsTemplateButton;
+    private ArrayList<HistoryLectureTable> historyLectureTables;
 
     public LectureScreen(HomeScreen homeScreen, boolean DEBUG_MODE) {
         this.homeScreen = homeScreen;
@@ -38,6 +40,8 @@ public class LectureScreen extends VisTable {
 
         lectureTable.setDebug(DEBUG_MODE);
         historyTable.setDebug(DEBUG_MODE);
+
+        historyLectureTables =  new ArrayList<>();
 
         createUI();
 
@@ -98,9 +102,6 @@ public class LectureScreen extends VisTable {
 
         dialog.getContentTable().add(group).colspan(3).right();
 
-
-
-
         cancelButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent changeEvent, Actor actor) {
@@ -113,13 +114,11 @@ public class LectureScreen extends VisTable {
             public void changed(ChangeEvent changeEvent, Actor actor) {
 
                 if (lectureNameField.isEmpty()) return;
-                //if (subjectField.isEmpty() || semesterField.isEmpty()) return;
 
-                Lecture lecture = new Lecture(lectureNameField.getText(),
-                    "",
-                    "");
+                Lecture lecture = new Lecture(lectureNameField.getText());
 
                 HistoryLectureTable table = new HistoryLectureTable(getLectureScreen(), lecture, DEBUG_MODE);
+                historyLectureTables.add(table);
 
                 stage.getActors().removeIndex(dialog.getZIndex());
                 homeScreen.getIdeaSpace().getLectureHandler().createNewLecture(lecture);
@@ -128,6 +127,16 @@ public class LectureScreen extends VisTable {
         });
 
         dialog.show(stage);
+    }
+
+    public void dispose() {
+        createSlideButton.dispose();
+
+        for (HistoryLectureTable table : historyLectureTables) table.dispose();
+
+
+        lectureTable.dispose();
+        historyTable.dispose();
     }
 
     public LectureScreen getLectureScreen() {

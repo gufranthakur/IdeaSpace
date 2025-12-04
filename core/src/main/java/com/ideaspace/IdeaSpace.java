@@ -99,6 +99,7 @@ public class IdeaSpace extends ApplicationAdapter {
     @Override
     public void dispose() {
         homeScreen.dispose();
+
         space.getSceneManager().dispose();
         space.dispose();
 

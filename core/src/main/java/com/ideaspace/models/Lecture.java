@@ -4,13 +4,11 @@ import java.util.ArrayList;
 
 public class Lecture {
 
-    private String lectureName, semester, subjectName;
+    private String lectureName;
     public ArrayList<Slide> slides;
 
-    public Lecture(String lectureName, String subjectName, String semester) {
+    public Lecture(String lectureName) {
         this.lectureName = lectureName;
-        this.subjectName = subjectName;
-        this.semester = semester;
 
         slides = new ArrayList<>(10);
     }
@@ -21,14 +19,6 @@ public class Lecture {
 
     public String getLectureName() {
         return lectureName;
-    }
-
-    public String getSemester() {
-        return semester;
-    }
-
-    public String getSubjectName() {
-        return subjectName;
     }
 
 

@@ -56,8 +56,6 @@ public class HomeScreen {
     }
 
     public void createUI() {
-
-
         lectureButton = new ISButton("ui/png/LecturesButton.png");
         modelsButton = new ISButton("ui/png/3D-Models-Button.png");
         howToUseButton = new ISButton("ui/png/HowToUseButton.png");
@@ -66,7 +64,6 @@ public class HomeScreen {
 
         navigationTable.padTop(250);
 
-        //navigationTable.add(logoImage).size(200f, 200f).row();
         navigationTable.add(lectureButton).fill().width(215).height(60).pad(5).row();
         navigationTable.add(modelsButton).fill().height(60).pad(5).row();
         navigationTable.add(howToUseButton).fill().height(60).pad(5).row();
@@ -76,18 +73,6 @@ public class HomeScreen {
         root.add(navigationTable).width(300).pad(10).padBottom(120);
         root.add(lectureScreen).expand().fill();
     }
-
-    //table.add(widget)           Add widget to cell
-    //     .width(200)            Set cell width
-    //     .height(100)           Set cell height
-    //     .pad(10)               Padding on all sides
-    //     .padLeft(5)            Specific side padding
-    //     .expand()              Expand to fill space
-    //     .fill()                Fill the cell
-    //     .center()              Center alignment
-    //     .left()                Left alignment
-    //     .colspan(2)            Span multiple columns
-    //     .row();                Move to next row
 
     public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
@@ -107,6 +92,8 @@ public class HomeScreen {
         logOutButton.dispose();
 
         navigationTable.dispose();
+
+        lectureScreen.dispose();
 
         stage.dispose();
     }

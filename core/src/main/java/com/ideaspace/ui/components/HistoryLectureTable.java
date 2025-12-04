@@ -6,7 +6,6 @@ import com.ideaspace.models.Lecture;
 import com.ideaspace.ui.screens.LectureScreen;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTable;
-import com.kotcrab.vis.ui.widget.VisTextButton;
 
 public class HistoryLectureTable extends ISTable {
 
@@ -55,6 +54,16 @@ public class HistoryLectureTable extends ISTable {
                 lectureScreen.getHomeScreen().getIdeaSpace().getLectureHandler().openLecture(lecture);
             }
         });
+    }
+
+
+    @Override
+    public void dispose() {
+        openButton.dispose();
+        editButton.dispose();
+        deleteButton.dispose();
+
+
     }
 
 }
