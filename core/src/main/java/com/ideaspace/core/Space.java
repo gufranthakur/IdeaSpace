@@ -31,7 +31,7 @@ public class Space {
 
     private float time;
     private SceneSkybox skybox;
-    private DirectionalLightEx light;;
+    private DirectionalLightEx light;
     private FirstPersonCameraController cameraController;
 
     public ArrayList<Slide> slides;
@@ -53,7 +53,7 @@ public class Space {
 
         camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 20f / 1000f;
-        camera.far = 80f;
+        camera.far = 80;
         sceneManager.setCamera(camera);
         camera.position.set(0,0.5f, 4f);
 
@@ -64,7 +64,8 @@ public class Space {
         light = new DirectionalLightEx();
         light.direction.set(1, -3, 1).nor();
         light.color.set(Color.WHITE);
-        //sceneManager.environment.add(light);
+
+        sceneManager.environment.add(light);
     }
 
     private void setupIBL() {
@@ -79,13 +80,13 @@ public class Space {
     }
 
     private void setupSceneManager() {
-        sceneManager.setAmbientLight(1f);
+        sceneManager.setAmbientLight(3f); // Reduce from 3f for better PBR rendering
         sceneManager.environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
-        sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubeMap));
+        //sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubeMap));
         sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubeMap));
 
         skybox = new SceneSkybox(environmentCubeMap);
-        //sceneManager.setSkyBox(skybox);
+        sceneManager.setSkyBox(skybox); // Uncomment this too for visual context
     }
 
     public void render(float deltaTime) {

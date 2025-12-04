@@ -8,8 +8,7 @@ import com.ideaspace.core.Decoder;
 import com.ideaspace.core.Server;
 import com.ideaspace.core.Space;
 import com.ideaspace.handlers.LectureHandler;
-import com.ideaspace.ui.HomeScreen;
-import com.ideaspace.utils.BackgroundUtils;
+import com.ideaspace.ui.screens.HomeScreen;
 import com.kotcrab.vis.ui.VisUI;
 
 public class IdeaSpace extends ApplicationAdapter {
@@ -27,9 +26,11 @@ public class IdeaSpace extends ApplicationAdapter {
     private final boolean DEBUG_MODE = false;
     private boolean lectureFlag;
 
+
     @Override
     public void create() {
-        VisUI.load();
+        VisUI.load(VisUI.SkinScale.X2);
+
 
         lectureHandler = new LectureHandler(this);
 
@@ -46,26 +47,30 @@ public class IdeaSpace extends ApplicationAdapter {
 
         space.addPanel();
 
-        space.selectedSlide.loadObject("Blue Env", "models/environments/blue_cube.glb");
-        space.selectedSlide.loadObject("ESP32", "models/microcontrollers/esp.glb");
-        space.selectedSlide.loadObject("3D Printer", "models/misc/3d_printer.glb");
+        space.selectedSlide.loadObject(
+            "Background",
+            "models/backgrounds/dark_background.glb"
+        );
+        space.selectedSlide.loadObject(
+            "ESP32",
+            "models/microcontrollers/esp32.glb"
+        );
+        space.selectedSlide.loadObject(
+            "3D Printer",
+            "models/misc/3d_printer.glb"
+        );
 
-        space.selectedSlide.getModelInstanceOf("Blue Env").transform.idt()
-            .scale(3f, 2f, 2f)
-                .translate(-53f, -55f, 0f);
+        space.selectedSlide
+            .getModelInstanceOf("Background")
+            .transform.idt()
+            .scale(10f, 10f, 10f);
 
-        space.selectedSlide.getModelInstanceOf("ESP32").transform.idt()
-            .translate(0f, 0f, 0f)
-            .scale(0.5f, 0.5f, 0.5f)
-                .rotate(0f, 1f, 0f, 89f)
-            .rotate(0f, 0f, 1f, 60f);
 
-        space.selectedSlide.addObject("Blue Env");
+        space.selectedSlide.addObject("Background");
+        space.selectedSlide.addObject("ESP32");
 
         serverThread = new Thread(server);
         serverThread.start();
-
-
     }
 
     @Override
@@ -89,7 +94,6 @@ public class IdeaSpace extends ApplicationAdapter {
             space.getSceneManager().render();
         }
 
-
     }
 
     @Override
@@ -98,9 +102,8 @@ public class IdeaSpace extends ApplicationAdapter {
         space.getSceneManager().dispose();
         space.dispose();
 
-        BackgroundUtils.disposeCachedBackgrounds();
-        VisUI.dispose();
 
+        VisUI.dispose();
     }
 
     public void setLectureFlag(boolean lectureFlag) {

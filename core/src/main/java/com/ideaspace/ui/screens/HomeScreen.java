@@ -1,13 +1,17 @@
-package com.ideaspace.ui;
+package com.ideaspace.ui.screens;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Gdx2DPixmap;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScalingViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.ideaspace.IdeaSpace;
-import com.ideaspace.utils.BackgroundUtils;
+import com.ideaspace.ui.components.ISButton;
+import com.ideaspace.ui.components.ISTable;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 
@@ -22,12 +26,15 @@ public class HomeScreen {
 
     private LectureScreen lectureScreen;
 
-    private VisTable navigationTable, contentTable;
+    private ISTable navigationTable, contentTable;
 
-    VisTextButton lectureButton, modelsButton, howToUseButton, settingsButton, logOutButton;
+    ISButton lectureButton, modelsButton, howToUseButton, settingsButton, logOutButton;
 
     public HomeScreen(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
+        Gdx.app.setLogLevel(Application.LOG_DEBUG);
+
+        Gdx.app.debug("Crazy", "Hello world");
 
         DEBUG_MODE = ideaSpace.getDebugMode();
         lectureScreen = new LectureScreen(this, DEBUG_MODE);
@@ -37,7 +44,7 @@ public class HomeScreen {
         root.setFillParent(true);
         root.top().left();
 
-        navigationTable = new VisTable();
+        navigationTable = new ISTable("ui/png/ButtonsPanel.png");
         navigationTable.top().left();
 
         stage.addActor(root);
@@ -49,27 +56,24 @@ public class HomeScreen {
     }
 
     public void createUI() {
-        Texture imgTexture = new Texture("IdeaSpace_512.png");
-        Image logoImage = new Image(imgTexture);
 
-        lectureButton = new VisTextButton("Lectures");
-        modelsButton = new VisTextButton("3D Models");
-        howToUseButton = new VisTextButton("How to Use");
-        settingsButton = new VisTextButton("Settings");
-        logOutButton = new VisTextButton("Log Out");
 
-        navigationTable.pad(10);
-        navigationTable.add(logoImage).size(200f, 200f).row();
-        navigationTable.add(lectureButton).fill().height(45).pad(5).row();
-        navigationTable.add(modelsButton).fill().height(45).pad(5).row();
-        navigationTable.add(howToUseButton).fill().height(45).pad(5).row();
-        navigationTable.add(settingsButton).fill().height(45).pad(5).row();
-        navigationTable.add(logOutButton).fill().height(45).pad(5).row();
+        lectureButton = new ISButton("ui/png/LecturesButton.png");
+        modelsButton = new ISButton("ui/png/3D-Models-Button.png");
+        howToUseButton = new ISButton("ui/png/HowToUseButton.png");
+        settingsButton = new ISButton("ui/png/SettingsButton.png");
+        logOutButton = new ISButton("ui/png/ExitButton.png");
 
-        Drawable background = BackgroundUtils.getPrimaryBackground();
-        navigationTable.setBackground(background);
+        navigationTable.padTop(250);
 
-        root.add(navigationTable).growY();
+        //navigationTable.add(logoImage).size(200f, 200f).row();
+        navigationTable.add(lectureButton).fill().width(215).height(60).pad(5).row();
+        navigationTable.add(modelsButton).fill().height(60).pad(5).row();
+        navigationTable.add(howToUseButton).fill().height(60).pad(5).row();
+        navigationTable.add(settingsButton).fill().height(60).pad(5).row();
+        navigationTable.add(logOutButton).fill().height(60).pad(5).row();
+
+        root.add(navigationTable).width(300).pad(10).padBottom(120);
         root.add(lectureScreen).expand().fill();
     }
 
@@ -95,6 +99,15 @@ public class HomeScreen {
     }
 
     public void dispose() {
+
+        lectureButton.dispose();
+        modelsButton.dispose();
+        settingsButton.dispose();
+        howToUseButton.dispose();
+        logOutButton.dispose();
+
+        navigationTable.dispose();
+
         stage.dispose();
     }
 

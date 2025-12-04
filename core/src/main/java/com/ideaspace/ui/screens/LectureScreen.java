@@ -1,12 +1,17 @@
-package com.ideaspace.ui;
+package com.ideaspace.ui.screens;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.ideaspace.models.Lecture;
-import com.ideaspace.utils.BackgroundUtils;
-import com.ideaspace.utils.DialogUtils;
+import com.ideaspace.ui.components.HistoryLectureTable;
+import com.ideaspace.ui.components.ISButton;
+import com.ideaspace.ui.components.ISTable;
 import com.kotcrab.vis.ui.widget.*;
 
 public class LectureScreen extends VisTable {
@@ -17,9 +22,9 @@ public class LectureScreen extends VisTable {
     private final int LECTURE_BUTTON_WIDTH = 200;
     private final int LECTURE_BUTTON_HEIGHT = 120;
 
-    private VisTable lectureTable, historyTable;
+    private ISTable lectureTable, historyTable;
 
-    private VisTextButton createSlideButton;
+    private ISButton createSlideButton; //285, 80
     private VisImageButton iotTemplateButton, tdpTemplateButton, electronicsTemplateButton;
 
     public LectureScreen(HomeScreen homeScreen, boolean DEBUG_MODE) {
@@ -28,11 +33,8 @@ public class LectureScreen extends VisTable {
         this.pad(10);
         this.DEBUG_MODE = DEBUG_MODE;
 
-        Drawable lectureBackground = BackgroundUtils.getPrimaryBackground();
-        this.setBackground(lectureBackground);
-
-        lectureTable = new VisTable();
-        historyTable = new VisTable();
+        lectureTable = new ISTable("ui/png/LecturesTable.png");
+        historyTable = new ISTable("ui/png/HistoriesTable.png");
 
         lectureTable.setDebug(DEBUG_MODE);
         historyTable.setDebug(DEBUG_MODE);
@@ -50,7 +52,12 @@ public class LectureScreen extends VisTable {
     }
 
     private void createLectureTable() {
-        createSlideButton = new VisTextButton("+");
+        createSlideButton = new ISButton("ui/png/CreateLectureButton.png");
+
+        lectureTable.left();
+        lectureTable.padLeft(20).padTop(5);
+
+        createSlideButton.left();
         createSlideButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent changeEvent, Actor actor) {
@@ -58,16 +65,8 @@ public class LectureScreen extends VisTable {
             }
         });
 
-
-        lectureTable.left().pad(10f);
-        lectureTable.add(new VisLabel("Create Lecture")).width(200f);
-        lectureTable.add(new VisLabel("Starter Templates")).pad(5).row();
-
         lectureTable.add(createSlideButton).size(LECTURE_BUTTON_WIDTH, LECTURE_BUTTON_HEIGHT);
 
-        Drawable tableBG = BackgroundUtils.getSecondaryBackground();
-        lectureTable.setBackground(tableBG);
-        historyTable.setBackground(tableBG);
     }
 
     private void createHistoryTable() {
@@ -76,29 +75,31 @@ public class LectureScreen extends VisTable {
 
     private void createNewLectureDialog(Stage stage) {
 
-        VisTextField lectureNameField = new VisTextField("Default lecture name");
-        VisTextField semesterField = new VisTextField("Default sem");
-        VisTextField subjectField = new VisTextField("Default sub");
+        VisTextField lectureNameField = new VisTextField(" Default lecture name");
 
-        VisTextButton cancelButton = new VisTextButton("Cancel");
-        VisTextButton createButton = new VisTextButton("Create");
+        ISButton cancelButton = new ISButton("ui/png/CancelButton.png");
+        ISButton createButton = new ISButton("ui/png/CreateButton.png");
 
-        VisDialog dialog = new VisDialog("Create new Lecture");
-        dialog.getContentTable().defaults().expandX().fillX();
+        VisDialog dialog = new VisDialog("");
+        dialog.pad(10);
+
+        Texture background = new Texture(Gdx.files.internal("ui/png/Dialog.png"));
+        dialog.setBackground(new TextureRegionDrawable(new TextureRegion(background)));
 
 
-        dialog.pad(20).padBottom(20);
+        dialog.getContentTable().add(lectureNameField).width(450f).height(50f).right().expandX().fillX().row();
 
-        dialog.getContentTable().add(new VisLabel("Name: ")).padRight(10).padTop(20);
-        dialog.getContentTable().add(lectureNameField).padRight(10).padTop(20).colspan(3).expand().fill().row();
+        HorizontalGroup group = new HorizontalGroup();
 
-        dialog.getContentTable().add(new VisLabel("Subject: ")).padRight(10);
-        dialog.getContentTable().add(subjectField).padRight(10);
-        dialog.getContentTable().add(new VisLabel("Semester: ")).padRight(10);
-        dialog.getContentTable().add(semesterField).padRight(10).row();
+        group.pad(5);
+        group.space(5);
+        group.addActor(cancelButton);
+        group.addActor(createButton);
 
-        dialog.getContentTable().add(cancelButton).pad(5).colspan(2);
-        dialog.getContentTable().add(createButton).pad(5).colspan(2);
+        dialog.getContentTable().add(group).colspan(3).right();
+
+
+
 
         cancelButton.addListener(new ChangeListener() {
             @Override
@@ -112,19 +113,17 @@ public class LectureScreen extends VisTable {
             public void changed(ChangeEvent changeEvent, Actor actor) {
 
                 if (lectureNameField.isEmpty()) return;
-                if (subjectField.isEmpty() || semesterField.isEmpty()) return;
-
-
+                //if (subjectField.isEmpty() || semesterField.isEmpty()) return;
 
                 Lecture lecture = new Lecture(lectureNameField.getText(),
-                    subjectField.getText(),
-                    semesterField.getText());
+                    "",
+                    "");
 
                 HistoryLectureTable table = new HistoryLectureTable(getLectureScreen(), lecture, DEBUG_MODE);
 
                 stage.getActors().removeIndex(dialog.getZIndex());
                 homeScreen.getIdeaSpace().getLectureHandler().createNewLecture(lecture);
-                historyTable.add(table).expandX().fillX().row();
+                historyTable.add(table).expandX().pad(10).fillX().row();
             }
         });
 
