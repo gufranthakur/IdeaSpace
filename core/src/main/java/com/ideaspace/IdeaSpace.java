@@ -14,6 +14,7 @@ import com.kotcrab.vis.ui.VisUI;
 public class IdeaSpace extends ApplicationAdapter {
 
     private LectureHandler lectureHandler;
+    //helloooooo
 
     public HomeScreen homeScreen;
     public Space space;
