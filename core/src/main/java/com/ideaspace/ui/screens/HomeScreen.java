@@ -25,6 +25,7 @@ public class HomeScreen {
     private VisTable root;
 
     private LectureScreen lectureScreen;
+    private ModelsScreen modelsScreen;
 
     private ISTable navigationTable, contentTable;
 
@@ -38,6 +39,7 @@ public class HomeScreen {
 
         DEBUG_MODE = ideaSpace.getDebugMode();
         lectureScreen = new LectureScreen(this, DEBUG_MODE);
+        modelsScreen = new ModelsScreen(this, DEBUG_MODE);
 
         stage = new Stage(new ScreenViewport());
         root = new VisTable();
@@ -71,7 +73,7 @@ public class HomeScreen {
         navigationTable.add(logOutButton).fill().height(60).pad(5).row();
 
         root.add(navigationTable).width(300).pad(10).padBottom(120);
-        root.add(lectureScreen).expand().fill();
+        root.add(modelsScreen).expand().fill();
     }
 
     public void resize(int width, int height) {
