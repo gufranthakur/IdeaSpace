@@ -15,6 +15,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
     private LectureHandler lectureHandler;
     //helloooooo
+    //Thank you <3 
 
     public HomeScreen homeScreen;
     public Space space;
