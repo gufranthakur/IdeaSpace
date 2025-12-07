@@ -122,7 +122,7 @@ public class LectureScreen extends VisTable {
 
                 stage.getActors().removeIndex(dialog.getZIndex());
                 homeScreen.getIdeaSpace().getLectureHandler().createNewLecture(lecture);
-                historyTable.add(table).expandX().pad(10).fillX().row();
+                historyTable.add(table).height(60).expandX().pad(10).fillX().row();
             }
         });
 

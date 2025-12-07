@@ -2,21 +2,16 @@ package com.ideaspace.ui.screens;
 
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.g2d.Gdx2DPixmap;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.*;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.ui.components.ISButton;
 import com.ideaspace.ui.components.ISTable;
 import com.kotcrab.vis.ui.widget.VisTable;
-import com.kotcrab.vis.ui.widget.VisTextButton;
 
 public class HomeScreen {
 
@@ -63,15 +58,27 @@ public class HomeScreen {
 
     public void createUI() {
         lectureButton = new ISButton("ui/png/LecturesButton.png");
-
         modelsButton = new ISButton("ui/png/3D-Models-Button.png");
-
         howToUseButton = new ISButton("ui/png/HowToUseButton.png");
         settingsButton = new ISButton("ui/png/SettingsButton.png");
         logOutButton = new ISButton("ui/png/ExitButton.png");
 
-        navigationTable.padTop(250);
+        lectureButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                switchScreen(lectureScreen);
+            }
+        });
 
+        modelsButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                switchScreen(modelsScreen);
+            }
+        });
+
+        navigationTable.padTop(20);
+        navigationTable.add(new ISTable("ui/png/IdeaSpaceLogo.png")).width(180).height(180).row();
         navigationTable.add(lectureButton).fill().width(215).height(60).pad(5).row();
         navigationTable.add(modelsButton).fill().height(60).pad(5).row();
         navigationTable.add(howToUseButton).fill().height(60).pad(5).row();
@@ -80,6 +87,10 @@ public class HomeScreen {
 
         root.add(navigationTable).width(300).pad(10);
         root.add(modelsScreen).expand().fill();
+    }
+
+    private void switchScreen(Actor newScreen) {
+        root.getCells().get(1).setActor(newScreen);
     }
 
     public void resize(int width, int height) {
@@ -113,8 +124,5 @@ public class HomeScreen {
     public IdeaSpace getIdeaSpace() {
         return this.ideaSpace;
     }
-
-
-
 
 }

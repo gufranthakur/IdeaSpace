@@ -17,16 +17,37 @@ public class ModelsScreen extends VisTable {
     private HomeScreen homeScreen;
     private ISTable contentTable;
 
+    private ISButton nextButton, backButton;
+
     public ModelsScreen(HomeScreen homeScreen, boolean DEBUG_MODE) {
         this.homeScreen = homeScreen;
         this.pad(10);
         this.setDebug(DEBUG_MODE);
         this.top().left();
 
+        createUI();
+    }
+
+    private void createUI() {
         contentTable = new ISTable("ui/png/models_screen_bg.png");
         contentTable.top();
         contentTable.pad(20);
         contentTable.padTop(70);
+
+        nextButton = new ISButton("ui/png/nextButtonMS.png");
+        backButton = new ISButton("ui/png/backButtonMS.png");
+
+        Table table = new Table();
+        table.pad(15);
+        table.center();
+
+        table.add(backButton).width(105).height(36).padRight(10);
+        table.add(nextButton).width(105).height(36);
+
+
+        contentTable.add(table).fillX().expandX().colspan(3);
+
+        contentTable.row();
 
         createModulePackCard("ui/png/Basic_IOT_Module_Pack.png");
         createModulePackCard("ui/png/Advanced_IOT_Module_Pack.png");
@@ -41,7 +62,6 @@ public class ModelsScreen extends VisTable {
 
         this.add(contentTable).fill().expand();
     }
-
 
     private void createModulePackCard(String imagePath) {
         ISTable table = new ISTable(imagePath);
