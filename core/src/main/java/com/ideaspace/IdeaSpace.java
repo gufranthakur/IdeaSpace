@@ -15,7 +15,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
     private LectureHandler lectureHandler;
     //helloooooo
-    //Thank you <3 
+    //Thank you <3
 
     public HomeScreen homeScreen;
     public Space space;
@@ -32,7 +32,6 @@ public class IdeaSpace extends ApplicationAdapter {
     @Override
     public void create() {
         VisUI.load(VisUI.SkinScale.X2);
-
 
         lectureHandler = new LectureHandler(this);
 

@@ -3,12 +3,15 @@ package com.ideaspace.ui.screens;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Gdx2DPixmap;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.ScalingViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Scaling;
+import com.badlogic.gdx.utils.viewport.*;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.ui.components.ISButton;
 import com.ideaspace.ui.components.ISTable;
@@ -27,7 +30,7 @@ public class HomeScreen {
     private LectureScreen lectureScreen;
     private ModelsScreen modelsScreen;
 
-    private ISTable navigationTable, contentTable;
+    private ISTable navigationTable;
 
     ISButton lectureButton, modelsButton, howToUseButton, settingsButton, logOutButton;
 
@@ -41,7 +44,8 @@ public class HomeScreen {
         lectureScreen = new LectureScreen(this, DEBUG_MODE);
         modelsScreen = new ModelsScreen(this, DEBUG_MODE);
 
-        stage = new Stage(new ScreenViewport());
+        stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
+            Gdx.graphics.getWidth() + 400, Gdx.graphics.getHeight() + 200));
         root = new VisTable();
         root.setFillParent(true);
         root.top().left();
@@ -59,7 +63,9 @@ public class HomeScreen {
 
     public void createUI() {
         lectureButton = new ISButton("ui/png/LecturesButton.png");
+
         modelsButton = new ISButton("ui/png/3D-Models-Button.png");
+
         howToUseButton = new ISButton("ui/png/HowToUseButton.png");
         settingsButton = new ISButton("ui/png/SettingsButton.png");
         logOutButton = new ISButton("ui/png/ExitButton.png");
@@ -72,7 +78,7 @@ public class HomeScreen {
         navigationTable.add(settingsButton).fill().height(60).pad(5).row();
         navigationTable.add(logOutButton).fill().height(60).pad(5).row();
 
-        root.add(navigationTable).width(300).pad(10).padBottom(120);
+        root.add(navigationTable).width(300).pad(10);
         root.add(modelsScreen).expand().fill();
     }
 
