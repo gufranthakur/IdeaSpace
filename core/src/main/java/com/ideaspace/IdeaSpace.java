@@ -8,6 +8,7 @@ import com.ideaspace.core.Decoder;
 import com.ideaspace.core.Server;
 import com.ideaspace.core.Space;
 import com.ideaspace.handlers.LectureHandler;
+import com.ideaspace.ui.panels.ControlPanel;
 import com.ideaspace.ui.screens.HomeScreen;
 import com.kotcrab.vis.ui.VisUI;
 
@@ -19,6 +20,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public HomeScreen homeScreen;
     public Space space;
+    public ControlPanel controlPanel;
     private Server server;
     public Decoder decoder;
 
@@ -36,6 +38,7 @@ public class IdeaSpace extends ApplicationAdapter {
         lectureHandler = new LectureHandler(this);
 
         homeScreen = new HomeScreen(this);
+        controlPanel = new ControlPanel(this);
 
         space = new Space(this);
         server = new Server(this);
@@ -78,6 +81,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public void resize(int width, int height) {
         space.getSceneManager().updateViewport(width, height);
         homeScreen.resize(width, height);
+        controlPanel.resize(width, height);
     }
 
     @Override
@@ -91,8 +95,11 @@ public class IdeaSpace extends ApplicationAdapter {
         if (!lectureFlag) {
             homeScreen.render(deltaTime);
         } else {
+
             space.getSceneManager().update(deltaTime);
             space.getSceneManager().render();
+
+            controlPanel.render(deltaTime);
         }
 
     }

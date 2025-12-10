@@ -86,7 +86,7 @@ public class HomeScreen {
         navigationTable.add(logOutButton).fill().height(60).pad(5).row();
 
         root.add(navigationTable).width(300).pad(10);
-        root.add(modelsScreen).expand().fill();
+        root.add(lectureScreen).expand().fill();
     }
 
     private void switchScreen(Actor newScreen) {
