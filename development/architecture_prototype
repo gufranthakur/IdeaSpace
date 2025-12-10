@@ -1,0 +1,121 @@
+For 3D Models storage
+
+Each model will belong to a "pack" or a "module"
+
+Following modules will be implemented as of Now
+
+##
+
+1. Basic IOT Module pack
+Arduino Uno
+LCD Display
+Ultra-sonic sensor
+Temperature sensor
+Servo Motor
+DC motor
+Battery holder
+UFI Module
+Push button
+Joystick module
+LED and resistors
+
+2. Advanced IOT Module pack
+ESP32
+Raspberry Pi 4
+FPGA Development Board
+LoRa Module
+IMU Sensor (Gyroscope + Accelerometer)
+OLED Display
+Stepper Motor with Driver
+Relay Module
+Temperature & Humidity Sensor (DHT22)
+Gas Sensor (MQ-2 or MQ-135)
+Camera Module (Pi Cam or ESP Cam)
+Micro SD Card Module
+Power Management/UPS Module
+Touchscreen Display
+Environmental Sensor Suite (Air Quality + Light + Pressure)
+
+
+3. Industrial Automation Module Pack
+PLC
+conveyor_belt
+scada_station
+hmi_panel
+vfd_drive
+proximity_sensor
+photoelectric_sensor
+pneumatic_cylinder
+solenoid_valve
+robotic_arm
+control_panel
+
+3. Laboratory Equipment Module Pack
+multimeter
+power_supply_unit
+oscilloscope
+function_generator
+soldering_station
+breadboard_kit
+logic_analyzer
+signal_generator
+toolkit
+digital_caliper
+temperature_probe
+frequency_counter
+
+4. Device Hardware Module Pack
+
+mobile_phone_1
+mobile_phone_2
+laptop_cpu
+laptop_ram
+laptop_ssd
+laptop_hdd
+gpu_unit
+motherboard
+cooling_fan
+battery_pack
+gyroscope_sensor
+accelerometer_sensor
+magnetometer_sensor
+wifi_module
+bluetooth_module
+
+5. Drone module pack
+Quadcopter Frame
+Hexacopter Frame
+Fixed-Wing Drone Frame
+Brushless Motors
+Electronic Speed Controllers (ESC)
+Propellers
+Flight Controller Board
+GPS Module
+IMU Sensor (Gyroscope + Accelerometer)
+LiPo Battery
+Battery Charger
+FPV Camera
+FPV Transmitter
+Gimbal Stabilizer
+Radio Transmitter & Receiver
+
+
+
+6. Miscellaneous
+mobile_phone
+camera
+drone
+cctv_camera
+barcode_scanner
+thermal_camera
+laser_distance_meter
+gps_module
+rfid_reader
+weather_sensor
+antenna_unit
+robot_trolley
+wireless_gateway
+signal_tower
+projector
+
+
