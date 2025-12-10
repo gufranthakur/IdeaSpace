@@ -46,8 +46,8 @@ public class Decoder {
 
         switch (command) {
             // Zoom
-            case "ZOOMED IN" -> targetMoveZ = zoomSpeed;
-            case "ZOOMED OUT" -> targetMoveZ = -zoomSpeed;
+            case "ZOOM IN" -> targetMoveZ = zoomSpeed;
+            case "ZOOM OUT" -> targetMoveZ = -zoomSpeed;
 
             // Camera LOOK (direction)
             case "CAMERA LOOK RIGHT" -> targetLookX = cameraLookSpeed;
