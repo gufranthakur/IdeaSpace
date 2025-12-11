@@ -28,7 +28,6 @@ GREEN = (40, 240, 40)
 BLUE = (240, 40, 40)
 
 # Performance settings
-
 TARGET_FPS = 30
 FRAME_TIME = 1.0 / TARGET_FPS
 
@@ -38,14 +37,13 @@ position_history = deque(maxlen=SMOOTHING_WINDOW)
 
 # Movement settings
 STABLE_FRAMES = 2
-MOVEMENT_THRESHOLD = 10
+MOVEMENT_THRESHOLD = 0.8
 DEAD_ZONE = 3
 
-# Swipe detection settings
-SWIPE_MIN_DISTANCE = 70  # Minimum horizontal distance for swipe
-SWIPE_MAX_TIME = 0.5  # Maximum time for swipe gesture (seconds)
-SWIPE_MAX_VERTICAL = 50  # Maximum vertical movement allowed
-SWIPE_COOLDOWN = 0.8  # Cooldown between swipes
+# Swipe detection settings - made more sensitive
+SWIPE_ANGLE_THRESHOLD = 15  # Reduced from 100
+SWIPE_MAX_TIME = 1.0  # Increased time window
+SWIPE_COOLDOWN = 0.5
 
 # Command throttling
 COMMAND_SEND_INTERVAL = 0.05
@@ -69,10 +67,11 @@ prev_index_point = None
 gesture_hold_frames = 0
 
 # Swipe tracking
-swipe_start_pos = None
+swipe_start_angle = None
 swipe_start_time = None
 last_swipe_time = 0
 swipe_in_progress = False
+
 
 def smooth_position(current_pos):
     """Apply moving average smoothing to position"""
@@ -83,6 +82,7 @@ def smooth_position(current_pos):
     positions = np.array(position_history)
     return tuple(np.mean(positions, axis=0).astype(int))
 
+
 def calculate_velocity(current_pos, prev_pos):
     """Calculate velocity for more responsive movement"""
     if prev_pos is None:
@@ -91,9 +91,10 @@ def calculate_velocity(current_pos, prev_pos):
     dy = current_pos[1] - prev_pos[1]
     return dx, dy
 
+
 def get_direction_from_velocity(dx, dy):
     """Determine direction with velocity-based approach"""
-    magnitude = np.sqrt(dx**2 + dy**2)
+    magnitude = np.sqrt(dx ** 2 + dy ** 2)
 
     if magnitude < DEAD_ZONE:
         return None
@@ -119,60 +120,71 @@ def get_direction_from_velocity(dx, dy):
 
     return None
 
-def detect_swipe_gesture(lms):
-    """Detect horizontal swipe gestures (all fingers extended)"""
-    global swipe_start_pos, swipe_start_time, last_swipe_time, swipe_in_progress
+
+def calculate_hand_angle(lms):
+    """Calculate the angle of hand orientation based on wrist to middle finger"""
+    # Use wrist (0) to middle fingertip for better angle detection
+    wrist_x, wrist_y = lms[0][1], lms[0][2]
+    middle_x, middle_y = lms[MIDDLE_FINGER][1], lms[MIDDLE_FINGER][2]
+
+    # Calculate angle from wrist to middle finger
+    dx = middle_x - wrist_x
+    dy = middle_y - wrist_y
+
+    angle = np.arctan2(dy, dx) * 180 / np.pi
+    return angle
+
+
+def detect_swipe_gesture(lms, img):
+    """Detect slapping motion for left hand - tracks horizontal movement"""
+    global swipe_start_angle, swipe_start_time, last_swipe_time, swipe_in_progress
 
     current_time = time.time()
 
-    # Check if all fingers are extended
-    index_up = lms[INDEX_FINGER][2] < lms[INDEX_POINT][2]
-    middle_up = lms[MIDDLE_FINGER][2] < lms[MIDDLE_POINT][2]
-    ring_up = lms[RING_FINGER][2] < lms[RING_POINT][2]
-    pinky_up = lms[PINKY_FINGER][2] < lms[PINKY_POINT][2]
+    # More lenient finger detection - allow some curl
+    index_up = lms[INDEX_FINGER][2] < lms[INDEX_POINT][2] + 20
+    middle_up = lms[MIDDLE_FINGER][2] < lms[MIDDLE_POINT][2] + 20
+    ring_up = lms[RING_FINGER][2] < lms[RING_POINT][2] + 20
+    pinky_up = lms[PINKY_FINGER][2] < lms[PINKY_POINT][2] + 20
 
-    all_fingers_extended = index_up and middle_up and ring_up and pinky_up
+    fingers_up_count = sum([index_up, middle_up, ring_up, pinky_up])
+    hand_extended = fingers_up_count >= 3
 
-    if all_fingers_extended:
-        palm_x = lms[MIDDLE_POINT][1]  # Use middle of palm for tracking
-        palm_y = lms[MIDDLE_POINT][2]
+    if hand_extended:
+        palm_x = lms[MIDDLE_POINT][1]
 
-        # Start tracking swipe
-        if swipe_start_pos is None:
-            swipe_start_pos = (palm_x, palm_y)
+        if swipe_start_angle is None:
+            # Don't start tracking if we're still in cooldown
+            if current_time - last_swipe_time < SWIPE_COOLDOWN:
+                return None
+
+            swipe_start_angle = palm_x
             swipe_start_time = current_time
             swipe_in_progress = True
             return None
 
-        # Check if swipe is still in progress
         if swipe_in_progress:
             time_elapsed = current_time - swipe_start_time
-            dx = palm_x - swipe_start_pos[0]
-            dy = abs(palm_y - swipe_start_pos[1])
+            dx = palm_x - swipe_start_angle
 
-            # Check if gesture completed
             if time_elapsed > SWIPE_MAX_TIME:
-                # Timeout - reset
-                swipe_start_pos = (palm_x, palm_y)
-                swipe_start_time = current_time
+                swipe_start_angle = None
+                swipe_start_time = None
+                swipe_in_progress = False
                 return None
 
-            # Check for valid swipe
-            if abs(dx) >= SWIPE_MIN_DISTANCE and dy <= SWIPE_MAX_VERTICAL:
-                # Check cooldown
-                if current_time - last_swipe_time >= SWIPE_COOLDOWN:
-                    last_swipe_time = current_time
-                    swipe_start_pos = None
-                    swipe_start_time = None
-                    swipe_in_progress = False
+            if abs(dx) >= SWIPE_ANGLE_THRESHOLD:
+                last_swipe_time = current_time
+                swipe_start_angle = None
+                swipe_start_time = None
+                swipe_in_progress = False
 
-                    if dx > 0:
-                        return "SWIPED RIGHT"
-                    else:
-                        return "SWIPED LEFT"
+                if dx < 0:
+                    return "SWIPED RIGHT"
+                else:
+                    return "SWIPED LEFT"
     else:
-        # Reset swipe tracking when hand configuration changes
-        swipe_start_pos = None
+        swipe_start_angle = None
         swipe_start_time = None
         swipe_in_progress = False
 
@@ -190,6 +202,7 @@ def send_command_throttled(command):
         return True
     return False
 
+
 prev_time = time.time()
 
 while True:
@@ -206,13 +219,22 @@ while True:
     detected_action = None
     handedness = detector.get_handedness(0)
 
-    if handedness == "Right" and len(lms) != 0:
-        # Check for swipe gesture first (highest priority)
-        swipe_action = detect_swipe_gesture(lms)
+    # Show detected hand
+    if handedness:
+        cv2.putText(img, f"Hand: {handedness}", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
+    # Swipe gesture detection - LEFT HAND ONLY
+    # Swipe gesture detection - LEFT HAND ONLY
+    # Swipe gesture detection - LEFT HAND ONLY
+    if handedness == "Left" and len(lms) != 0:
+        swipe_action = detect_swipe_gesture(lms, img)
         if swipe_action:
             detected_action = swipe_action
 
-        elif CURRENT_MODE == VIEW_MODE:
+    # Right hand gestures for other controls
+    if handedness == "Right" and len(lms) != 0:
+        if CURRENT_MODE == VIEW_MODE:
             # Zoom gestures
             zoom_out_action = utils.distance_between_points(THUMB, INDEX_FINGER, RED, img, lms)
             zoom_in_action = utils.distance_between_points(THUMB, MIDDLE_FINGER, BLUE, img, lms)
@@ -252,7 +274,7 @@ while True:
             # Zoom detection (only when not in camera mode)
             if not camera_active:
                 if utils.action_between_threshold(zoom_out_action, 0, 40) and \
-                   utils.action_between_threshold(zoom_in_action, 50, 150):
+                        utils.action_between_threshold(zoom_in_action, 50, 150):
                     zoom_out_frames += 1
                     if zoom_out_frames >= STABLE_FRAMES:
                         detected_action = "ZOOMED OUT"
