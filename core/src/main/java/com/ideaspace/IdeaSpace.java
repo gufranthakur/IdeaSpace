@@ -49,29 +49,26 @@ public class IdeaSpace extends ApplicationAdapter {
         multiplexer.addProcessor(homeScreen.getStage());
         Gdx.input.setInputProcessor(multiplexer);
 
-        space.addPanel();
-
-        space.selectedSlide.loadObject(
+        space.loadObject(
             "Background",
             "models/backgrounds/dark_background.glb"
         );
-        space.selectedSlide.loadObject(
+        space.loadObject(
             "ESP32",
             "models/microcontrollers/esp32.glb"
         );
-        space.selectedSlide.loadObject(
+        space.loadObject(
             "3D Printer",
             "models/misc/3d_printer.glb"
         );
 
-        space.selectedSlide
-            .getModelInstanceOf("Background")
+        space.getObjectInstance("Background")
             .transform.idt()
             .scale(10f, 10f, 10f);
 
 
-        space.selectedSlide.addObject("Background");
-        space.selectedSlide.addObject("ESP32");
+        space.addObject("Background");
+        space.addObject("ESP32");
 
         serverThread = new Thread(server);
         serverThread.start();

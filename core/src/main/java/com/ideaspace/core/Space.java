@@ -5,19 +5,22 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.ideaspace.IdeaSpace;
 
-import com.ideaspace.models.Slide;
+import net.mgsx.gltf.loaders.glb.GLBLoader;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx;
+import net.mgsx.gltf.scene3d.scene.Scene;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
 import net.mgsx.gltf.scene3d.scene.SceneSkybox;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 
 public class Space {
 
@@ -34,13 +37,19 @@ public class Space {
     private DirectionalLightEx light;
     private FirstPersonCameraController cameraController;
 
-    public ArrayList<Slide> slides;
-    public Slide selectedSlide;
+    private HashMap<String, Scene> objects;
+    private HashMap<String, SceneAsset> objectAssets;
+    public Scene selectedObject;
+
+    private Iterator<String> modelIterator;
+    private String currentModel;
 
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
         sceneManager = new SceneManager();
-        slides = new ArrayList<>();
+
+        objects = new HashMap<>();
+        objectAssets = new HashMap<>();
 
         setupCamera();
         setupLighting();
@@ -49,8 +58,6 @@ public class Space {
     }
 
     private void setupCamera() {
-       // FreeTypeFontGenerator generator = new FreeTypeFontGenerator();
-
         camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 20f / 1000f;
         camera.far = 80;
@@ -100,6 +107,56 @@ public class Space {
         sceneManager.render();
     }
 
+    public void loadObject(String name, String path) {
+        SceneAsset asset = new GLBLoader().load(Gdx.files.internal(path));
+        Scene scene = new Scene(asset.scene);
+
+        objects.put(name, scene);
+        objectAssets.put(name, asset);
+
+        selectedObject = objects.get(name);
+    }
+
+    public void addObject(String name) {
+        getSceneManager().addScene(objects.get(name));
+    }
+
+    public Scene getObject(String name) {
+        return objects.get(name);
+    }
+
+    public ModelInstance getObjectInstance(String name) {
+        return objects.get(name).modelInstance;
+    }
+
+
+    public void playAnimation(String name, String animationName) {
+        Scene scene = objects.get(name);
+        scene.animationController.animate(animationName, -1);
+
+    }
+
+
+    public void swapModel(String removedModel, String newModel) {
+        getSceneManager().removeScene(getObjects().get(removedModel));
+        getSceneManager().addScene(getObjects().get(newModel));
+    }
+
+    public void nextModel() {
+        if (modelIterator == null || !modelIterator.hasNext()) {
+            modelIterator = getObjects().keySet().iterator();
+        }
+
+        if (currentModel != null) {
+            getSceneManager().removeScene(getObjects().get(currentModel));
+        }
+
+        if (modelIterator.hasNext()) {
+            currentModel = modelIterator.next();
+            getSceneManager().addScene(getObjects().get(currentModel));
+        }
+    }
+
     public void dispose() {
         environmentCubeMap.dispose();
         diffuseCubeMap.dispose();
@@ -107,29 +164,23 @@ public class Space {
         brdfLUT.dispose();
         skybox.dispose();
 
-        for (Slide slide : slides) {
-            for (SceneAsset sceneAsset : slide.getObjectAssets().values()) {
-                sceneAsset.dispose();
-            }
-        }
-    }
-
-
-    public void addPanel() {
-        Slide slide = new Slide(this);
-        slides.add(slide);
-
-        selectedSlide = slide;
-    }
-
-
-    public SceneManager getSceneManager() {
-        return sceneManager;
     }
 
     public FirstPersonCameraController getCameraController() {
         return cameraController;
     }
 
+    public HashMap<String, Scene> getObjects() {
+        return objects;
+    }
 
+    public SceneManager getSceneManager() {
+        return sceneManager;
+    }
 }
+
+
+
+
+
+

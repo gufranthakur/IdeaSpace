@@ -1,21 +1,25 @@
 package com.ideaspace.models;
 
+import com.badlogic.gdx.Gdx;
+import com.ideaspace.IdeaSpace;
+import net.mgsx.gltf.loaders.glb.GLBLoader;
+import net.mgsx.gltf.scene3d.scene.Scene;
+import net.mgsx.gltf.scene3d.scene.SceneAsset;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 
 public class Lecture {
 
     private String lectureName;
-    public ArrayList<Slide> slides;
+
 
     public Lecture(String lectureName) {
         this.lectureName = lectureName;
-
-        slides = new ArrayList<>(10);
     }
 
-    public void loadSlides() {
 
-    }
 
     public String getLectureName() {
         return lectureName;
