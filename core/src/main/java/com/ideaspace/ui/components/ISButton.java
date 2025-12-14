@@ -8,13 +8,60 @@ import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ISButton extends ImageButton {
 
-    private Texture texture;
+    private List<Texture> textures = new ArrayList<>();
 
     public ISButton(String spritePath) {
         super(createStyle(spritePath));
+        setupClickListener();
+    }
 
+    public ISButton(String normalPath, String hoverPath) {
+        super(createStyleWithHover(normalPath, hoverPath));
+        setupClickListener();
+    }
+
+    public ISButton(String normalPath, String hoverPath, String selectedPath) {
+        super(createStyleWithHoverAndSelected(normalPath, hoverPath, selectedPath));
+        setupClickListener();
+    }
+
+    private static ImageButtonStyle createStyle(String spritePath) {
+        Texture texture = new Texture(Gdx.files.internal(spritePath));
+        ImageButtonStyle style = new ImageButtonStyle();
+        style.imageUp = new TextureRegionDrawable(new TextureRegion(texture));
+        return style;
+    }
+
+    private static ImageButtonStyle createStyleWithHover(String normalPath, String hoverPath) {
+        Texture normalTexture = new Texture(Gdx.files.internal(normalPath));
+        Texture hoverTexture = new Texture(Gdx.files.internal(hoverPath));
+
+        ImageButtonStyle style = new ImageButtonStyle();
+        style.imageUp = new TextureRegionDrawable(new TextureRegion(normalTexture));
+        style.imageOver = new TextureRegionDrawable(new TextureRegion(hoverTexture));
+
+        return style;
+    }
+
+    private static ImageButtonStyle createStyleWithHoverAndSelected(String normalPath, String hoverPath, String selectedPath) {
+        Texture normalTexture = new Texture(Gdx.files.internal(normalPath));
+        Texture hoverTexture = new Texture(Gdx.files.internal(hoverPath));
+        Texture selectedTexture = new Texture(Gdx.files.internal(selectedPath));
+
+        ImageButtonStyle style = new ImageButtonStyle();
+        style.imageUp = new TextureRegionDrawable(new TextureRegion(normalTexture));
+        style.imageOver = new TextureRegionDrawable(new TextureRegion(hoverTexture));
+        style.imageChecked = new TextureRegionDrawable(new TextureRegion(selectedTexture));
+
+        return style;
+    }
+
+    private void setupClickListener() {
         this.addListener(new ClickListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
@@ -35,21 +82,16 @@ public class ISButton extends ImageButton {
         });
     }
 
-    private static ImageButtonStyle createStyle(String spritePath) {
-        Texture texture = new Texture(Gdx.files.internal(spritePath));
-        ImageButtonStyle style = new ImageButtonStyle();
-        style.imageUp = new TextureRegionDrawable(new TextureRegion(texture));
-        return style;
-    }
-
     // Override this method in subclasses or use a listener
     protected void onClicked() {
         System.out.println("Button clicked!");
     }
 
     public void dispose() {
-        if (texture != null) {
-            texture.dispose();
+        for (Texture texture : textures) {
+            if (texture != null) {
+                texture.dispose();
+            }
         }
     }
 }

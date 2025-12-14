@@ -12,7 +12,7 @@ public class HistoryLectureTable extends ISTable {
     private LectureScreen lectureScreen;
     private Lecture lecture;
     private VisLabel lectureNameLabel, lectureInfoLabel;
-    private ISButton openButton, editButton, deleteButton;
+    private ISButton openButton, deleteButton;
 
     public HistoryLectureTable(LectureScreen lectureScreen, Lecture lecture, boolean DEBUG_MODE) {
         super("ui/png/HistoryTable.png");
@@ -29,17 +29,17 @@ public class HistoryLectureTable extends ISTable {
         lectureInfoLabel = new VisLabel("");
 
         openButton = new ISButton("ui/png/openButton.png");
-        editButton = new ISButton("ui/png/editButton.png");
         deleteButton = new ISButton("ui/png/deleteButton.png");
 
         VisTable rightTable = new VisTable();
+        rightTable.pad(10);
         VisTable leftTable = new VisTable();
+        leftTable.pad(10);
 
         rightTable.add(lectureNameLabel);
         rightTable.add(lectureInfoLabel);
 
         leftTable.add(openButton).padRight(5).width(90).height(42); //scaled down to 0.60x
-        leftTable.add(editButton).padRight(5).width(90).height(42);
         leftTable.add(deleteButton).padRight(5).width(90).height(42);
 
         this.add(rightTable).left().expandX();
@@ -60,7 +60,6 @@ public class HistoryLectureTable extends ISTable {
     @Override
     public void dispose() {
         openButton.dispose();
-        editButton.dispose();
         deleteButton.dispose();
 
 

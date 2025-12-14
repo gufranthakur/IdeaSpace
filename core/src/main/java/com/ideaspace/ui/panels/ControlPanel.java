@@ -35,7 +35,7 @@ public class ControlPanel extends Stage{
     }
 
     private void createUI() {
-        root.setWidth(290f);
+        root.setWidth(240);
         root.setHeight(870);
         root.setPosition(0, Gdx.graphics.getHeight() - root.getHeight()); // Position at screen top
         this.addActor(root);

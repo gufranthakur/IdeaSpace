@@ -7,7 +7,9 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.*;
+import com.github.tommyettinger.textra.TextraButton;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.ui.components.ISButton;
 import com.ideaspace.ui.components.ISTable;
@@ -57,11 +59,30 @@ public class HomeScreen {
     }
 
     public void createUI() {
-        lectureButton = new ISButton("ui/png/LecturesButton.png");
-        modelsButton = new ISButton("ui/png/3D-Models-Button.png");
-        howToUseButton = new ISButton("ui/png/HowToUseButton.png");
-        settingsButton = new ISButton("ui/png/SettingsButton.png");
-        logOutButton = new ISButton("ui/png/ExitButton.png");
+        lectureButton = new ISButton(
+            "ui/png/LecturesButton.png",
+            "ui/png/LecturesButton_hovered.png",
+            "ui/png/LecturesButton_selected.png"
+        );
+        modelsButton = new ISButton(
+            "ui/png/3DModelsButton.png",
+            "ui/png/3DModelsButton_hovered.png",
+            "ui/png/3DModelsButton_selected.png"
+        );
+        howToUseButton = new ISButton(
+            "ui/png/HowToUseButton.png",
+            "ui/png/HowToUseButton_hovered.png",
+            "ui/png/HowToUseButton_selected.png"
+        );
+        settingsButton = new ISButton(
+            "ui/png/SettingsButton.png",
+            "ui/png/SettingsButton_hovered.png",
+            "ui/png/SettingsButton_selected.png"
+        );
+        logOutButton = new ISButton(
+            "ui/png/ExitButton.png",
+            "ui/png/ExitButton_hovered.png"
+        );
 
         lectureButton.addListener(new ClickListener() {
             @Override
@@ -78,14 +99,16 @@ public class HomeScreen {
         });
 
         navigationTable.padTop(20);
-        navigationTable.add(new ISTable("ui/png/IdeaSpaceLogo.png")).width(180).height(180).row();
-        navigationTable.add(lectureButton).fill().width(215).height(60).pad(5).row();
-        navigationTable.add(modelsButton).fill().height(60).pad(5).row();
-        navigationTable.add(howToUseButton).fill().height(60).pad(5).row();
-        navigationTable.add(settingsButton).fill().height(60).pad(5).row();
-        navigationTable.add(logOutButton).fill().height(60).pad(5).row();
+        navigationTable.align(Align.top);
 
-        root.add(navigationTable).width(300).pad(10);
+        navigationTable.add(new ISTable("ui/png/Logo.png")).width(180).height(180).row();
+        navigationTable.add(lectureButton).width(180).height(60).pad(5).row();
+        navigationTable.add(modelsButton).width(180).height(60).pad(5).row();
+        navigationTable.add(howToUseButton).width(180).height(60).pad(5).row();
+        navigationTable.add(settingsButton).width(180).height(60).pad(5).row();
+        navigationTable.add(logOutButton).width(180).height(60).pad(5).row();
+
+        root.add(navigationTable).width(220).pad(10);
         root.add(lectureScreen).expand().fill();
     }
 

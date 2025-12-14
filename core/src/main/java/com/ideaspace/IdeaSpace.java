@@ -28,7 +28,7 @@ public class IdeaSpace extends ApplicationAdapter {
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
-    private boolean lectureFlag = true;
+    private boolean lectureFlag = false;
 
 
     @Override
@@ -55,7 +55,7 @@ public class IdeaSpace extends ApplicationAdapter {
         );
         space.loadObject(
             "ESP32",
-            "models/microcontrollers/esp32.glb"
+            "models/microcontrollers/arduinouno.glb"
         );
         space.loadObject(
             "3D Printer",
@@ -64,7 +64,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
         space.getObjectInstance("Background")
             .transform.idt()
-            .scale(10f, 10f, 10f);
+            .scale(30f, 30f, 30f);
 
 
         space.addObject("Background");
