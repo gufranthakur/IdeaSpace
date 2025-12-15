@@ -1,7 +1,6 @@
 import cv2
 import time
 import hand_tracking_module as htm
-import hand_utils as utils
 import server as server
 from collections import deque
 import numpy as np
@@ -10,39 +9,31 @@ from gesture_config import *
 from maths import *
 from swipe_utils import *
 from remove_gesture import RemoveGesture
+from drag_gesture import DragGesture
+from split_gesture import SplitGesture
 
 CURRENT_MODE = VIEW_MODE
 
-# Initialize remove gesture detector
+# Initialize gesture detectors
 remove_gesture = RemoveGesture()
+drag_gesture = DragGesture()
+split_gesture = SplitGesture()
 
 # Runtime variables
 position_history = deque(maxlen=SMOOTHING_WINDOW)
 last_command_time = 0
 last_sent_command = None
-snap_ready = False
-snap_sent = False
 
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 cap.set(cv2.CAP_PROP_FPS, TARGET_FPS)
-detector = htm.handDetector(maxHands=1)
+detector = htm.handDetector(maxHands=2, detectionConfidence=0.7, trackConfidence=0.5)
 
 # State tracking
-zoom_in_frames = 0
-zoom_out_frames = 0
 current_active_action = None
 camera_active = False
 prev_index_point = None
 gesture_hold_frames = 0
-
-# Resolution-independent thresholds (as ratios of frame width)
-ZOOM_OUT_MIN = 0.0
-ZOOM_OUT_MAX = 0.07  # ~40 pixels on 640 width
-ZOOM_IN_MIN_1 = 0.08  # ~50 pixels
-ZOOM_IN_MAX_1 = 0.23  # ~150 pixels
-ZOOM_IN_MIN_2 = 0.14  # ~90 pixels
-ZOOM_IN_MAX_2 = 0.19  # ~120 pixels
 
 
 def send_command_throttled(command):
@@ -69,93 +60,96 @@ while True:
 
     img = cv2.flip(img, 1)
     img = detector.find_hands(img, True)
-    lms = detector.find_position(img, draw=False)
+
+    # Get positions for both hands
+    left_lms = []
+    right_lms = []
+
+    if detector.results and detector.results.multi_hand_landmarks:
+        for hand_idx in range(len(detector.results.multi_hand_landmarks)):
+            handedness = detector.get_handedness(hand_idx)
+            lms = detector.find_position(img, hand_idx, draw=False)
+
+            if handedness == "Left":
+                left_lms = lms
+            elif handedness == "Right":
+                right_lms = lms
 
     detected_action = None
-    handedness = detector.get_handedness(0)
 
-    # Show detected hand
-    if handedness:
-        cv2.putText(img, f"Hand: {handedness}", (10, 30),
+    # Show detected hands
+    hands_present = []
+    if len(left_lms) > 0:
+        hands_present.append("Left")
+    if len(right_lms) > 0:
+        hands_present.append("Right")
+
+    if hands_present:
+        cv2.putText(img, f"Hands: {', '.join(hands_present)}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
     # LEFT HAND gestures - Swipe and Remove
-    if handedness == "Left" and len(lms) != 0:
-        # Check remove gesture first
-        remove_action = remove_gesture.detect(lms, img)
+    if len(left_lms) > 0 and not detected_action:
+        remove_action = remove_gesture.detect(left_lms, img)
         if remove_action:
             detected_action = remove_action
-        else:
-            # Check swipe if remove not detected
-            swipe_action = detect_swipe_gesture(lms, img)
+        elif not remove_gesture.is_active():
+            swipe_action = detect_swipe_gesture(left_lms, img)
             if swipe_action:
                 detected_action = swipe_action
 
-    # Right hand gestures for other controls
-    if handedness == "Right" and len(lms) != 0:
+    # RIGHT HAND gestures - Split (snap), Drag, Camera Look
+    if len(right_lms) > 0 and not detected_action:
 
-        if CURRENT_MODE == VIEW_MODE:
-            # Zoom gestures - now using normalized distances (0.0-1.0)
-            zoom_out_action = utils.distance_between_points(THUMB, INDEX_FINGER, RED, img, lms)
-            zoom_in_action = utils.distance_between_points(THUMB, MIDDLE_FINGER, BLUE, img, lms)
+        # PRIORITY 1: Check split gesture (snap) first
+        split_action = split_gesture.detect(right_lms, img)
+        if split_action:
+            detected_action = split_action
 
-            # Gesture detection - Only index finger up, rest closed
-            index_up = lms[INDEX_FINGER][2] < lms[INDEX_POINT][2]
-            middle_curled = lms[MIDDLE_FINGER][2] > lms[MIDDLE_POINT][2]
-            ring_curled = lms[RING_FINGER][2] > lms[RING_POINT][2]
-            pinky_curled = lms[PINKY_FINGER][2] > lms[PINKY_POINT][2]
+        # PRIORITY 2: Other right hand gestures (only if split not active)
+        if not detected_action and not split_gesture.is_active():
+            if CURRENT_MODE == VIEW_MODE:
+                # Check drag gesture
+                drag_action = drag_gesture.detect(right_lms, img)
+                if drag_action:
+                    detected_action = drag_action
+                elif not drag_gesture.is_active():
+                    # Camera look gesture
+                    index_up = right_lms[INDEX_FINGER][2] < right_lms[INDEX_POINT][2]
+                    middle_curled = right_lms[MIDDLE_FINGER][2] > right_lms[MIDDLE_POINT][2]
+                    ring_curled = right_lms[RING_FINGER][2] > right_lms[RING_POINT][2]
+                    pinky_curled = right_lms[PINKY_FINGER][2] > right_lms[PINKY_POINT][2]
 
-            # Camera look gesture: only index up, all others closed
-            camera_look_gesture = index_up and middle_curled and ring_curled and pinky_curled
+                    camera_look_gesture = index_up and middle_curled and ring_curled and pinky_curled
 
-            if camera_look_gesture:
-                gesture_hold_frames += 1
+                    if camera_look_gesture:
+                        gesture_hold_frames += 1
 
-                if gesture_hold_frames >= STABLE_FRAMES:
-                    camera_active = True
-                    index_x, index_y = lms[INDEX_FINGER][1], lms[INDEX_FINGER][2]
+                        if gesture_hold_frames >= STABLE_FRAMES:
+                            camera_active = True
+                            index_x, index_y = right_lms[INDEX_FINGER][1], right_lms[INDEX_FINGER][2]
+                            smoothed_pos = smooth_position(position_history, np, (index_x, index_y))
 
-                    smoothed_pos = smooth_position(position_history, np, (index_x, index_y))
+                            if prev_index_point is not None:
+                                dx, dy = calculate_velocity(smoothed_pos, prev_index_point)
+                                direction = get_direction_from_velocity(np, DEAD_ZONE, dx, dy)
+                                if direction:
+                                    detected_action = f"CAMERA LOOK {direction}"
 
-                    if prev_index_point is not None:
-                        dx, dy = calculate_velocity(smoothed_pos, prev_index_point)
-                        direction = get_direction_from_velocity(np, DEAD_ZONE, dx, dy)
+                            prev_index_point = smoothed_pos
+                    else:
+                        camera_active = False
+                        prev_index_point = None
+                        gesture_hold_frames = 0
+                        position_history.clear()
 
-                        if direction:
-                            detected_action = f"CAMERA LOOK {direction}"
-
-                    prev_index_point = smoothed_pos
-            else:
-                camera_active = False
-                prev_index_point = None
-                gesture_hold_frames = 0
-                position_history.clear()
-
-            # Zoom detection using ratio-based thresholds
-            if not camera_active:
-                if utils.action_between_threshold(zoom_out_action, ZOOM_OUT_MIN, ZOOM_OUT_MAX) and \
-                        utils.action_between_threshold(zoom_in_action, ZOOM_IN_MIN_1, ZOOM_IN_MAX_1):
-                    zoom_out_frames += 1
-                    if zoom_out_frames >= STABLE_FRAMES:
-                        detected_action = "ZOOMED OUT"
-                else:
-                    zoom_out_frames = 0
-
-                if utils.action_between_threshold(zoom_in_action, ZOOM_IN_MIN_2, ZOOM_IN_MAX_2):
-                    zoom_in_frames += 1
-                    if zoom_in_frames >= STABLE_FRAMES:
-                        detected_action = "ZOOMED IN"
-                else:
-                    zoom_in_frames = 0
-
-        elif CURRENT_MODE == CANVAS_MODE:
-            print("CANVAS")
+            elif CURRENT_MODE == CANVAS_MODE:
+                print("CANVAS")
 
     # Send commands with throttling
     if detected_action:
         current_active_action = detected_action
         send_command_throttled(current_active_action)
-
         cv2.putText(img, current_active_action, (50, 50),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     else:
