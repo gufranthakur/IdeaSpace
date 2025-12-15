@@ -56,7 +56,10 @@ public class LectureScreen extends VisTable {
     }
 
     private void createLectureTable() {
-        createSlideButton = new ISButton("ui/png/CreateLectureButton.png");
+        createSlideButton = new ISButton(
+            "ui/png/CreateLectureButton.png",
+            "ui/png/CreateLectureButton_hovered.png"
+        );
 
         lectureTable.left();
         lectureTable.padLeft(20).padTop(5);

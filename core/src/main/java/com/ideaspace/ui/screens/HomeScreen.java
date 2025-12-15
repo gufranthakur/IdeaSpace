@@ -87,14 +87,40 @@ public class HomeScreen {
         lectureButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                switchScreen(lectureScreen);
+                switchScreen(lectureScreen, lectureButton);
             }
         });
 
         modelsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                switchScreen(modelsScreen);
+                switchScreen(modelsScreen, modelsButton);
+            }
+        });
+
+        howToUseButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Add your how-to-use screen here when ready
+                deselectAllButtons();
+                howToUseButton.setChecked(true);
+            }
+        });
+
+        settingsButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Add your settings screen here when ready
+                deselectAllButtons();
+                settingsButton.setChecked(true);
+            }
+        });
+
+        logOutButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Add your log out logic here
+                // Note: logOutButton doesn't have a selected state, so no need to select it
             }
         });
 
@@ -110,10 +136,23 @@ public class HomeScreen {
 
         root.add(navigationTable).width(220).pad(10);
         root.add(lectureScreen).expand().fill();
+
+        // Set initial selected button
+        lectureButton.setChecked(true);
     }
 
-    private void switchScreen(Actor newScreen) {
+    private void switchScreen(Actor newScreen, ISButton selectedButton) {
         root.getCells().get(1).setActor(newScreen);
+        deselectAllButtons();
+        selectedButton.setChecked(true);
+    }
+
+    private void deselectAllButtons() {
+        lectureButton.setChecked(false);
+        modelsButton.setChecked(false);
+        howToUseButton.setChecked(false);
+        settingsButton.setChecked(false);
+        // logOutButton doesn't have a selected state, so we don't need to deselect it
     }
 
     public void resize(int width, int height) {

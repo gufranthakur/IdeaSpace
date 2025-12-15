@@ -28,7 +28,7 @@ public class IdeaSpace extends ApplicationAdapter {
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
-    private boolean lectureFlag = false;
+    private boolean lectureFlag = true;
 
 
     @Override
@@ -47,6 +47,7 @@ public class IdeaSpace extends ApplicationAdapter {
         multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(space.getCameraController());
         multiplexer.addProcessor(homeScreen.getStage());
+        multiplexer.addProcessor(controlPanel.getStage());
         Gdx.input.setInputProcessor(multiplexer);
 
         space.loadObject(
