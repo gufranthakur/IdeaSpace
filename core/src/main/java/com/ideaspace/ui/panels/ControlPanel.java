@@ -66,7 +66,10 @@ public class ControlPanel extends Stage{
 
         root.add(table).center().fillX().expandX().row();
 
-        root.add(new ModelCard("Arduino Uno Model")).width(310).height(110);
+        root.add(new ModelCard("Arduino Uno Model")).width(300).height(100).padBottom(10).row();
+        root.add(new ModelCard("ESP-32")).width(300).height(100).padBottom(10).row();
+        root.add(new ModelCard("RaspberryPi")).width(300).height(100).padBottom(10).row();
+        root.add(new ModelCard("PLC")).width(300).height(100).padBottom(10).row();
 
         this.addActor(root);
     }

@@ -22,7 +22,7 @@ public class ModelCard extends ISTable{
         super("ui/png/Model_card.png");
         this.modelName = modelName;
         this.align(Align.left);
-        this.pad(10);
+        this.pad(20);
 
         createUI();
         setupListeners();
@@ -43,12 +43,12 @@ public class ModelCard extends ISTable{
         Table table = new Table();
 
         table.align(Align.right);
-        table.add(addButton).width(110f).height(80f).right();
+        table.add(addButton).width(90f).height(70f).right();
 
         //group.addActor(removeButton);
 
         this.add(table).fillX().expandX();
-        this.setDebug(true);
+        this.setDebug(false);
     }
 
     private void setupListeners() {
