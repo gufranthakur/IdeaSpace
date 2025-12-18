@@ -15,11 +15,6 @@ public class ModelHandler {
 
     private IdeaSpace ideaSpace;
 
-    private HashMap<String, SceneAsset> objectAssets;
-    public Scene selectedObject;
-
-    private HashMap<String, Scene> objects;
-
     public HashMap<String, ModelMesh> loadedModels;
     public HashMap<String, ModelMesh> modelLibrary;
 
@@ -29,13 +24,13 @@ public class ModelHandler {
         loadedModels = new HashMap<>();
         modelLibrary = new HashMap<>();
 
-        objects = new HashMap<>();
-        objectAssets = new HashMap<>();
     }
 
     public void loadInitialModels() {
         createModel("Background", "models/backgrounds/dark_background.glb");
         loadModel(modelLibrary.get("Background"));
+
+        getModelInstance("Background").transform.idt().scale(20f, 20f, 20f);
     }
 
     public void createModels() {
@@ -44,7 +39,7 @@ public class ModelHandler {
         createModel("Raspberry Pi", "models/microcontrollers/raspberry_pi.glb");
     }
 
-    public void createModel(String name, String path) {
+    private void createModel(String name, String path) {
         ModelMesh modelMesh = new ModelMesh(name, path);
         modelLibrary.put(name, modelMesh);
 
@@ -59,29 +54,27 @@ public class ModelHandler {
         Scene scene = new Scene(sceneAsset.scene);
 
         modelMesh.setScene(scene);
+        modelMesh.setModelSceneAsset(sceneAsset);
+
+        loadedModels.put(modelMesh.modelName, modelMesh);
         ideaSpace.space.getSceneManager().addScene(modelMesh.getScene());
     }
 
 
     public ModelInstance getModelInstance(String name) {
-        return objects.get(name).modelInstance;
+        return loadedModels.get(name).getScene().modelInstance;
     }
 
-    public void loadModelInSpace(String name, String path) {
-        SceneAsset asset = new GLBLoader().load(Gdx.files.internal(path));
-        Scene scene = new Scene(asset.scene);
-
-        objects.put(name, scene);
-        objectAssets.put(name, asset);
-
-        selectedObject = objects.get(name);
+    public void dispose() {
+        for (ModelMesh modelMesh : loadedModels.values()) {
+            modelMesh.getModelSceneAsset().dispose();
+        }
     }
 
-
-    public void playAnimation(String name, String animationName) {
-        Scene scene = objects.get(name);
-        scene.animationController.animate(animationName, -1);
-    }
+//    public void playAnimation(String name, String animationName) {
+//        Scene scene = objects.get(name);
+//        scene.animationController.animate(animationName, -1);
+//    }
 
 
 }

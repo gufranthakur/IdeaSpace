@@ -73,7 +73,7 @@ public class ControlPanel extends Stage{
         libraryModelsScrollPane.setActor(libraryModelsContentTable);
 
         root.add(buttonTable).center().fillX().expandX().row();
-        root.add(loadedModelsScrollPane);
+        root.add(libraryModelsScrollPane);
 
         loadedModelButton.addListener(new ClickListener() {
             @Override
@@ -97,7 +97,7 @@ public class ControlPanel extends Stage{
     }
 
     public void addModelCardToLibrary(ModelCard modelCard) {
-        loadedModelsContentTable.add(modelCard).width(280).height(100).padBottom(10).row();
+        libraryModelsContentTable.add(modelCard).width(280).height(100).padBottom(10).row();
     }
 
     public void render(float deltaTime) {
