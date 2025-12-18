@@ -1,12 +1,9 @@
 package com.ideaspace.ui.components;
 
-import com.badlogic.gdx.maps.tiled.renderers.OrthoCachedTiledMapRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
-import com.ideaspace.ui.screens.ModelsScreen;
 import com.kotcrab.vis.ui.widget.VisLabel;
 
 public class ModelCard extends ISTable{
