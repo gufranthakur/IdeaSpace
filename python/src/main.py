@@ -11,6 +11,7 @@ from swipe_utils import *
 from remove_gesture import RemoveGesture
 from drag_gesture import DragGesture
 from split_gesture import SplitGesture
+from zoom_gesture import ZoomGesture
 
 CURRENT_MODE = VIEW_MODE
 
@@ -18,6 +19,7 @@ CURRENT_MODE = VIEW_MODE
 remove_gesture = RemoveGesture()
 drag_gesture = DragGesture()
 split_gesture = SplitGesture()
+zoom_gesture = ZoomGesture()
 
 # Runtime variables
 position_history = deque(maxlen=SMOOTHING_WINDOW)
@@ -88,8 +90,14 @@ while True:
         cv2.putText(img, f"Hands: {', '.join(hands_present)}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
-    # LEFT HAND gestures - Swipe and Remove
-    if len(left_lms) > 0 and not detected_action:
+    # BOTH HANDS gestures - Zoom (check first, highest priority)
+    if len(left_lms) > 0 and len(right_lms) > 0 and not detected_action:
+        zoom_action = zoom_gesture.detect(left_lms, right_lms, img)
+        if zoom_action:
+            detected_action = zoom_action
+
+    # LEFT HAND gestures - Swipe and Remove (only if zoom not active)
+    if len(left_lms) > 0 and not detected_action and not zoom_gesture.is_active():
         remove_action = remove_gesture.detect(left_lms, img)
         if remove_action:
             detected_action = remove_action
@@ -98,8 +106,8 @@ while True:
             if swipe_action:
                 detected_action = swipe_action
 
-    # RIGHT HAND gestures - Split (snap), Drag, Camera Look
-    if len(right_lms) > 0 and not detected_action:
+    # RIGHT HAND gestures - Split (snap), Drag, Camera Look (only if zoom not active)
+    if len(right_lms) > 0 and not detected_action and not zoom_gesture.is_active():
 
         # PRIORITY 1: Check split gesture (snap) first
         split_action = split_gesture.detect(right_lms, img)
