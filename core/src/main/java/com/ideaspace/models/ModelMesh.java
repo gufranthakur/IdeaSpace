@@ -8,6 +8,7 @@ public class ModelMesh {
     public String modelPath, modelName;
     private Scene modelScene;
     private SceneAsset modelSceneAsset;
+    private boolean isLoaded = false;
 
     public ModelMesh(String modelName, String modelPath) {
         this.modelName = modelName;
@@ -31,6 +32,14 @@ public class ModelMesh {
 
     public SceneAsset getModelSceneAsset() {
         return modelSceneAsset;
+    }
+
+    public void setIsLoaded(boolean isLoaded) {
+        this.isLoaded = isLoaded;
+    }
+
+    public boolean isLoaded() {
+        return isLoaded;
     }
 
 }

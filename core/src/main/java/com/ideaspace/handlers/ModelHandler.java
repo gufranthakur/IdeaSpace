@@ -45,11 +45,17 @@ public class ModelHandler {
 
         if (name.equals("Background")) return;
 
-        ModelCard modelCard = new ModelCard(name);
+        ModelCard modelCard = new ModelCard(this, modelMesh, false);
         ideaSpace.controlPanel.addModelCardToLibrary(modelCard);
     }
 
     public void loadModel(ModelMesh modelMesh) {
+
+        if (loadedModels.containsKey(modelMesh.modelName)) {
+            System.out.println("Model already exists!");
+            return;
+        }
+
         SceneAsset sceneAsset = new GLBLoader().load(Gdx.files.internal(modelMesh.modelPath));
         Scene scene = new Scene(sceneAsset.scene);
 
@@ -58,6 +64,51 @@ public class ModelHandler {
 
         loadedModels.put(modelMesh.modelName, modelMesh);
         ideaSpace.space.getSceneManager().addScene(modelMesh.getScene());
+
+        if (modelMesh.modelName.equals("Background")) return;
+
+        ModelCard modelCard = new ModelCard(this, modelMesh, true);
+        ideaSpace.controlPanel.addModelCardToModelsPane(modelCard);
+    }
+
+    public void unloadModel(String modelName, ModelCard modelCard) {
+        ModelMesh modelMesh = loadedModels.get(modelName);
+
+        if (modelMesh != null) {
+            ideaSpace.space.getSceneManager().removeScene(modelMesh.getScene());
+            modelMesh.getModelSceneAsset().dispose();
+            loadedModels.remove(modelName);
+        }
+
+        if (modelCard == null) return;
+
+        ideaSpace.controlPanel.removeModelCard(modelCard);
+    }
+
+    public void unloadAllModels(String... exceptions) {
+        String[] keys = loadedModels.keySet().toArray(new String[0]);
+
+        for (String modelName : keys) {
+            boolean shouldKeep = false;
+            for (String exception : exceptions) {
+                if (modelName.equals(exception)) {
+                    shouldKeep = true;
+                    break;
+                }
+            }
+
+            if (!shouldKeep) {
+                unloadModel(modelName, null);
+            }
+        }
+    }
+
+    public void reloadModel(String modelName) {
+        ModelMesh modelMesh = modelLibrary.get(modelName);
+        if (modelMesh != null) {
+            if (loadedModels.containsKey(modelName)) unloadModel(modelName, null);
+            loadModel(modelMesh);
+        }
     }
 
 
@@ -76,5 +127,8 @@ public class ModelHandler {
 //        scene.animationController.animate(animationName, -1);
 //    }
 
+    public IdeaSpace getIdeaSpace() {
+        return ideaSpace;
+    }
 
 }

@@ -6,6 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.ui.components.ISButton;
@@ -24,11 +25,19 @@ public class ControlPanel extends Stage{
 
     private ISButton loadedModelButton, libraryModelButton;
 
+    // Track model cards
+    private Array<ModelCard> loadedModelCards;
+    private Array<ModelCard> libraryModelCards;
+
     public ControlPanel(IdeaSpace ideaSpace) {
 
         super(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
             Gdx.graphics.getWidth() + 400, Gdx.graphics.getHeight() + 200));
         this.ideaSpace = ideaSpace;
+
+        // Initialize arrays
+        loadedModelCards = new Array<>();
+        libraryModelCards = new Array<>();
 
         root = new ISTable("ui/png/ControlPanelBG.png");
         root.setFillParent(false);
@@ -47,8 +56,6 @@ public class ControlPanel extends Stage{
             "ui/png/loaded_model_button.png",
             "ui/png/loaded_model_button_hovered.png"
         );
-
-
 
         libraryModelButton = new ISButton(
             "ui/png/library_model_button.png",
@@ -97,7 +104,41 @@ public class ControlPanel extends Stage{
     }
 
     public void addModelCardToLibrary(ModelCard modelCard) {
-        libraryModelsContentTable.add(modelCard).width(280).height(100).padBottom(10).row();
+        if (!libraryModelCards.contains(modelCard, true)) {
+            libraryModelCards.add(modelCard);
+            rebuildLibraryModelsTable();
+        }
+    }
+
+    public void addModelCardToModelsPane(ModelCard modelCard) {
+        if (!loadedModelCards.contains(modelCard, true)) {
+            loadedModelCards.add(modelCard);
+            rebuildLoadedModelsTable();
+        }
+    }
+
+    public void removeModelCard(ModelCard modelCard) {
+        loadedModelCards.removeValue(modelCard, true);
+        rebuildLoadedModelsTable();
+    }
+
+    public void removeModelCardFromLibrary(ModelCard modelCard) {
+        libraryModelCards.removeValue(modelCard, true);
+        rebuildLibraryModelsTable();
+    }
+
+    private void rebuildLoadedModelsTable() {
+        loadedModelsContentTable.clearChildren();
+        for (ModelCard card : loadedModelCards) {
+            loadedModelsContentTable.add(card).width(280).height(100).padBottom(10).row();
+        }
+    }
+
+    private void rebuildLibraryModelsTable() {
+        libraryModelsContentTable.clearChildren();
+        for (ModelCard card : libraryModelCards) {
+            libraryModelsContentTable.add(card).width(280).height(100).padBottom(10).row();
+        }
     }
 
     public void render(float deltaTime) {
@@ -112,6 +153,4 @@ public class ControlPanel extends Stage{
     public Stage getStage() {
         return this;
     }
-
-
 }
