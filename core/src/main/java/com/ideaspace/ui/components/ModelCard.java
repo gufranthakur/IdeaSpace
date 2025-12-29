@@ -1,15 +1,17 @@
 package com.ideaspace.ui.components;
 
-import com.badlogic.gdx.maps.tiled.renderers.OrthoCachedTiledMapRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
-import com.ideaspace.ui.screens.ModelsScreen;
+import com.ideaspace.IdeaSpace;
+import com.ideaspace.handlers.ModelHandler;
+import com.ideaspace.models.ModelMesh;
 import com.kotcrab.vis.ui.widget.VisLabel;
 
 public class ModelCard extends ISTable{
+
+    private ModelMesh modelMesh;
 
     private boolean isLoaded;
     private String modelName;
@@ -18,14 +20,16 @@ public class ModelCard extends ISTable{
     private ISButton addButton, removeButton;
 
 
-    public ModelCard(String modelName) {
+    public ModelCard(ModelHandler modelHandler, ModelMesh modelMesh, boolean isLoaded) {
         super("ui/png/Model_card.png");
-        this.modelName = modelName;
+        this.modelMesh = modelMesh;
+        this.modelName = modelMesh.modelName;
+        this.isLoaded = isLoaded;
         this.align(Align.left);
         this.pad(20);
 
         createUI();
-        setupListeners();
+        setupListeners(modelHandler);
     }
 
     private void createUI() {
@@ -43,21 +47,29 @@ public class ModelCard extends ISTable{
         Table table = new Table();
 
         table.align(Align.right);
-        table.add(addButton).width(90f).height(70f).right();
 
-        //group.addActor(removeButton);
+        if (!isLoaded) table.add(addButton).width(90f).height(70f).right();
+        else table.add(removeButton).width(90f).height(70f).right();
 
         this.add(table).fillX().expandX();
         this.setDebug(false);
     }
 
-    private void setupListeners() {
+    private void setupListeners(ModelHandler modelHandler) {
         addButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                if (!getLoaded()) {
-                    setLoaded(true);
-                }
+
+                getModelCard().modelMesh.setIsLoaded(true);
+                modelHandler.loadModel(modelMesh);
+            }
+        });
+
+        removeButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                modelHandler.unloadModel(modelName, getModelCard());
+                getModelCard().modelMesh.setIsLoaded(false);
             }
         });
     }
@@ -69,5 +81,11 @@ public class ModelCard extends ISTable{
     private boolean getLoaded() {
         return isLoaded;
     }
+
+    public ModelCard getModelCard() {
+        return this;
+    }
+
+
 
 }

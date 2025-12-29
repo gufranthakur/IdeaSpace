@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.ideaspace.IdeaSpace;
 
+import com.ideaspace.models.ModelMesh;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
@@ -37,9 +38,7 @@ public class Space {
     private DirectionalLightEx light;
     private FirstPersonCameraController cameraController;
 
-    private HashMap<String, Scene> objects;
-    private HashMap<String, SceneAsset> objectAssets;
-    public Scene selectedObject;
+
 
     private Iterator<String> modelIterator;
     private String currentModel;
@@ -47,9 +46,6 @@ public class Space {
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
         sceneManager = new SceneManager();
-
-        objects = new HashMap<>();
-        objectAssets = new HashMap<>();
 
         setupCamera();
         setupLighting();
@@ -107,55 +103,14 @@ public class Space {
         sceneManager.render();
     }
 
-    public void loadObject(String name, String path) {
-        SceneAsset asset = new GLBLoader().load(Gdx.files.internal(path));
-        Scene scene = new Scene(asset.scene);
 
-        objects.put(name, scene);
-        objectAssets.put(name, asset);
 
-        selectedObject = objects.get(name);
-    }
-
-    public void addObject(String name) {
-        getSceneManager().addScene(objects.get(name));
-    }
-
-    public Scene getObject(String name) {
-        return objects.get(name);
-    }
-
-    public ModelInstance getObjectInstance(String name) {
-        return objects.get(name).modelInstance;
+    public void addObject(ModelMesh modelMesh) {
+        getSceneManager().addScene(modelMesh.getScene());
     }
 
 
-    public void playAnimation(String name, String animationName) {
-        Scene scene = objects.get(name);
-        scene.animationController.animate(animationName, -1);
 
-    }
-
-
-    public void swapModel(String removedModel, String newModel) {
-        getSceneManager().removeScene(getObjects().get(removedModel));
-        getSceneManager().addScene(getObjects().get(newModel));
-    }
-
-    public void nextModel() {
-        if (modelIterator == null || !modelIterator.hasNext()) {
-            modelIterator = getObjects().keySet().iterator();
-        }
-
-        if (currentModel != null) {
-            getSceneManager().removeScene(getObjects().get(currentModel));
-        }
-
-        if (modelIterator.hasNext()) {
-            currentModel = modelIterator.next();
-            getSceneManager().addScene(getObjects().get(currentModel));
-        }
-    }
 
     public void dispose() {
         environmentCubeMap.dispose();
@@ -170,9 +125,6 @@ public class Space {
         return cameraController;
     }
 
-    public HashMap<String, Scene> getObjects() {
-        return objects;
-    }
 
     public SceneManager getSceneManager() {
         return sceneManager;

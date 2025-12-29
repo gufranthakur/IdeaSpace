@@ -8,6 +8,7 @@ import com.ideaspace.core.Decoder;
 import com.ideaspace.core.Server;
 import com.ideaspace.core.Space;
 import com.ideaspace.handlers.LectureHandler;
+import com.ideaspace.handlers.ModelHandler;
 import com.ideaspace.ui.panels.ControlPanel;
 import com.ideaspace.ui.screens.HomeScreen;
 import com.kotcrab.vis.ui.VisUI;
@@ -24,11 +25,13 @@ public class IdeaSpace extends ApplicationAdapter {
     private Server server;
     public Decoder decoder;
 
+    private ModelHandler modelHandler;
+
     public Thread serverThread;
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
-    private boolean lectureFlag = false;
+    private boolean lectureFlag = true;
 
 
     @Override
@@ -44,32 +47,16 @@ public class IdeaSpace extends ApplicationAdapter {
         server = new Server(this);
         decoder = new Decoder(this);
 
+        modelHandler = new ModelHandler(this);
+
         multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(space.getCameraController());
         multiplexer.addProcessor(homeScreen.getStage());
         multiplexer.addProcessor(controlPanel.getStage());
         Gdx.input.setInputProcessor(multiplexer);
 
-        space.loadObject(
-            "Background",
-            "models/backgrounds/dark_background.glb"
-        );
-        space.loadObject(
-            "ESP32",
-            "models/microcontrollers/arduinouno.glb"
-        );
-        space.loadObject(
-            "3D Printer",
-            "models/misc/3d_printer.glb"
-        );
-
-        space.getObjectInstance("Background")
-            .transform.idt()
-            .scale(30f, 30f, 30f);
-
-
-        space.addObject("Background");
-        space.addObject("ESP32");
+        modelHandler.loadInitialModels();
+        modelHandler.createModels();
 
         serverThread = new Thread(server);
         serverThread.start();
@@ -105,7 +92,7 @@ public class IdeaSpace extends ApplicationAdapter {
     @Override
     public void dispose() {
         homeScreen.dispose();
-
+        modelHandler.dispose();
         space.getSceneManager().dispose();
         space.dispose();
 

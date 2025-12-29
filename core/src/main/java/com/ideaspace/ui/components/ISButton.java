@@ -83,9 +83,7 @@ public class ISButton extends ImageButton {
     }
 
     // Override this method in subclasses or use a listener
-    protected void onClicked() {
-        System.out.println("Button clicked!");
-    }
+    protected void onClicked() {}
 
     public void dispose() {
         for (Texture texture : textures) {
