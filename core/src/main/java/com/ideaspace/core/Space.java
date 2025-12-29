@@ -22,7 +22,7 @@ import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 
 import java.util.HashMap;
 import java.util.Iterator;
-
+import com.badlogic.gdx.graphics.GL20;
 public class Space {
 
     private IdeaSpace ideaSpace;
@@ -38,6 +38,8 @@ public class Space {
     private DirectionalLightEx light;
     private FirstPersonCameraController cameraController;
 
+    public CanvasRenderer canvasRenderer;
+
 
 
     private Iterator<String> modelIterator;
@@ -51,6 +53,8 @@ public class Space {
         setupLighting();
         setupIBL();
         setupSceneManager();
+
+        canvasRenderer = new CanvasRenderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     private void setupCamera() {
@@ -101,6 +105,11 @@ public class Space {
         camera.update();
         sceneManager.update(deltaTime);
         sceneManager.render();
+
+        // Disable depth test for 2D overlay
+        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+        canvasRenderer.render();
+        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
 
 
@@ -119,6 +128,12 @@ public class Space {
         brdfLUT.dispose();
         skybox.dispose();
 
+        canvasRenderer.dispose();
+
+    }
+
+    public void resize(int width, int height) {
+        canvasRenderer.resize(width, height);
     }
 
     public FirstPersonCameraController getCameraController() {

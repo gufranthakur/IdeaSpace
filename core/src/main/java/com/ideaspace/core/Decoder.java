@@ -37,6 +37,7 @@ public class Decoder {
     }
 
     public void decode(String command) {
+        System.out.println("Decoder received: " + command);
         // Reset targets
         targetMoveX = 0f;
         targetMoveY = 0f;
@@ -44,30 +45,37 @@ public class Decoder {
         targetLookX = 0f;
         targetLookY = 0f;
 
+        // Handle CANVAS commands
+        if (command.startsWith("CANVAS ")) {
+            System.out.println("Handling canvas command");
+            handleCanvasCommand(command);
+            return;
+        }
+
         switch (command) {
             // Zoom
             case "ZOOMED IN" -> targetMoveZ = zoomSpeed;
             case "ZOOMED OUT" -> targetMoveZ = -zoomSpeed;
 
             // Camera LOOK (direction)
-            case "CAMERA LOOK RIGHT" -> targetLookX = cameraLookSpeed;
-            case "CAMERA LOOK LEFT" -> targetLookX = -cameraLookSpeed;
-            case "CAMERA LOOK TOP" -> targetLookY = cameraLookSpeed;
-            case "CAMERA LOOK BOTTOM" -> targetLookY = -cameraLookSpeed;
+            case "ROTATE RIGHT" -> targetLookX = cameraLookSpeed;
+            case "ROTATE LEFT" -> targetLookX = -cameraLookSpeed;
+            case "ROTATE TOP" -> targetLookY = cameraLookSpeed;
+            case "ROTATE BOTTOM" -> targetLookY = -cameraLookSpeed;
 
-            case "CAMERA LOOK TOP-RIGHT" -> {
+            case "ROTATE TOP-RIGHT" -> {
                 targetLookX = cameraLookSpeed * 0.707f;
                 targetLookY = cameraLookSpeed * 0.707f;
             }
-            case "CAMERA LOOK TOP-LEFT" -> {
+            case "ROTATE TOP-LEFT" -> {
                 targetLookX = -cameraLookSpeed * 0.707f;
                 targetLookY = cameraLookSpeed * 0.707f;
             }
-            case "CAMERA LOOK BOTTOM-RIGHT" -> {
+            case "ROTATE BOTTOM-RIGHT" -> {
                 targetLookX = cameraLookSpeed * 0.707f;
                 targetLookY = -cameraLookSpeed * 0.707f;
             }
-            case "CAMERA LOOK BOTTOM-LEFT" -> {
+            case "ROTATE BOTTOM-LEFT" -> {
                 targetLookX = -cameraLookSpeed * 0.707f;
                 targetLookY = -cameraLookSpeed * 0.707f;
             }
@@ -89,6 +97,49 @@ public class Decoder {
                     System.out.println("Invalid command received: " + command);
                 }
             }
+        }
+    }
+
+    private void handleCanvasCommand(String command) {
+        String[] parts = command.split(" ");
+
+        if (parts.length < 2) {
+            System.out.println("Invalid canvas command: " + command);
+            return;
+        }
+
+        String action = parts[1]; // DRAW, ERASE, CLEAR, END
+        System.out.println("Canvas action: " + action);
+
+        switch (action) {
+            case "DRAW", "ERASE" -> {
+                if (parts.length >= 7) {
+                    try {
+                        float normX = Float.parseFloat(parts[2]);
+                        float normY = Float.parseFloat(parts[3]);
+                        int r = Integer.parseInt(parts[4]);
+                        int g = Integer.parseInt(parts[5]);
+                        int b = Integer.parseInt(parts[6]);
+                        int thickness = parts.length >= 8 ? Integer.parseInt(parts[7]) : 5;
+
+                        System.out.println("Adding point: " + normX + ", " + normY);
+                        ideaSpace.space.canvasRenderer.addPoint(normX, normY, r, g, b, thickness);
+
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid canvas coordinates: " + command);
+                        e.printStackTrace();
+                    }
+                }
+            }
+            case "END" -> {
+                System.out.println("Ending stroke");
+                ideaSpace.space.canvasRenderer.endStroke();
+            }
+            case "CLEAR" -> {
+                System.out.println("Clearing canvas");
+                ideaSpace.space.canvasRenderer.clearCanvas();
+            }
+            default -> System.out.println("Unknown canvas action: " + action);
         }
     }
 
@@ -144,6 +195,4 @@ public class Decoder {
     private float lerp(float start, float end, float alpha) {
         return start + (end - start) * alpha;
     }
-
-
 }

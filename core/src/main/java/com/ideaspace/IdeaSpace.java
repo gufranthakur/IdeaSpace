@@ -65,28 +65,22 @@ public class IdeaSpace extends ApplicationAdapter {
     @Override
     public void resize(int width, int height) {
         space.getSceneManager().updateViewport(width, height);
+        space.resize(width, height);
         homeScreen.resize(width, height);
         controlPanel.resize(width, height);
     }
-
     @Override
     public void render() {
         float deltaTime = Gdx.graphics.getDeltaTime();
-
-        space.render(deltaTime);
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
         if (!lectureFlag) {
             homeScreen.render(deltaTime);
         } else {
-
-            space.getSceneManager().update(deltaTime);
-            space.getSceneManager().render();
-
+            space.render(deltaTime);
             controlPanel.render(deltaTime);
         }
-
     }
 
     @Override
