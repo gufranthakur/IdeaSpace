@@ -160,7 +160,7 @@ while True:
                                 dx, dy = calculate_velocity(smoothed_pos, prev_index_point)
                                 direction = get_direction_from_velocity(np, DEAD_ZONE, dx, dy)
                                 if direction:
-                                    detected_action = f"CAMERA LOOK {direction}"
+                                    detected_action = f"ROTATE {direction}"
 
                             prev_index_point = smoothed_pos
                     else:

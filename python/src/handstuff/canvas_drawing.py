@@ -3,6 +3,7 @@ import numpy as np
 from collections import deque
 from canvas_config import *
 from canvas_color_picker import UnifiedColorBrushUI
+import server
 
 
 class CanvasDrawing:
@@ -32,7 +33,10 @@ class CanvasDrawing:
         # Shape detection
         self.stroke_points = []
         self.stroke_start_time = None
-        self.shape_autocorrect_enabled = True  # Re-enabled
+        self.shape_autocorrect_enabled = True
+
+        # Server tracking
+        self.is_drawing_active = False
 
     def draw_point(self, x, y):
         """Draw with perfect interpolation - no gaps"""
@@ -44,12 +48,28 @@ class CanvasDrawing:
             if self.is_erasing:
                 cv2.line(self.canvas, self.prev_point, current_point, (0, 0, 0), ERASER_SIZE, cv2.LINE_AA)
             else:
-                # Draw line thicker than brush size to ensure no gaps
                 cv2.line(self.canvas, self.prev_point, current_point, self.current_color,
                          max(self.current_brush_size * 2, 4), cv2.LINE_AA)
             self.has_drawn = True
 
         self.prev_point = current_point
+
+        # Send to server
+        self._send_draw_command(x, y)
+
+    def _send_draw_command(self, x, y):
+        """Send drawing coordinate to server"""
+        mode = "ERASE" if self.is_erasing else "DRAW"
+        # Normalize coordinates to 0-1 range for resolution independence
+        norm_x = x / self.w
+        norm_y = y / self.h
+        r, g, b = self.current_color
+
+        command = f"CANVAS {mode} {norm_x:.4f} {norm_y:.4f} {r} {g} {b} {self.current_brush_size}"
+        server.send_command(command)
+
+        if not self.is_drawing_active:
+            self.is_drawing_active = True
 
     def reset_drawing(self):
         # Detect and auto-correct shapes before saving
@@ -59,6 +79,12 @@ class CanvasDrawing:
         if self.has_drawn:
             self.save_state()
             self.has_drawn = False
+
+        # Send drawing end signal
+        if self.is_drawing_active:
+            server.send_command("CANVAS END")
+            self.is_drawing_active = False
+
         self.prev_point = None
         self.point_history.clear()
         self.stroke_points = []
@@ -97,6 +123,8 @@ class CanvasDrawing:
         self.canvas = np.zeros((self.h, self.w, 3), dtype=np.uint8)
         self.reset_drawing()
         self.save_state()
+        # Send clear command
+        server.send_command("CANVAS CLEAR")
 
     def save_state(self):
         self.history = self.history[:self.history_index + 1]
