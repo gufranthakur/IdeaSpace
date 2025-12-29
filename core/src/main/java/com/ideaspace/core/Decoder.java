@@ -122,9 +122,11 @@ public class Decoder {
                         int b = Integer.parseInt(parts[6]);
                         int thickness = parts.length >= 8 ? Integer.parseInt(parts[7]) : 5;
 
-                        System.out.println("Adding point: " + normX + ", " + normY);
-                        ideaSpace.space.canvasRenderer.addPoint(normX, normY, r, g, b, thickness);
+                        boolean isEraser = action.equals("ERASE");
 
+                        Gdx.app.postRunnable(() -> {
+                            ideaSpace.space.canvasRenderer.addPoint(normX, normY, r, g, b, thickness, isEraser);
+                        });
                     } catch (NumberFormatException e) {
                         System.out.println("Invalid canvas coordinates: " + command);
                         e.printStackTrace();
@@ -132,12 +134,14 @@ public class Decoder {
                 }
             }
             case "END" -> {
-                System.out.println("Ending stroke");
-                ideaSpace.space.canvasRenderer.endStroke();
+                Gdx.app.postRunnable(() -> {
+                    ideaSpace.space.canvasRenderer.endStroke();
+                });
             }
             case "CLEAR" -> {
-                System.out.println("Clearing canvas");
-                ideaSpace.space.canvasRenderer.clearCanvas();
+                Gdx.app.postRunnable(() -> {
+                    ideaSpace.space.canvasRenderer.clearCanvas();
+                });
             }
             default -> System.out.println("Unknown canvas action: " + action);
         }

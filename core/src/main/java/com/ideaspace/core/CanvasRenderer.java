@@ -6,6 +6,9 @@ import com.badlogic.gdx.math.Vector2;
 import java.util.ArrayList;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.graphics.Pixmap;
 
 public class CanvasRenderer {
 
@@ -14,6 +17,8 @@ public class CanvasRenderer {
     private ShapeRenderer shapeRenderer;
     private int screenWidth;
     private int screenHeight;
+    private FrameBuffer frameBuffer;
+    private SpriteBatch spriteBatch;
 
     public CanvasRenderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
@@ -21,16 +26,18 @@ public class CanvasRenderer {
         this.strokes = new ArrayList<>();
         this.shapeRenderer = new ShapeRenderer();
         this.shapeRenderer.setAutoShapeType(true);
+        this.frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888, screenWidth, screenHeight, false);
+        this.spriteBatch = new SpriteBatch();
     }
 
     public void startStroke(float normX, float normY, int r, int g, int b, int thickness, boolean isEraser) {
         currentStroke = new CanvasStroke(r, g, b, thickness, isEraser);
-        addPoint(normX, normY, r, g, b, thickness);
+        addPoint(normX, normY, r, g, b, thickness, isEraser);
     }
 
-    public void addPoint(float normX, float normY, int r, int g, int b, int thickness) {
+    public void addPoint(float normX, float normY, int r, int g, int b, int thickness, boolean isEraser) {
         if (currentStroke == null) {
-            startStroke(normX, normY, r, g, b, thickness, false);
+            startStroke(normX, normY, r, g, b, thickness, isEraser);
         }
 
         float screenX = normX * screenWidth;
@@ -49,40 +56,62 @@ public class CanvasRenderer {
     public void clearCanvas() {
         strokes.clear();
         currentStroke = null;
+
+        frameBuffer.begin();
+        Gdx.gl.glClearColor(0, 0, 0, 0);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        frameBuffer.end();
     }
 
     public void render() {
-        if (strokes.isEmpty() && currentStroke == null) return;
+        frameBuffer.begin();
 
+        // Only render current stroke to framebuffer
+        if (currentStroke != null && currentStroke.points.size() > 0) {
+            shapeRenderer.setProjectionMatrix(new com.badlogic.gdx.math.Matrix4().setToOrtho2D(0, 0, screenWidth, screenHeight));
+
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            if (currentStroke.isEraser) {
+                Gdx.gl.glBlendFuncSeparate(GL20.GL_ZERO, GL20.GL_ONE_MINUS_SRC_ALPHA, GL20.GL_ZERO, GL20.GL_ONE_MINUS_SRC_ALPHA);
+            } else {
+                Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+            }
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            currentStroke.render(shapeRenderer);
+            shapeRenderer.end();
+
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+        }
+
+        frameBuffer.end();
+
+        // Draw framebuffer to screen
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-
-        shapeRenderer.setProjectionMatrix(
-            new com.badlogic.gdx.math.Matrix4().setToOrtho2D(0, 0, screenWidth, screenHeight)
-        );
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        for (CanvasStroke stroke : strokes) {
-            stroke.render(shapeRenderer);
-        }
-
-        if (currentStroke != null) {
-            currentStroke.render(shapeRenderer);
-        }
-
-        shapeRenderer.end();
-
+        spriteBatch.setProjectionMatrix(new com.badlogic.gdx.math.Matrix4().setToOrtho2D(0, 0, screenWidth, screenHeight));
+        spriteBatch.begin();
+        spriteBatch.draw(frameBuffer.getColorBufferTexture(), 0, 0, screenWidth, screenHeight, 0, 0, 1, 1);
+        spriteBatch.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     public void dispose() {
         shapeRenderer.dispose();
+        frameBuffer.dispose();
+        spriteBatch.dispose();
     }
 
     public void resize(int width, int height) {
+        if (width <= 0 || height <= 0) return;
+
         this.screenWidth = width;
         this.screenHeight = height;
+
+        if (frameBuffer != null) {
+            frameBuffer.dispose();
+        }
+        frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
     }
 
     private static class CanvasStroke {
@@ -105,9 +134,9 @@ public class CanvasRenderer {
         public void render(ShapeRenderer renderer) {
             if (points.size() < 2) return;
 
-            renderer.setColor(isEraser ? Color.BLACK : color);
+            renderer.setColor(isEraser ? new Color(1, 1, 1, 1) : color);
 
-            float drawThickness = thickness * 4;
+            float drawThickness = isEraser ? thickness : (thickness * 4);
 
             for (int i = 0; i < points.size() - 1; i++) {
                 Vector2 p1 = points.get(i);

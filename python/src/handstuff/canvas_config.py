@@ -29,7 +29,7 @@ DEFAULT_COLOR = 'BLUE'
 DEFAULT_BRUSH_SIZE = 'MEDIUM'
 
 # Eraser settings
-ERASER_SIZE = 20
+ERASER_SIZE = 50
 
 # Drawing smoothing
 DRAWING_SMOOTHING = 3  # Number of points to average

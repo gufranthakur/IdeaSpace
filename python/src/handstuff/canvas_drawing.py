@@ -58,14 +58,13 @@ class CanvasDrawing:
         self._send_draw_command(x, y)
 
     def _send_draw_command(self, x, y):
-        """Send drawing coordinate to server"""
         mode = "ERASE" if self.is_erasing else "DRAW"
-        # Normalize coordinates to 0-1 range for resolution independence
         norm_x = x / self.w
         norm_y = y / self.h
         r, g, b = self.current_color
 
-        command = f"CANVAS {mode} {norm_x:.4f} {norm_y:.4f} {r} {g} {b} {self.current_brush_size}"
+        size = ERASER_SIZE if self.is_erasing else self.current_brush_size
+        command = f"CANVAS {mode} {norm_x:.4f} {norm_y:.4f} {r} {g} {b} {size}"
         server.send_command(command)
 
         if not self.is_drawing_active:
