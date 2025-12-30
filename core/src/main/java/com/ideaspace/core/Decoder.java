@@ -8,9 +8,8 @@ public class Decoder {
     private IdeaSpace ideaSpace;
 
     // Velocity-based movement (units per second)
-    public float cameraMoveSpeed = 2.0f;   // Movement speed
     public float cameraLookSpeed = 1.5f;   // Look rotation speed
-    public float zoomSpeed = 3.0f;         // Zoom speed
+    public float zoomSpeed = 6.0f;         // Zoom speed
 
     // Smoothing factors
     private float moveSmoothing = 0.15f;   // Higher = more responsive, lower = smoother
@@ -54,8 +53,8 @@ public class Decoder {
 
         switch (command) {
             // Zoom
-            case "ZOOMED IN" -> targetMoveZ = zoomSpeed;
-            case "ZOOMED OUT" -> targetMoveZ = -zoomSpeed;
+            case "ZOOM IN" -> targetMoveZ = zoomSpeed;
+            case "ZOOM OUT" -> targetMoveZ = -zoomSpeed;
 
             // Camera LOOK (direction)
             case "ROTATE RIGHT" -> targetLookX = cameraLookSpeed;

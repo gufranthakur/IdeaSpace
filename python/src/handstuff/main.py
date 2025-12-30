@@ -117,11 +117,19 @@ while True:
     if CURRENT_MODE == VIEW_MODE:
         # ========== VIEW MODE (2 HANDS) ==========
 
+        # Priority 1: Two-hand zoom (both hands horizontal, moving apart/together)
         if len(left_lms) > 0 and len(right_lms) > 0 and not detected_action:
             zoom_action = zoom_gesture.detect(left_lms, right_lms, img)
             if zoom_action:
                 detected_action = zoom_action
 
+        # Priority 2: Single-hand pinch zoom (right hand, thumb-middle finger)
+        if len(right_lms) > 0 and not detected_action and not zoom_gesture.zoom_active:
+            pinch_zoom_action = zoom_gesture.detect_pinch_zoom(right_lms, img)
+            if pinch_zoom_action:
+                detected_action = pinch_zoom_action
+
+        # Priority 3: Left hand gestures (remove, swipe)
         if len(left_lms) > 0 and not detected_action and not zoom_gesture.is_active():
             remove_action = remove_gesture.detect(left_lms, img)
             if remove_action:
@@ -131,6 +139,7 @@ while True:
                 if swipe_action:
                     detected_action = swipe_action
 
+        # Priority 4: Right hand gestures (split, drag, camera rotate)
         if len(right_lms) > 0 and not detected_action and not zoom_gesture.is_active():
             split_action = split_gesture.detect(right_lms, img)
             if split_action:
