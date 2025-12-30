@@ -89,6 +89,8 @@ public class IdeaSpace extends ApplicationAdapter {
 
     @Override
     public void dispose() {
+        server.stopServer();
+
         homeScreen.dispose();
         modelHandler.dispose();
         space.getSceneManager().dispose();
