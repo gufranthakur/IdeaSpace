@@ -84,8 +84,14 @@ public class LectureScreen extends VisTable {
 
         VisTextField lectureNameField = new VisTextField(" Default lecture name");
 
-        ISButton cancelButton = new ISButton("ui/png/CancelButton.png");
-        ISButton createButton = new ISButton("ui/png/CreateButton.png");
+        ISButton cancelButton = new ISButton(
+            "ui/png/CancelButton.png",
+            "ui/png/CancelButton_hovered.png"
+        );
+        ISButton createButton = new ISButton(
+            "ui/png/CreateButton.png" ,
+             "ui/png/CreateButton_hovered.png"
+        );
 
         VisDialog dialog = new VisDialog("");
         dialog.pad(10);

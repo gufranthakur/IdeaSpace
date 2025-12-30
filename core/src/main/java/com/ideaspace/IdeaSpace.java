@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.*;
 import com.ideaspace.core.Decoder;
 import com.ideaspace.core.Server;
 import com.ideaspace.core.Space;
+import com.ideaspace.handlers.AnimationHandler;
 import com.ideaspace.handlers.LectureHandler;
 import com.ideaspace.handlers.ModelHandler;
 import com.ideaspace.ui.panels.ControlPanel;
@@ -25,13 +26,14 @@ public class IdeaSpace extends ApplicationAdapter {
     private Server server;
     public Decoder decoder;
 
-    private ModelHandler modelHandler;
+    public ModelHandler modelHandler;
+    public AnimationHandler animationHandler;
 
     public Thread serverThread;
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
-    private boolean lectureFlag = false;
+    private boolean lectureFlag = true;
 
 
     @Override
@@ -48,6 +50,7 @@ public class IdeaSpace extends ApplicationAdapter {
         decoder = new Decoder(this);
 
         modelHandler = new ModelHandler(this);
+        animationHandler = new AnimationHandler(this);
 
         multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(space.getCameraController());
@@ -80,6 +83,7 @@ public class IdeaSpace extends ApplicationAdapter {
         } else {
             space.render(deltaTime);
             controlPanel.render(deltaTime);
+            animationHandler.update();
         }
     }
 

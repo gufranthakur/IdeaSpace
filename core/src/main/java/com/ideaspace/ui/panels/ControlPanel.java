@@ -122,6 +122,22 @@ public class ControlPanel extends Stage{
         rebuildLoadedModelsTable();
     }
 
+    public void removeModelCardByName(String modelName) {
+        ModelCard cardToRemove = null;
+
+        // Search in loaded models
+        for (ModelCard card : loadedModelCards) {
+            if (card.getModelMesh().modelName.equals(modelName)) {
+                cardToRemove = card;
+                break;
+            }
+        }
+
+        if (cardToRemove != null) {
+            removeModelCard(cardToRemove);
+        }
+    }
+
     public void removeModelCardFromLibrary(ModelCard modelCard) {
         libraryModelCards.removeValue(modelCard, true);
         rebuildLibraryModelsTable();

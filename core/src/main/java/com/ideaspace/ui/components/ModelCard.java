@@ -38,6 +38,7 @@ public class ModelCard extends ISTable{
         addButton = new ISButton(
             "ui/png/addButton.png",
             "ui/png/addButton_hovered.png"
+
         );
 
         removeButton = new ISButton("ui/png/removeButton.png");
@@ -80,6 +81,9 @@ public class ModelCard extends ISTable{
 
     private boolean getLoaded() {
         return isLoaded;
+    }
+    public ModelMesh getModelMesh() {
+        return modelMesh;
     }
 
     public ModelCard getModelCard() {

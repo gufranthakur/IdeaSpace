@@ -88,6 +88,26 @@ public class Decoder {
                 System.out.println("Swiped right i guess");
             }
 
+            case "DRAG" -> {
+                Gdx.app.postRunnable(() -> {
+                    ideaSpace.modelHandler.loadRandomModel();
+                });
+
+            }
+
+
+            case "REMOVE" -> {
+                Gdx.app.postRunnable(() -> {
+                    ideaSpace.modelHandler.unloadModel(null, null);
+                });
+            }
+
+            case "SPLIT" -> {
+                Gdx.app.postRunnable(() -> {
+                    ideaSpace.modelHandler.splitModel();
+                });
+            }
+
             case "NULL" -> {
                 // Let smoothing naturally decay to zero
             }

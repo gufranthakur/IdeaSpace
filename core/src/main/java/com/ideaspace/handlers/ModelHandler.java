@@ -15,6 +15,8 @@ public class ModelHandler {
 
     private IdeaSpace ideaSpace;
 
+    private ModelMesh selectedModel; // Add this as a class field at the top with other fields
+
     public HashMap<String, ModelMesh> loadedModels;
     public HashMap<String, ModelMesh> modelLibrary;
 
@@ -30,7 +32,7 @@ public class ModelHandler {
         createModel("Background", "models/backgrounds/dark_background.glb");
         loadModel(modelLibrary.get("Background"));
 
-        getModelInstance("Background").transform.idt().scale(20f, 20f, 20f);
+        getModelInstance("Background").transform.idt().scale(50f, 50f, 50f);
     }
 
     public void createModels() {
@@ -69,20 +71,54 @@ public class ModelHandler {
 
         ModelCard modelCard = new ModelCard(this, modelMesh, true);
         ideaSpace.controlPanel.addModelCardToModelsPane(modelCard);
+
+        selectedModel = modelMesh;
     }
 
     public void unloadModel(String modelName, ModelCard modelCard) {
-        ModelMesh modelMesh = loadedModels.get(modelName);
 
-        if (modelMesh != null) {
-            ideaSpace.space.getSceneManager().removeScene(modelMesh.getScene());
-            modelMesh.getModelSceneAsset().dispose();
-            loadedModels.remove(modelName);
+        ModelMesh modelMesh;
+        String nameToRemove;
+
+        if (modelName == null) {
+            modelMesh = selectedModel;
+            nameToRemove = (selectedModel != null) ? selectedModel.modelName : null;
+        } else {
+            modelMesh = loadedModels.get(modelName);
+            nameToRemove = modelName;
         }
 
-        if (modelCard == null) return;
+        if (modelMesh != null) {
+            ModelInstance modelInstance = modelMesh.getScene().modelInstance;
 
-        ideaSpace.controlPanel.removeModelCard(modelCard);
+            // Capture the name for removal in the lambda
+            final String finalNameToRemove = nameToRemove;
+            final ModelMesh finalModelMesh = modelMesh;
+
+            // Play remove animation first
+            ideaSpace.animationHandler.removeModelAnimation(modelInstance, () -> {
+                // This code runs after animation completes
+                ideaSpace.space.getSceneManager().removeScene(finalModelMesh.getScene());
+                finalModelMesh.getModelSceneAsset().dispose();
+                loadedModels.remove(finalNameToRemove);
+
+                // Find and remove the corresponding ModelCard
+                if (modelCard != null) {
+                    ideaSpace.controlPanel.removeModelCard(modelCard);
+                } else {
+                    // Search for the card by matching the model name
+                    ideaSpace.controlPanel.removeModelCardByName(finalNameToRemove);
+                }
+
+                // Clear selectedModel if we just removed it
+                if (finalModelMesh == selectedModel) {
+                    selectedModel = null;
+                }
+            });
+        } else if (modelCard != null) {
+            // If model doesn't exist but card does, just remove the card
+            ideaSpace.controlPanel.removeModelCard(modelCard);
+        }
     }
 
     public void unloadAllModels(String... exceptions) {
@@ -122,10 +158,46 @@ public class ModelHandler {
         }
     }
 
-//    public void playAnimation(String name, String animationName) {
-//        Scene scene = objects.get(name);
-//        scene.animationController.animate(animationName, -1);
-//    }
+    public void loadRandomModel() {
+        if (modelLibrary.isEmpty()) {
+            System.out.println("Model library is empty!");
+            return;
+        }
+
+        java.util.List<String> availableModels = new java.util.ArrayList<>();
+        for (String modelName : modelLibrary.keySet()) {
+            if (!modelName.equals("Background")) {
+                availableModels.add(modelName);
+            }
+        }
+
+        if (availableModels.isEmpty()) {
+            System.out.println("No models available to load!");
+            return;
+        }
+
+        int randomIndex = (int) (Math.random() * availableModels.size());
+        String randomModelName = availableModels.get(randomIndex);
+
+        ModelMesh randomModel = modelLibrary.get(randomModelName);
+        loadModel(randomModel);
+        selectedModel = randomModel;
+    }
+
+    public void splitModel() {
+        if (selectedModel == null) {
+            System.out.println("No model selected!");
+            return;
+        }
+
+        Scene scene = selectedModel.getScene();
+
+        if (scene.animationController != null) {
+            scene.animationController.animate("Split", 1, 1f, null, 0f);
+        } else {
+            System.out.println("Model has no animation controller!");
+        }
+    }
 
     public IdeaSpace getIdeaSpace() {
         return ideaSpace;

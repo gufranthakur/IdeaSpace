@@ -28,8 +28,15 @@ public class HistoryLectureTable extends ISTable {
         lectureNameLabel = new VisLabel(lecture.getLectureName());
         lectureInfoLabel = new VisLabel("");
 
-        openButton = new ISButton("ui/png/openButton.png");
-        deleteButton = new ISButton("ui/png/deleteButton.png");
+        openButton = new ISButton(
+            "ui/png/openButton.png",
+            "ui/png/openButton_hovered.png"
+
+        );
+        deleteButton = new ISButton(
+            "ui/png/deleteButton.png",
+            "ui/png/deleteButton_hovered.png"
+        );
 
         VisTable rightTable = new VisTable();
         rightTable.pad(10);
