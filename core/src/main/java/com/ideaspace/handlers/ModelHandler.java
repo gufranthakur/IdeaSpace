@@ -187,10 +187,12 @@ public class ModelHandler {
     public void splitModel() {
         if (selectedModel == null) {
             System.out.println("No model selected!");
+
             return;
         }
 
         Scene scene = selectedModel.getScene();
+
 
         if (scene.animationController != null) {
             scene.animationController.animate("Split", 1, 1f, null, 0f);

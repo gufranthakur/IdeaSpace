@@ -33,7 +33,7 @@ public class IdeaSpace extends ApplicationAdapter {
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
-    private boolean lectureFlag = true;
+    private boolean lectureFlag = false;
 
 
     @Override
