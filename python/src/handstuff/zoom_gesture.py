@@ -18,8 +18,8 @@ class ZoomGesture:
         self.pinch_active = False
         self.pinch_stable_frames = 0
         self.PINCH_STABLE_FRAMES = 3
-        self.PINCH_CLOSE_THRESHOLD = 0.07   # Below this = ZOOM OUT (fingers close)
-        self.PINCH_OPEN_THRESHOLD = 0.14    # Above this = ZOOM IN (fingers far apart)
+        self.PINCH_CLOSE_THRESHOLD = 0.07  # Below this = ZOOM OUT (fingers close)
+        self.PINCH_OPEN_THRESHOLD = 0.14  # Above this = ZOOM IN (fingers far apart)
         self.last_pinch_action = None
         self.pinch_cooldown = 0
 
@@ -125,7 +125,7 @@ class ZoomGesture:
             if self.last_pinch_action != "ZOOM OUT":
                 self.last_pinch_action = "ZOOM OUT"
             return "ZOOM OUT"
-        
+
         elif current_distance > self.PINCH_OPEN_THRESHOLD:
             # Fingers far apart = ZOOM IN
             if self.last_pinch_action != "ZOOM IN":
@@ -140,7 +140,8 @@ class ZoomGesture:
         Check if hand is in a valid pinch pose:
         - Thumb and INDEX finger are the active pinch fingers
         - Middle, Ring, and Pinky must be CLOSED/curled
-        - Thumb and Index must be CLOSE ENOUGH to be a pinch (not pointing)
+        - INDEX must be somewhat extended (not in a fist)
+        - Thumb and Index must be oriented toward each other
         """
         if len(lms) < 21:
             return False
@@ -162,32 +163,30 @@ class ZoomGesture:
         if not (middle_closed and ring_closed and pinky_closed):
             return False
 
-        # CRITICAL: Check that thumb and index are oriented toward each other (pinching)
-        # Not just index pointing with thumb resting
+        # KEY FIX: Index must be EXTENDED for pinch, not curled like in a fist
+        index_tip_y = lms[INDEX_FINGER][2]
+        index_mcp_y = lms[INDEX_POINT][2]
+
+        # Index finger must be extended upward (tip above MCP)
+        MIN_INDEX_EXTENSION = 30  # pixels - index must stick out
+        if index_tip_y > index_mcp_y - MIN_INDEX_EXTENSION:
+            return False  # Index is curled = fist, not pinch
+
+        # Check thumb and index tips distance
         thumb_tip_x, thumb_tip_y = lms[THUMB][1], lms[THUMB][2]
         index_tip_x, index_tip_y = lms[INDEX_FINGER][1], lms[INDEX_FINGER][2]
-        index_mcp_x, index_mcp_y = lms[INDEX_POINT][1], lms[INDEX_POINT][2]
-        
-        # Calculate distance between thumb and index tips
+
         thumb_index_dist = math.sqrt((thumb_tip_x - index_tip_x) ** 2 + (thumb_tip_y - index_tip_y) ** 2)
-        
-        # Calculate how extended the index finger is (distance from MCP to tip)
-        index_extension = math.sqrt((index_tip_x - index_mcp_x) ** 2 + (index_tip_y - index_mcp_y) ** 2)
-        
-        # If index is very extended AND thumb is far from index tip, it's a POINTING gesture, not pinch
-        # Pinch gesture: thumb and index tips should be within reasonable distance
-        MAX_PINCH_DISTANCE = 150  # pixels - if further than this, it's pointing not pinching
-        
+
+        # For pinch, tips shouldn't be too far apart
+        MAX_PINCH_DISTANCE = 150  # pixels
         if thumb_index_dist > MAX_PINCH_DISTANCE:
             return False
-        
-        # Also check: for pointing, index points away from thumb
-        # For pinch, thumb moves toward index
-        # Check if thumb is extended toward index (not resting at side)
+
+        # Check if thumb is extended toward index
         thumb_mcp_x, thumb_mcp_y = lms[2][1], lms[2][2]
         thumb_extension = math.sqrt((thumb_tip_x - thumb_mcp_x) ** 2 + (thumb_tip_y - thumb_mcp_y) ** 2)
-        
-        # Thumb should be somewhat extended for a pinch gesture
+
         MIN_THUMB_EXTENSION = 30  # pixels
         if thumb_extension < MIN_THUMB_EXTENSION:
             return False

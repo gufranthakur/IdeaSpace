@@ -10,7 +10,7 @@ class DragGesture:
         self.idle_frames = 0
         self.MAX_IDLE_FRAMES = 60
         self.fist_confidence = 0
-        self.DRAG_THRESHOLD = 0.04
+        self.DRAG_THRESHOLD = 0.025  # Reduced from 0.04 for easier triggering
 
     def is_active(self):
         return self.drag_active
@@ -41,12 +41,9 @@ class DragGesture:
         # Detect fist and start tracking
         if not self.drag_active:
             if hand_fist:
-                self.fist_confidence += 1
-                if self.fist_confidence >= 2:
-                    self.drag_active = True
-                    self.initial_fist_x = current_x
-            else:
-                self.fist_confidence = 0
+                # Start tracking immediately when fist is detected
+                self.drag_active = True
+                self.initial_fist_x = current_x
             return None
 
         # Detect leftward movement with fist
@@ -70,35 +67,36 @@ class DragGesture:
         return None
 
     def _is_fist(self, lms, img):
-        """All fingers closed - reject horizontal hands"""
+        """All fingers closed - reject very horizontal hands"""
         h, w, c = img.shape
 
-        # REJECT HORIZONTAL HANDS - fist must be vertical
+        # REJECT ONLY VERY HORIZONTAL HANDS - be more lenient
         wrist_x, wrist_y = lms[0][1], lms[0][2]
         middle_tip_x, middle_tip_y = lms[MIDDLE_FINGER][1], lms[MIDDLE_FINGER][2]
         dx = abs(middle_tip_x - wrist_x)
         dy = abs(middle_tip_y - wrist_y)
 
-        # If hand is horizontal (pointing sideways), NOT a fist
-        if dx > dy * 0.8:
+        # Only reject if hand is very horizontal (pointing strongly sideways)
+        # Changed from 0.8 to 1.2 - allows more diagonal orientations
+        if dx > dy * 1.2:
             return False
 
         palm = (lms[0][1], lms[0][2])
 
-        # Fingers must be VERY close to palm for fist
+        # Fingers must be close to palm for fist (slightly relaxed from 0.15)
         closed_fingers = sum(
             1 for tip in [INDEX_FINGER, MIDDLE_FINGER, RING_FINGER, PINKY_FINGER]
-            if math.dist((lms[tip][1], lms[tip][2]), palm) / w < 0.15
+            if math.dist((lms[tip][1], lms[tip][2]), palm) / w < 0.17
         )
 
         if closed_fingers < 4:
             return False
 
-        # Additional check: fingers must be actually curled
+        # Additional check: fingers must be curled (slightly relaxed from 0.08)
         fingers_very_curled = sum(
             1 for tip, mcp in [(INDEX_FINGER, INDEX_POINT), (MIDDLE_FINGER, MIDDLE_POINT),
                                (RING_FINGER, RING_POINT), (PINKY_FINGER, PINKY_POINT)]
-            if math.dist((lms[tip][1], lms[tip][2]), (lms[mcp][1], lms[mcp][2])) / w < 0.08
+            if math.dist((lms[tip][1], lms[tip][2]), (lms[mcp][1], lms[mcp][2])) / w < 0.10
         )
 
         is_fist = closed_fingers >= 4 and fingers_very_curled >= 3

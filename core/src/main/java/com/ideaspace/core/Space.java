@@ -58,7 +58,7 @@ public class Space {
     private void setupCamera() {
         camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 20f / 1000f;
-        camera.far = 150;
+        camera.far = 600;
         sceneManager.setCamera(camera);
         camera.position.set(0,0.5f, 4f);
 

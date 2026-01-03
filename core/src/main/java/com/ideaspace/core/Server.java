@@ -66,14 +66,37 @@ public class Server implements Runnable {
     }
 
     private void startPythonScript() {
-        pb = new ProcessBuilder("venv/bin/python", "src/handstuff/main.py");
+        String os = System.getProperty("os.name").toLowerCase();
+        File workingDir = new File(new File(System.getProperty("user.dir")).getParent(), "python");
+
+        String pythonExe = workingDir.getAbsolutePath() + "\\.venv\\Scripts\\python.exe";
+        String scriptPath = "src\\handstuff\\main.py";  // Changed to src\main.py
+
+        pb = new ProcessBuilder(pythonExe, scriptPath);
+        pb.directory(workingDir);
         pb.redirectErrorStream(true);
 
         try {
-            pb.directory(new File("../python"));
+            System.out.println("Starting Python from: " + pythonExe);
+            System.out.println("Script: " + scriptPath);
             process = pb.start();
+            System.out.println("Python script started successfully");
+
+            // Read Python output
+            new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println("[Python] " + line);
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error reading Python output: " + e.getMessage());
+                }
+            }).start();
+
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Failed to start Python: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
