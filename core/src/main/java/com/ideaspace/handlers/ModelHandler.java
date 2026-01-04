@@ -36,9 +36,11 @@ public class ModelHandler {
     }
 
     public void createModels() {
-        createModel("Arduino Uno", "models/microcontrollers/arduinouno.glb");
         createModel("Esp32", "models/microcontrollers/esp32.glb");
-        createModel("Raspberry Pi", "models/microcontrollers/raspberry_pi.glb");
+        createModel("mechanical_keyboard", "models/misc/mechanical_keyboard.glb");
+        createModel("Drone", "models/misc/cp_drone.glb");
+        createModel("Iphone 17", "models/misc/iphone17pro.glb");
+        createModel("SSD", "models/misc/ssd.glb");
     }
 
     private void createModel(String name, String path) {
@@ -195,7 +197,7 @@ public class ModelHandler {
 
 
         if (scene.animationController != null) {
-            scene.animationController.animate("Split", 1, 1f, null, 0f);
+            scene.animationController.animate("split", 1, 1f, null, 0f);
         } else {
             System.out.println("Model has no animation controller!");
         }

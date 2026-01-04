@@ -17,23 +17,21 @@ import com.kotcrab.vis.ui.VisUI;
 public class IdeaSpace extends ApplicationAdapter {
 
     private LectureHandler lectureHandler;
-    //helloooooo
-    //Thank you <3
 
     public HomeScreen homeScreen;
     public Space space;
     public ControlPanel controlPanel;
-    private Server server;
+    private Server canvasServer;
     public Decoder decoder;
 
     public ModelHandler modelHandler;
     public AnimationHandler animationHandler;
 
-    public Thread serverThread;
+    public Thread canvasThread;
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
-    private boolean lectureFlag = false;
+    private boolean lectureFlag = true;
 
 
     @Override
@@ -46,7 +44,7 @@ public class IdeaSpace extends ApplicationAdapter {
         controlPanel = new ControlPanel(this);
 
         space = new Space(this);
-        server = new Server(this);
+        canvasServer = new Server(this, "src/modular/right_main.py", 65005);
         decoder = new Decoder(this);
 
         modelHandler = new ModelHandler(this);
@@ -61,8 +59,8 @@ public class IdeaSpace extends ApplicationAdapter {
         modelHandler.loadInitialModels();
         modelHandler.createModels();
 
-        serverThread = new Thread(server);
-        serverThread.start();
+        canvasThread = new Thread(canvasServer);
+        canvasThread.start();
     }
 
     @Override
@@ -89,7 +87,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
     @Override
     public void dispose() {
-        server.stopServer();
+        canvasServer.stopServer();
 
         homeScreen.dispose();
         modelHandler.dispose();

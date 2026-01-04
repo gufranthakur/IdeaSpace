@@ -10,19 +10,24 @@ public class Server implements Runnable {
     private ServerSocket serverSocket;
     private volatile boolean running = true;
 
+    private String scriptPath;
+    private int port;
+
     ProcessBuilder pb;
     Process process;
 
-    public Server(IdeaSpace ideaSpace) {
+    public Server(IdeaSpace ideaSpace, String scriptPath, int port) {
         this.ideaSpace = ideaSpace;
+        this.scriptPath = scriptPath;
+        this.port = port;
     }
 
     public void startServer() {
         startPythonScript();
 
         try {
-            serverSocket = new ServerSocket(65000);
-            System.out.println("Socket Server started on port 65000");
+            serverSocket = new ServerSocket(port);
+            System.out.println("Socket Server started on port " + port);
 
             while (running) {
                 Socket client = serverSocket.accept();
@@ -66,37 +71,14 @@ public class Server implements Runnable {
     }
 
     private void startPythonScript() {
-        String os = System.getProperty("os.name").toLowerCase();
-        File workingDir = new File(new File(System.getProperty("user.dir")).getParent(), "python");
-
-        String pythonExe = workingDir.getAbsolutePath() + "\\.venv\\Scripts\\python.exe";
-        String scriptPath = "src\\handstuff\\main.py";  // Changed to src\main.py
-
-        pb = new ProcessBuilder(pythonExe, scriptPath);
-        pb.directory(workingDir);
-        pb.redirectErrorStream(true);
+        pb = new ProcessBuilder("venv/bin/python", scriptPath);
+        pb.inheritIO(); // This will show Python output directly in your Java console
 
         try {
-            System.out.println("Starting Python from: " + pythonExe);
-            System.out.println("Script: " + scriptPath);
+            pb.directory(new File("../python"));
             process = pb.start();
-            System.out.println("Python script started successfully");
-
-            // Read Python output
-            new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        System.out.println("[Python] " + line);
-                    }
-                } catch (IOException e) {
-                    System.err.println("Error reading Python output: " + e.getMessage());
-                }
-            }).start();
-
         } catch (IOException e) {
-            System.err.println("Failed to start Python: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
