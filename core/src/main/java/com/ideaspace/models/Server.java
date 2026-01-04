@@ -81,7 +81,7 @@ public class Server implements Runnable {
             pb = new ProcessBuilder("venv/bin/python", scriptPath);
 
         }
-        pb.inheritIO(); // This will show Python output directly in your Java console
+       // pb.inheritIO(); // This will show Python output directly in your Java console
 
         try {
             pb.directory(new File("../python"));

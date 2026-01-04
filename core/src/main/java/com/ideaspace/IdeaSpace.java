@@ -22,8 +22,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public Space space;
     public ControlPanel controlPanel;
 
-    private Server rightHandServer;
-    private Server leftHandServer;
+    private Server coreGesturesServer;
     private Server zoomServer;
     private Server canvasServer;
 
@@ -32,7 +31,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public ModelHandler modelHandler;
     public AnimationHandler animationHandler;
 
-    public Thread canvasThread, rightHandServerThread, leftHandServerThread;
+    public Thread canvasThread, coreGestureServerThread, zoomServerThread;
 
     private InputMultiplexer multiplexer;
 
@@ -51,9 +50,10 @@ public class IdeaSpace extends ApplicationAdapter {
 
         space = new Space(this);
 
+
+        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 65002, false);
+        zoomServer = new Server(this, "src/modular/zoom_main.py", 65004, false);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, false);
-        rightHandServer = new Server(this, "src/modular/right_main.py", 65002, false);
-        leftHandServer = new Server(this, "src/modular/left_main.py", 65003, false);
 
         decoder = new Decoder(this);
 
@@ -73,13 +73,16 @@ public class IdeaSpace extends ApplicationAdapter {
     }
 
     private void initThreads() {
+        //--------these ones are not always active so no memory issues I hope so---------
         canvasThread = new Thread(canvasServer);
-        rightHandServerThread = new Thread(rightHandServer);
-        leftHandServerThread = new Thread(leftHandServer);
+
+        //-------------------------------------------------------------------------------
+        coreGestureServerThread = new Thread(coreGesturesServer);
+        zoomServerThread = new Thread(zoomServer);
 
         //canvasThread.start();
-        //rightHandServerThread.start();
-        leftHandServerThread.start();
+        coreGestureServerThread.start();
+        zoomServerThread.start();
 
     }
 
@@ -108,8 +111,9 @@ public class IdeaSpace extends ApplicationAdapter {
     @Override
     public void dispose() {
         //canvasServer.stopServer();
-        //rightHandServer.stopServer();
-        leftHandServer.stopServer();
+        coreGesturesServer.stopServer();
+        //leftHandServer.stopServer();
+        zoomServer.stopServer();
 
         homeScreen.dispose();
         modelHandler.dispose();

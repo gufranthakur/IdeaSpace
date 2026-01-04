@@ -8,22 +8,19 @@ from gesture_config import *
 from drag_gesture import DragGesture
 from flick_gesture import FlickGesture
 
-# Server connection
+# Parse debug flag
+DEBUG = "--debug" in sys.argv
+
 PORT = 65002
 server = Server(PORT)
 
-# Detector - right hand only
 detector = handDetector(maxHands=1, detectionConfidence=0.5, trackConfidence=0.5)
-
-# Gesture detectors
 drag_gesture = DragGesture()
-flick_gesture = FlickGesture(return_command="ANIMATE")  # For playing animations
+flick_gesture = FlickGesture(return_command="ANIMATE")
 
-# State
 last_command_time = 0
 last_sent_command = None
 
-# Camera settings
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 cap.set(cv2.CAP_PROP_FPS, TARGET_FPS)
@@ -49,78 +46,84 @@ def send_command_throttled(command):
 
 prev_time = time.time()
 
-while True:
-    current_time = time.time()
+try:
+    while True:
+        current_time = time.time()
 
-    success, img = cap.read()
-    if not success:
-        continue
+        success, img = cap.read()
+        if not success:
+            continue
 
-    img = cv2.flip(img, 1)
-    h_full, w_full = img.shape[:2]
+        img = cv2.flip(img, 1)
+        h_full, w_full = img.shape[:2]
 
-    img_small = cv2.resize(img, (PROCESS_WIDTH, PROCESS_HEIGHT))
-    img_small = detector.find_hands(img_small, False)
+        img_small = cv2.resize(img, (PROCESS_WIDTH, PROCESS_HEIGHT))
+        if DEBUG:
+            img_small = detector.find_hands(img_small, False)
+        else:
+            detector.find_hands(img_small, False)
 
-    scale_x = w_full / PROCESS_WIDTH
-    scale_y = h_full / PROCESS_HEIGHT
+        scale_x = w_full / PROCESS_WIDTH
+        scale_y = h_full / PROCESS_HEIGHT
 
-    right_lms = []
-    detected_action = None
+        right_lms = []
+        detected_action = None
 
-    if detector.results and detector.results.multi_hand_landmarks:
-        for hand_idx in range(len(detector.results.multi_hand_landmarks)):
-            handedness = detector.get_handedness(hand_idx)
+        if detector.results and detector.results.multi_hand_landmarks:
+            for hand_idx in range(len(detector.results.multi_hand_landmarks)):
+                handedness = detector.get_handedness(hand_idx)
 
-            if handedness == "Right":
-                lms_small = detector.find_position(img_small, hand_idx, draw=False)
-                right_lms = [[l[0], int(l[1] * scale_x), int(l[2] * scale_y)] for l in lms_small]
+                if handedness == "Right":
+                    lms_small = detector.find_position(img_small, hand_idx, draw=False)
+                    right_lms = [[l[0], int(l[1] * scale_x), int(l[2] * scale_y)] for l in lms_small]
 
-                # Draw landmarks
-                for lm in right_lms:
-                    cv2.circle(img, (lm[1], lm[2]), 5, (255, 0, 255), -1)
+                    if DEBUG:
+                        for lm in right_lms:
+                            cv2.circle(img, (lm[1], lm[2]), 5, (255, 0, 255), -1)
 
-    # Detect gestures with priority: Flick (Play Animation) > Drag
-    if len(right_lms) > 0:
-        # Priority 1: Flick gesture (play animation)
-        flick_action = flick_gesture.detect(right_lms, img)
-        if flick_action:
-            detected_action = flick_action
+        if len(right_lms) > 0:
+            flick_action = flick_gesture.detect(right_lms, img)
+            if flick_action:
+                detected_action = flick_action
 
-        # Priority 2: Drag gesture (only if flick not active)
-        if not detected_action and not flick_gesture.is_active():
-            drag_action = drag_gesture.detect(right_lms, img)
-            if drag_action:
-                detected_action = drag_action
+            if not detected_action and not flick_gesture.is_active():
+                drag_action = drag_gesture.detect(right_lms, img)
+                if drag_action:
+                    detected_action = drag_action
 
-    # Send command
-    if detected_action:
-        send_command_throttled(detected_action)
-        cv2.putText(img, detected_action, (50, 60),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-    else:
-        if last_sent_command is not None and last_sent_command != "NULL":
-            send_command_throttled("NULL")
+        if detected_action:
+            send_command_throttled(detected_action)
+            if DEBUG:
+                cv2.putText(img, detected_action, (50, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        else:
+            if last_sent_command is not None and last_sent_command != "NULL":
+                send_command_throttled("NULL")
 
-    # Display
-    cv2.putText(img, "RIGHT GESTURES", (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+        if DEBUG:
+            cv2.putText(img, "RIGHT GESTURES", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
 
-    fps = 1.0 / (time.time() - prev_time)
-    prev_time = time.time()
-    cv2.putText(img, f"FPS: {int(fps)}", (img.shape[1] - 100, 30),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            fps = 1.0 / (time.time() - prev_time)
+            prev_time = time.time()
+            cv2.putText(img, f"FPS: {int(fps)}", (img.shape[1] - 100, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-    cv2.imshow("Right Gestures", img)
+            cv2.namedWindow("Right_65002", cv2.WINDOW_AUTOSIZE)
+            cv2.imshow("Right_65002", img)
 
-    elapsed = time.time() - current_time
-    if elapsed < FRAME_TIME:
-        time.sleep(FRAME_TIME - elapsed)
+        elapsed = time.time() - current_time
+        if elapsed < FRAME_TIME:
+            time.sleep(FRAME_TIME - elapsed)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        if DEBUG and cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        elif not DEBUG:
+            time.sleep(0.01)
 
-send_command_throttled("NULL")
-server.close()
-cap.release()
-cv2.destroyAllWindows()
+finally:
+    send_command_throttled("NULL")
+    server.close()
+    cap.release()
+    if DEBUG:
+        cv2.destroyAllWindows()
