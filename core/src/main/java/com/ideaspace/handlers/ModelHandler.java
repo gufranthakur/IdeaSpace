@@ -123,33 +123,6 @@ public class ModelHandler {
         }
     }
 
-    public void unloadAllModels(String... exceptions) {
-        String[] keys = loadedModels.keySet().toArray(new String[0]);
-
-        for (String modelName : keys) {
-            boolean shouldKeep = false;
-            for (String exception : exceptions) {
-                if (modelName.equals(exception)) {
-                    shouldKeep = true;
-                    break;
-                }
-            }
-
-            if (!shouldKeep) {
-                unloadModel(modelName, null);
-            }
-        }
-    }
-
-    public void reloadModel(String modelName) {
-        ModelMesh modelMesh = modelLibrary.get(modelName);
-        if (modelMesh != null) {
-            if (loadedModels.containsKey(modelName)) unloadModel(modelName, null);
-            loadModel(modelMesh);
-        }
-    }
-
-
     public ModelInstance getModelInstance(String name) {
         return loadedModels.get(name).getScene().modelInstance;
     }
@@ -201,6 +174,10 @@ public class ModelHandler {
         } else {
             System.out.println("Model has no animation controller!");
         }
+    }
+
+    public ModelMesh getSelectedModel() {
+        return selectedModel;
     }
 
     public IdeaSpace getIdeaSpace() {

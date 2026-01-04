@@ -1,6 +1,7 @@
 package com.ideaspace.core;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.math.Vector3;
 import com.ideaspace.IdeaSpace;
 
 public class Decoder {
@@ -10,10 +11,12 @@ public class Decoder {
     // Velocity-based movement (units per second)
     public float cameraLookSpeed = 1.5f;   // Look rotation speed
     public float zoomSpeed = 6.0f;         // Zoom speed
+    public float rotationSpeed = 180f;      // Model rotation speed (degrees per second)
 
     // Smoothing factors
     private float moveSmoothing = 0.15f;   // Higher = more responsive, lower = smoother
     private float lookSmoothing = 0.12f;
+    private float rotationSmoothing = 0.15f;
 
     // Current target velocities
     private float targetMoveX = 0f;
@@ -21,6 +24,8 @@ public class Decoder {
     private float targetMoveZ = 0f;
     private float targetLookX = 0f;
     private float targetLookY = 0f;
+    private float targetRotationY = 0f;
+    private float targetRotationX = 0f;
 
     // Current smoothed velocities
     private float currentMoveX = 0f;
@@ -28,6 +33,8 @@ public class Decoder {
     private float currentMoveZ = 0f;
     private float currentLookX = 0f;
     private float currentLookY = 0f;
+    private float currentRotationY = 0f;
+    private float currentRotationX = 0f;
 
     int i = 0;
 
@@ -43,6 +50,8 @@ public class Decoder {
         targetMoveZ = 0f;
         targetLookX = 0f;
         targetLookY = 0f;
+        targetRotationX = 0f;
+        targetRotationY = 0f;
 
         // Handle CANVAS commands
         if (command.startsWith("CANVAS ")) {
@@ -56,27 +65,26 @@ public class Decoder {
             case "ZOOM IN" -> targetMoveZ = zoomSpeed;
             case "ZOOM OUT" -> targetMoveZ = -zoomSpeed;
 
-            // Camera LOOK (direction)
-            case "ROTATE RIGHT" -> targetLookX = cameraLookSpeed;
-            case "ROTATE LEFT" -> targetLookX = -cameraLookSpeed;
-            case "ROTATE TOP" -> targetLookY = cameraLookSpeed;
-            case "ROTATE BOTTOM" -> targetLookY = -cameraLookSpeed;
+            case "ROTATE RIGHT" -> targetRotationY = -rotationSpeed;
+            case "ROTATE LEFT" -> targetRotationY = rotationSpeed;
+            case "ROTATE TOP" -> targetRotationX = -rotationSpeed;
+            case "ROTATE BOTTOM" -> targetRotationX = rotationSpeed;
 
             case "ROTATE TOP-RIGHT" -> {
-                targetLookX = cameraLookSpeed * 0.707f;
-                targetLookY = cameraLookSpeed * 0.707f;
+                targetRotationY = -rotationSpeed * 0.707f;
+                targetRotationX = -rotationSpeed * 0.707f;
             }
             case "ROTATE TOP-LEFT" -> {
-                targetLookX = -cameraLookSpeed * 0.707f;
-                targetLookY = cameraLookSpeed * 0.707f;
+                targetRotationY = rotationSpeed * 0.707f;
+                targetRotationX = -rotationSpeed * 0.707f;
             }
             case "ROTATE BOTTOM-RIGHT" -> {
-                targetLookX = cameraLookSpeed * 0.707f;
-                targetLookY = -cameraLookSpeed * 0.707f;
+                targetRotationY = -rotationSpeed * 0.707f;
+                targetRotationX = rotationSpeed * 0.707f;
             }
             case "ROTATE BOTTOM-LEFT" -> {
-                targetLookX = -cameraLookSpeed * 0.707f;
-                targetLookY = -cameraLookSpeed * 0.707f;
+                targetRotationY = rotationSpeed * 0.707f;
+                targetRotationX = rotationSpeed * 0.707f;
             }
 
             case "SWIPED LEFT" -> {
@@ -91,9 +99,7 @@ public class Decoder {
                 Gdx.app.postRunnable(() -> {
                     ideaSpace.modelHandler.loadRandomModel();
                 });
-
             }
-
 
             case "REMOVE" -> {
                 Gdx.app.postRunnable(() -> {
@@ -173,6 +179,8 @@ public class Decoder {
         currentMoveZ = lerp(currentMoveZ, targetMoveZ, moveSmoothing);
         currentLookX = lerp(currentLookX, targetLookX, lookSmoothing);
         currentLookY = lerp(currentLookY, targetLookY, lookSmoothing);
+        currentRotationY = lerp(currentRotationY, targetRotationY, rotationSmoothing);
+        currentRotationX = lerp(currentRotationX, targetRotationX, rotationSmoothing);
 
         // Apply position movement using camera's direction vector
         if (Math.abs(currentMoveZ) > 0.001f) {
@@ -210,6 +218,15 @@ public class Decoder {
             );
 
             ideaSpace.space.camera.direction.nor();
+        }
+
+        // Apply rotation to selected model
+        if (ideaSpace.modelHandler.getSelectedModel() != null &&
+            (Math.abs(currentRotationY) > 0.001f || Math.abs(currentRotationX) > 0.001f)) {
+
+            var model = ideaSpace.modelHandler.getSelectedModel().getScene().modelInstance;
+            model.transform.rotate(Vector3.Y, currentRotationY * delta);
+            model.transform.rotate(Vector3.X, currentRotationX * delta);
         }
 
         ideaSpace.space.camera.update();

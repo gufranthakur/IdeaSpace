@@ -5,23 +5,16 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.ideaspace.IdeaSpace;
 
-import com.ideaspace.models.ModelMesh;
-import net.mgsx.gltf.loaders.glb.GLBLoader;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx;
-import net.mgsx.gltf.scene3d.scene.Scene;
-import net.mgsx.gltf.scene3d.scene.SceneAsset;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
 import net.mgsx.gltf.scene3d.scene.SceneSkybox;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 
-import java.util.HashMap;
-import java.util.Iterator;
 import com.badlogic.gdx.graphics.GL20;
 public class Space {
 
@@ -40,8 +33,9 @@ public class Space {
 
     public CanvasRenderer canvasRenderer;
 
-    private Iterator<String> modelIterator;
-    private String currentModel;
+    private SimulationHand simulationHand;
+    private HandLines handLines;
+
 
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
@@ -52,6 +46,10 @@ public class Space {
         setupIBL();
         setupSceneManager();
 
+        simulationHand = new SimulationHand(65000, camera, sceneManager);
+
+        handLines = new HandLines(camera);
+
         canvasRenderer = new CanvasRenderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
@@ -60,7 +58,7 @@ public class Space {
         camera.near = 20f / 1000f;
         camera.far = 600;
         sceneManager.setCamera(camera);
-        camera.position.set(0,0.5f, 4f);
+        camera.position.set(0,0, 0);
 
         cameraController = new FirstPersonCameraController(camera);
     }
@@ -97,27 +95,18 @@ public class Space {
     public void render(float deltaTime) {
         time += deltaTime;
         cameraController.update();
-
         ideaSpace.decoder.update(deltaTime);
-
         camera.update();
-        sceneManager.update(deltaTime);
-        sceneManager.render();
 
-        // Disable depth test for 2D overlay
+        simulationHand.update();
+
+        sceneManager.update(deltaTime);
+        sceneManager.render();  // This now renders hand spheres too with PBR
+
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         canvasRenderer.render();
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
-
-
-
-    public void addObject(ModelMesh modelMesh) {
-        getSceneManager().addScene(modelMesh.getScene());
-    }
-
-
-
 
     public void dispose() {
         environmentCubeMap.dispose();
@@ -125,7 +114,8 @@ public class Space {
         specularCubeMap.dispose();
         brdfLUT.dispose();
         skybox.dispose();
-
+        simulationHand.dispose();
+        handLines.dispose();
         canvasRenderer.dispose();
 
     }

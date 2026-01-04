@@ -25,13 +25,14 @@ public class IdeaSpace extends ApplicationAdapter {
     private Server coreGesturesServer;
     private Server zoomServer;
     private Server canvasServer;
+    private Server rotatorServer;
 
     public Decoder decoder;
 
     public ModelHandler modelHandler;
     public AnimationHandler animationHandler;
 
-    public Thread canvasThread, coreGestureServerThread, zoomServerThread;
+    public Thread canvasThread, coreGestureServerThread, zoomServerThread, rotatorServerThread;
 
     private InputMultiplexer multiplexer;
 
@@ -51,6 +52,7 @@ public class IdeaSpace extends ApplicationAdapter {
         space = new Space(this);
 
 
+        rotatorServer = new Server(this, "src/modular/rotator_main.py", 65001, false);
         coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 65002, false);
         zoomServer = new Server(this, "src/modular/zoom_main.py", 65004, false);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, false);
@@ -77,12 +79,14 @@ public class IdeaSpace extends ApplicationAdapter {
         canvasThread = new Thread(canvasServer);
 
         //-------------------------------------------------------------------------------
+        rotatorServerThread = new Thread(rotatorServer);
         coreGestureServerThread = new Thread(coreGesturesServer);
         zoomServerThread = new Thread(zoomServer);
 
         //canvasThread.start();
-        coreGestureServerThread.start();
-        zoomServerThread.start();
+        //rotatorServerThread.start();
+        //coreGestureServerThread.start();
+        //zoomServerThread.start();
 
     }
 
@@ -112,7 +116,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public void dispose() {
         //canvasServer.stopServer();
         coreGesturesServer.stopServer();
-        //leftHandServer.stopServer();
+        rotatorServer.stopServer();
         zoomServer.stopServer();
 
         homeScreen.dispose();
