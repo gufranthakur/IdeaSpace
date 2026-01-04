@@ -5,7 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.*;
 import com.ideaspace.core.Decoder;
-import com.ideaspace.core.Server;
+import com.ideaspace.models.Server;
 import com.ideaspace.core.Space;
 import com.ideaspace.handlers.AnimationHandler;
 import com.ideaspace.handlers.LectureHandler;
@@ -32,8 +32,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public ModelHandler modelHandler;
     public AnimationHandler animationHandler;
 
-    public Thread canvasThread;
-    public Thread rightHandServerThread;
+    public Thread canvasThread, rightHandServerThread, leftHandServerThread;
 
     private InputMultiplexer multiplexer;
 
@@ -53,7 +52,8 @@ public class IdeaSpace extends ApplicationAdapter {
         space = new Space(this);
 
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, false);
-        rightHandServer = new Server(this, "src/modular/right_main.py", 65001, false);
+        rightHandServer = new Server(this, "src/modular/right_main.py", 65002, false);
+        leftHandServer = new Server(this, "src/modular/left_main.py", 65003, false);
 
         decoder = new Decoder(this);
 
@@ -69,10 +69,18 @@ public class IdeaSpace extends ApplicationAdapter {
         modelHandler.loadInitialModels();
         modelHandler.createModels();
 
+        initThreads();
+    }
+
+    private void initThreads() {
         canvasThread = new Thread(canvasServer);
         rightHandServerThread = new Thread(rightHandServer);
-        rightHandServerThread.start();
+        leftHandServerThread = new Thread(leftHandServer);
+
         //canvasThread.start();
+        //rightHandServerThread.start();
+        leftHandServerThread.start();
+
     }
 
     @Override
@@ -100,7 +108,8 @@ public class IdeaSpace extends ApplicationAdapter {
     @Override
     public void dispose() {
         //canvasServer.stopServer();
-        rightHandServer.stopServer();
+        //rightHandServer.stopServer();
+        leftHandServer.stopServer();
 
         homeScreen.dispose();
         modelHandler.dispose();

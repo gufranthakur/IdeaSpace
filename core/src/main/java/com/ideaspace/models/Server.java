@@ -1,30 +1,36 @@
-package com.ideaspace.servers;
+package com.ideaspace.models;
 
 import com.ideaspace.IdeaSpace;
 import java.io.*;
 import java.net.*;
 
-public class CanvasServer implements Runnable {
+public class Server implements Runnable {
 
     private IdeaSpace ideaSpace;
     private ServerSocket serverSocket;
     private volatile boolean running = true;
 
-    private final int PORT = 65005;
+    private String scriptPath;
+    private int port;
+    private boolean debugFlag;
 
     ProcessBuilder pb;
     Process process;
 
-    public CanvasServer(IdeaSpace ideaSpace) {
+    public Server(IdeaSpace ideaSpace, String scriptPath, int port, boolean debugFlag) {
         this.ideaSpace = ideaSpace;
+        this.scriptPath = scriptPath;
+        this.port = port;
+
+        this.debugFlag = debugFlag;
     }
 
     public void startServer() {
-        startPythonScript();
+        startPythonScript(debugFlag);
 
         try {
-            serverSocket = new ServerSocket(PORT);
-            System.out.println("Socket Server started on port 65000");
+            serverSocket = new ServerSocket(port);
+            System.out.println("Socket Server started on port " + port);
 
             while (running) {
                 Socket client = serverSocket.accept();
@@ -67,9 +73,15 @@ public class CanvasServer implements Runnable {
         System.out.println("Socket Server stopped");
     }
 
-    private void startPythonScript() {
-        pb = new ProcessBuilder("venv/bin/python", "src/modular/canvas_main.py");
-        pb.redirectErrorStream(true);
+    private void startPythonScript(boolean debugFlag) {
+
+        if (debugFlag) {
+            pb = new ProcessBuilder("venv/bin/python", scriptPath , "--debug");
+        } else {
+            pb = new ProcessBuilder("venv/bin/python", scriptPath);
+
+        }
+        pb.inheritIO(); // This will show Python output directly in your Java console
 
         try {
             pb.directory(new File("../python"));
@@ -84,7 +96,6 @@ public class CanvasServer implements Runnable {
             System.out.println("Stopping Python process...");
 
             process.destroy();
-
             try {
                 boolean exited = process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS);
 

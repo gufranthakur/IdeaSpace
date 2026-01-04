@@ -17,7 +17,7 @@ detector = handDetector(maxHands=1, detectionConfidence=0.5, trackConfidence=0.5
 
 # Gesture detectors
 drag_gesture = DragGesture()
-flick_gesture = FlickGesture(return_command="DRAG")  # For playing animations
+flick_gesture = FlickGesture(return_command="ANIMATE")  # For playing animations
 
 # State
 last_command_time = 0

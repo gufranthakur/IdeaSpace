@@ -157,5 +157,5 @@ class FlickGesture:
         self.cooldown = 0
 
     def is_active(self):
-        """Check if gesture is currently in ready pose (tracking)"""
-        return self.ready_pose_detected
+        """Check if gesture is currently in ready pose (tracking) or cooldown"""
+        return self.ready_pose_detected or self.cooldown > 0
