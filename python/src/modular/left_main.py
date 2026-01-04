@@ -5,7 +5,7 @@ import sys
 from server import Server
 from hand_tracking_module import handDetector
 from gesture_config import *
-from remove_gesture import RemoveGesture
+from flick_gesture import FlickGesture
 from swipe_utils import detect_swipe_gesture
 
 # Server connection
@@ -16,7 +16,7 @@ server = Server(PORT)
 detector = handDetector(maxHands=1, detectionConfidence=0.5, trackConfidence=0.5)
 
 # Gesture detector
-remove_gesture = RemoveGesture()
+flick_gesture = FlickGesture(return_command="REMOVE")  # For removing objects
 
 # State
 last_command_time = 0
@@ -79,15 +79,15 @@ while True:
                 for lm in left_lms:
                     cv2.circle(img, (lm[1], lm[2]), 5, (255, 0, 255), -1)
 
-    # Detect gestures with priority: Remove > Swipe
+    # Detect gestures with priority: Flick (Remove) > Swipe
     if len(left_lms) > 0:
-        # Priority 1: Remove gesture
-        remove_action = remove_gesture.detect(left_lms, img)
-        if remove_action:
-            detected_action = remove_action
+        # Priority 1: Flick gesture (remove object)
+        flick_action = flick_gesture.detect(left_lms, img)
+        if flick_action:
+            detected_action = flick_action
 
-        # Priority 2: Swipe gesture (only if remove not active)
-        if not detected_action and not remove_gesture.is_active():
+        # Priority 2: Swipe gesture (only if flick not active)
+        if not detected_action and not flick_gesture.is_active():
             swipe_action = detect_swipe_gesture(left_lms, img)
             if swipe_action:
                 detected_action = swipe_action

@@ -2,8 +2,7 @@ import math
 import sys
 sys.path.append('..')
 
-from modular.gesture_config import *
-from modular.canvas_config import INDEX_EXTENSION_THRESHOLD, THUMB_EXTENSION_THRESHOLD, FINGER_EXTENSION_THRESHOLD, INDEX_POINTING_FORWARD_THRESHOLD
+from gesture_config import *
 
 
 class CanvasGestureDetector:
@@ -12,35 +11,11 @@ class CanvasGestureDetector:
         self.thumbs_up_hold_frames = 0
         self.last_thumbs_up_state = False
 
-    def _is_index_pointing_forward(self, lms):
-        """
-        Detect if index finger is pointing forward (toward camera) in depth.
-        Works regardless of tilt/rotation (left, right, up, down).
-        
-        Uses average 2D distance between finger joints - when pointing forward,
-        joints appear compressed together in 2D space.
-        """
-        # Index finger landmarks
-        index_tip_x, index_tip_y = lms[8][1], lms[8][2]   # Tip
-        index_dip_x, index_dip_y = lms[7][1], lms[7][2]   # DIP joint
-        index_pip_x, index_pip_y = lms[6][1], lms[6][2]   # PIP joint (middle)
-        index_mcp_x, index_mcp_y = lms[5][1], lms[5][2]   # MCP joint (knuckle)
-        
-        # Calculate distances between joints in 2D
-        tip_to_pip = math.sqrt((index_tip_x - index_pip_x)**2 + (index_tip_y - index_pip_y)**2)
-        tip_to_mcp = math.sqrt((index_tip_x - index_mcp_x)**2 + (index_tip_y - index_mcp_y)**2)
-        dip_to_mcp = math.sqrt((index_dip_x - index_mcp_x)**2 + (index_dip_y - index_mcp_y)**2)
-        
-        # Average distance - captures pointing forward even when tilted
-        avg_joint_distance = (tip_to_pip + tip_to_mcp + dip_to_mcp) / 3
-        
-        return avg_joint_distance < INDEX_POINTING_FORWARD_THRESHOLD
-
     def detect_canvas_gestures(self, lms, img):
         """
         Detect canvas gestures:
         - Thumbs up: Opens unified color/brush UI
-        - Index finger pointing FORWARD + Thumb extended: Draw
+        - Index finger only: Draw
         - Open hand (4+ fingers): Erase
         """
         if len(lms) == 0:
@@ -68,24 +43,16 @@ class CanvasGestureDetector:
         pinky_base = lms[PINKY_POINT][2]
 
         wrist_x, wrist_y = lms[0][1], lms[0][2]
+        thumb_dist_from_wrist = math.sqrt((thumb_tip_x - wrist_x) ** 2 + (thumb_tip_y - wrist_y) ** 2)
 
         palm_center_x = (lms[0][1] + lms[9][1]) // 2
         palm_center_y = (lms[0][2] + lms[9][2]) // 2
-        
         thumb_dist_from_palm = math.sqrt((thumb_tip_x - palm_center_x) ** 2 + (thumb_tip_y - palm_center_y) ** 2)
 
-        # Check if thumb is extended using global threshold
-        thumb_extended = thumb_dist_from_palm > THUMB_EXTENSION_THRESHOLD
+        thumb_extended = thumb_dist_from_palm > 80
 
-        # Check if index finger is pointing forward (works with any tilt)
-        index_pointing_forward = self._is_index_pointing_forward(lms)
-
-        # Check if index finger is extended using global threshold
-        index_dist_from_palm = math.sqrt(
-            (lms[INDEX_FINGER][1] - palm_center_x) ** 2 + (lms[INDEX_FINGER][2] - palm_center_y) ** 2)
-        index_extended = index_dist_from_palm > INDEX_EXTENSION_THRESHOLD
-
-        index_curled = index_dist_from_palm < 80
+        index_curled = math.sqrt(
+            (lms[INDEX_FINGER][1] - palm_center_x) ** 2 + (lms[INDEX_FINGER][2] - palm_center_y) ** 2) < 80
         middle_curled = math.sqrt(
             (lms[MIDDLE_FINGER][1] - palm_center_x) ** 2 + (lms[MIDDLE_FINGER][2] - palm_center_y) ** 2) < 80
         ring_curled = math.sqrt(
@@ -98,7 +65,6 @@ class CanvasGestureDetector:
 
         index_x, index_y = lms[INDEX_FINGER][1], lms[INDEX_FINGER][2]
 
-        # Thumbs up gesture (for opening UI)
         if thumb_really_extended and all_fingers_curled:
             self.thumbs_up_hold_frames += 1
             self.last_thumbs_up_state = True
@@ -108,32 +74,21 @@ class CanvasGestureDetector:
         else:
             self.thumbs_up_hold_frames = 0
 
-        # Distance-based finger extension detection
-        middle_dist_from_palm = math.sqrt(
-            (lms[MIDDLE_FINGER][1] - palm_center_x) ** 2 + (lms[MIDDLE_FINGER][2] - palm_center_y) ** 2)
-        ring_dist_from_palm = math.sqrt(
-            (lms[RING_FINGER][1] - palm_center_x) ** 2 + (lms[RING_FINGER][2] - palm_center_y) ** 2)
-        pinky_dist_from_palm = math.sqrt(
-            (lms[PINKY_FINGER][1] - palm_center_x) ** 2 + (lms[PINKY_FINGER][2] - palm_center_y) ** 2)
+        index_up = index_tip < index_base - 40
+        middle_up = middle_tip < middle_base - 40
+        ring_up = ring_tip < ring_base + 20
+        pinky_up = pinky_tip < pinky_base + 20
 
-        middle_extended = middle_dist_from_palm > FINGER_EXTENSION_THRESHOLD
-        ring_extended = ring_dist_from_palm > FINGER_EXTENSION_THRESHOLD
-        pinky_extended = pinky_dist_from_palm > FINGER_EXTENSION_THRESHOLD
+        fingers_up_count = sum([index_up, middle_up, ring_up, pinky_up])
 
-        fingers_extended_count = sum([index_extended, middle_extended, ring_extended, pinky_extended])
+        if fingers_up_count == 1 and index_up:
+            if self.last_thumbs_up_state:
+                self.last_thumbs_up_state = False
+                return ("THUMBS_UP_RELEASED", index_x, index_y)
+            self._reset()
+            return ("DRAW", index_x, index_y)
 
-        # DRAW: Index pointing forward + thumb extended
-        if index_pointing_forward and thumb_extended:
-            # Check that middle, ring, and pinky are NOT extended (to avoid confusion with erase gesture)
-            if not (middle_extended and ring_extended and pinky_extended):
-                if self.last_thumbs_up_state:
-                    self.last_thumbs_up_state = False
-                    return ("THUMBS_UP_RELEASED", index_x, index_y)
-                self._reset()
-                return ("DRAW", index_x, index_y)
-
-        # Erase gesture - 4+ fingers extended
-        if fingers_extended_count >= 4:
+        elif fingers_up_count >= 4:
             if self.last_thumbs_up_state:
                 self.last_thumbs_up_state = False
                 return ("THUMBS_UP_RELEASED", index_x, index_y)

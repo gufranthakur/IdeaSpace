@@ -1,8 +1,8 @@
 import math
 import sys
-sys.path.append('..')
 
-from modular.gesture_config import *
+
+from gesture_config import *
 
 
 class DragGesture:

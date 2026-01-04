@@ -1,12 +1,11 @@
 import cv2
 import numpy as np
 import sys
-sys.path.append('..')
 
 from collections import deque
-from modular.canvas_config import *
-from modular.canvas_color_picker import UnifiedColorBrushUI
-from modular.server import Server
+from canvas_config import *
+from canvas_color_picker import UnifiedColorBrushUI
+from server import Server
 
 
 class CanvasDrawing:

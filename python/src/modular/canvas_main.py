@@ -7,7 +7,7 @@ from hand_tracking_module import handDetector
 from gesture_config import *
 from canvas_drawing import CanvasDrawing
 from canvas_gestures import CanvasGestureDetector
-from clear_gesture import SplitGesture
+from flick_gesture import FlickGesture
 
 # Server connection
 PORT = 65005
@@ -18,7 +18,7 @@ detector = handDetector(maxHands=1, detectionConfidence=0.4, trackConfidence=0.4
 
 # Gesture detectors
 canvas_gesture_detector = CanvasGestureDetector()
-split_gesture = SplitGesture()
+flick_gesture = FlickGesture(return_command="SPLIT")  # For clearing canvas
 
 # Camera settings
 cap = cv2.VideoCapture(0)
@@ -78,9 +78,9 @@ while True:
     ui_is_open = canvas.unified_ui.is_active
 
     if len(right_lms) > 0:
-        # Check split gesture first - closes UI or clears canvas
-        split_action = split_gesture.detect(right_lms, img)
-        if split_action == "SPLIT":
+        # Check flick gesture first - closes UI or clears canvas
+        flick_action = flick_gesture.detect(right_lms, img)
+        if flick_action == "SPLIT":
             if ui_is_open:
                 canvas.close_unified_ui()
                 detected_action = "CLOSED UI"
@@ -88,7 +88,7 @@ while True:
                 canvas.clear_canvas()
                 detected_action = "CLEAR"
 
-        elif not split_gesture.is_active():
+        elif not flick_gesture.is_active():
             # Canvas gestures
             gesture_result = canvas_gesture_detector.detect_canvas_gestures(right_lms, img)
 

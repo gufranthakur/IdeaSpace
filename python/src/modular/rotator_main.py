@@ -2,13 +2,12 @@ import cv2
 import numpy as np
 import time
 import sys
-sys.path.append('..')
 
 from collections import deque
-from modular.server import Server
-from modular.hand_tracking_module import handDetector
-from modular.gesture_config import *
-from modular.maths import smooth_position, calculate_velocity, get_direction_from_velocity
+from server import Server
+from hand_tracking_module import handDetector
+from gesture_config import *
+from maths import smooth_position, calculate_velocity, get_direction_from_velocity
 
 # Server connection
 PORT = 65001
@@ -54,7 +53,7 @@ def is_pointing_gesture(lms):
     middle_curled = lms[MIDDLE_FINGER][2] > lms[MIDDLE_POINT][2]
     ring_curled = lms[RING_FINGER][2] > lms[RING_POINT][2]
     pinky_curled = lms[PINKY_FINGER][2] > lms[PINKY_POINT][2]
-    
+
     return index_up and middle_curled and ring_curled and pinky_curled
 
 
@@ -62,7 +61,7 @@ prev_time = time.time()
 
 while True:
     current_time = time.time()
-    
+
     success, img = cap.read()
     if not success:
         continue
@@ -82,11 +81,11 @@ while True:
     if detector.results and detector.results.multi_hand_landmarks:
         for hand_idx in range(len(detector.results.multi_hand_landmarks)):
             handedness = detector.get_handedness(hand_idx)
-            
+
             if handedness == "Right":
                 lms_small = detector.find_position(img_small, hand_idx, draw=False)
                 right_lms = [[l[0], int(l[1] * scale_x), int(l[2] * scale_y)] for l in lms_small]
-                
+
                 # Draw landmarks
                 for lm in right_lms:
                     cv2.circle(img, (lm[1], lm[2]), 5, (255, 0, 255), -1)

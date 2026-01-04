@@ -1,16 +1,34 @@
 import math
 import sys
-sys.path.append('..')
 
 from gesture_config import *
 
 
-class RemoveGesture:
-    def __init__(self):
+class FlickGesture:
+    """
+    Unified flick gesture detector using thumb-middle finger snap.
+
+    Usage:
+    - Left hand: Returns "REMOVE" (remove object)
+    - Right hand (normal mode): Returns "DRAG" (play animation)
+    - Right hand (canvas mode): Returns "SPLIT" (clear canvas)
+
+    The return value is determined by the calling code's context.
+    """
+
+    def __init__(self, return_command="FLICK"):
+        """
+        Initialize the flick gesture detector.
+
+        Args:
+            return_command: The command string to return when flick is detected
+                           (e.g., "REMOVE", "DRAG", "SPLIT")
+        """
+        self.return_command = return_command
         self.ready_pose_detected = False
         self.ready_pose_frames = 0
         self.initial_thumb_middle_dist = None
-        self.remove_detected = False
+        self.flick_detected = False
         self.cooldown = 0
         self.READY_FRAMES_REQUIRED = 4
         self.SNAP_THRESHOLD_RATIO = 0.12
@@ -19,8 +37,12 @@ class RemoveGesture:
         self.pose_stability_check = []
 
     def detect(self, lms, img):
-        """Detect remove gesture: thumb-middle circle → rapid snap apart"""
+        """
+        Detect flick gesture: thumb-middle circle → rapid snap apart
 
+        Returns:
+            self.return_command if gesture detected, None otherwise
+        """
         if self.cooldown > 0:
             self.cooldown -= 1
             return None
@@ -53,7 +75,7 @@ class RemoveGesture:
                 self.pose_stability_check = []
             return None
 
-        if self.ready_pose_detected and not self.remove_detected:
+        if self.ready_pose_detected and not self.flick_detected:
             self.frames_since_ready += 1
             distance_increase = thumb_middle_dist - self.initial_thumb_middle_dist
 
@@ -62,10 +84,10 @@ class RemoveGesture:
                 return None
 
             if distance_increase > self.SNAP_THRESHOLD_RATIO:
-                self.remove_detected = True
+                self.flick_detected = True
                 self._reset()
                 self.cooldown = 10
-                return "REMOVE"
+                return self.return_command
 
         return None
 
@@ -84,6 +106,7 @@ class RemoveGesture:
         index_dy = abs(index_tip_y - index_mcp_y)
         index_dx = abs(index_tip_x - index_mcp_x)
 
+        # Reject horizontal hand orientation
         if index_dx > index_dy:
             return False
 
@@ -96,6 +119,7 @@ class RemoveGesture:
         if extended_count < 3:
             return False
 
+        # Check thumb orientation
         thumb_tip_y = lms[THUMB][2]
         thumb_mcp_y = lms[1][2]
         thumb_tip_x = lms[THUMB][1]
@@ -104,6 +128,7 @@ class RemoveGesture:
         thumb_dy = abs(thumb_tip_y - thumb_mcp_y)
         thumb_dx = abs(thumb_tip_x - thumb_mcp_x)
 
+        # Reject if thumb is too horizontal
         if thumb_dx > thumb_dy * 2:
             return False
 
@@ -122,13 +147,15 @@ class RemoveGesture:
         self.ready_pose_detected = False
         self.ready_pose_frames = 0
         self.initial_thumb_middle_dist = None
-        self.remove_detected = False
+        self.flick_detected = False
         self.frames_since_ready = 0
         self.pose_stability_check = []
 
     def reset(self):
+        """Public reset method"""
         self._reset()
         self.cooldown = 0
 
     def is_active(self):
+        """Check if gesture is currently in ready pose (tracking)"""
         return self.ready_pose_detected

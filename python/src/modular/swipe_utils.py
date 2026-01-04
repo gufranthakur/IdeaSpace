@@ -1,8 +1,7 @@
 import time
 import sys
-sys.path.append('..')
 
-from modular.gesture_config import *
+from gesture_config import *
 
 # Swipe tracking
 swipe_start_pos = None

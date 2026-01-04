@@ -44,7 +44,7 @@ public class IdeaSpace extends ApplicationAdapter {
         controlPanel = new ControlPanel(this);
 
         space = new Space(this);
-        canvasServer = new Server(this, "src/modular/right_main.py", 65005);
+        canvasServer = new Server(this, "src/modular/left_main.py", 65003);
         decoder = new Decoder(this);
 
         modelHandler = new ModelHandler(this);

@@ -6,7 +6,7 @@ from server import Server
 from hand_tracking_module import handDetector
 from gesture_config import *
 from drag_gesture import DragGesture
-from clear_gesture import SplitGesture
+from flick_gesture import FlickGesture
 
 # Server connection
 PORT = 65002
@@ -17,7 +17,7 @@ detector = handDetector(maxHands=1, detectionConfidence=0.5, trackConfidence=0.5
 
 # Gesture detectors
 drag_gesture = DragGesture()
-split_gesture = SplitGesture()
+flick_gesture = FlickGesture(return_command="DRAG")  # For playing animations
 
 # State
 last_command_time = 0
@@ -80,15 +80,15 @@ while True:
                 for lm in right_lms:
                     cv2.circle(img, (lm[1], lm[2]), 5, (255, 0, 255), -1)
 
-    # Detect gestures with priority: Split > Drag
+    # Detect gestures with priority: Flick (Play Animation) > Drag
     if len(right_lms) > 0:
-        # Priority 1: Split gesture
-        split_action = split_gesture.detect(right_lms, img)
-        if split_action:
-            detected_action = split_action
+        # Priority 1: Flick gesture (play animation)
+        flick_action = flick_gesture.detect(right_lms, img)
+        if flick_action:
+            detected_action = flick_action
 
-        # Priority 2: Drag gesture (only if split not active)
-        if not detected_action and not split_gesture.is_active():
+        # Priority 2: Drag gesture (only if flick not active)
+        if not detected_action and not flick_gesture.is_active():
             drag_action = drag_gesture.detect(right_lms, img)
             if drag_action:
                 detected_action = drag_action
