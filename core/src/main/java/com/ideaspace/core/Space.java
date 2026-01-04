@@ -48,8 +48,8 @@ public class Space {
 
         simulationHand = new SimulationHand(65000, camera, sceneManager);
 
-        handLines = new HandLines(camera);
 
+        handLines = new HandLines(sceneManager);
         canvasRenderer = new CanvasRenderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
@@ -99,9 +99,10 @@ public class Space {
         camera.update();
 
         simulationHand.update();
+        handLines.update(simulationHand);
 
         sceneManager.update(deltaTime);
-        sceneManager.render();  // This now renders hand spheres too with PBR
+        sceneManager.render();
 
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         canvasRenderer.render();
