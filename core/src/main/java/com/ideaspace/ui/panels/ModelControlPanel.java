@@ -15,7 +15,7 @@ import com.ideaspace.ui.components.ISTable;
 import com.ideaspace.ui.components.ModelCard;
 import com.kotcrab.vis.ui.widget.VisTable;
 
-public class ControlPanel extends Stage{
+public class ModelControlPanel extends Stage{
 
     private IdeaSpace ideaSpace;
 
@@ -29,7 +29,7 @@ public class ControlPanel extends Stage{
     private Array<ModelCard> loadedModelCards;
     private Array<ModelCard> libraryModelCards;
 
-    public ControlPanel(IdeaSpace ideaSpace) {
+    public ModelControlPanel(IdeaSpace ideaSpace) {
 
         super(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
             Gdx.graphics.getWidth() + 400, Gdx.graphics.getHeight() + 200));
@@ -47,7 +47,7 @@ public class ControlPanel extends Stage{
     }
 
     private void createUI() {
-        root.setWidth(320);
+        root.setWidth(260);
         root.setHeight(870);
         root.setPosition(0, Gdx.graphics.getHeight() - root.getHeight());
         root.padTop(50);
@@ -146,14 +146,14 @@ public class ControlPanel extends Stage{
     private void rebuildLoadedModelsTable() {
         loadedModelsContentTable.clearChildren();
         for (ModelCard card : loadedModelCards) {
-            loadedModelsContentTable.add(card).width(280).height(100).padBottom(10).row();
+            loadedModelsContentTable.add(card).width(220).height(100).padBottom(10).row();
         }
     }
 
     private void rebuildLibraryModelsTable() {
         libraryModelsContentTable.clearChildren();
         for (ModelCard card : libraryModelCards) {
-            libraryModelsContentTable.add(card).width(280).height(100).padBottom(10).row();
+            libraryModelsContentTable.add(card).width(220).height(100).padBottom(10).row();
         }
     }
 

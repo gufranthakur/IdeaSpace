@@ -10,7 +10,7 @@ import com.ideaspace.core.Space;
 import com.ideaspace.handlers.AnimationHandler;
 import com.ideaspace.handlers.LectureHandler;
 import com.ideaspace.handlers.ModelHandler;
-import com.ideaspace.ui.panels.ControlPanel;
+import com.ideaspace.ui.panels.ModelControlPanel;
 import com.ideaspace.ui.screens.HomeScreen;
 import com.kotcrab.vis.ui.VisUI;
 
@@ -20,7 +20,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public HomeScreen homeScreen;
     public Space space;
-    public ControlPanel controlPanel;
+    public ModelControlPanel modelControlPanel;
 
     private Server coreGesturesServer;
     private Server zoomServer;
@@ -47,7 +47,7 @@ public class IdeaSpace extends ApplicationAdapter {
         lectureHandler = new LectureHandler(this);
 
         homeScreen = new HomeScreen(this);
-        controlPanel = new ControlPanel(this);
+        modelControlPanel = new ModelControlPanel(this);
 
         space = new Space(this);
 
@@ -65,7 +65,7 @@ public class IdeaSpace extends ApplicationAdapter {
         multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(space.getCameraController());
         multiplexer.addProcessor(homeScreen.getStage());
-        multiplexer.addProcessor(controlPanel.getStage());
+        multiplexer.addProcessor(modelControlPanel.getStage());
         Gdx.input.setInputProcessor(multiplexer);
 
         modelHandler.loadInitialModels();
@@ -95,7 +95,7 @@ public class IdeaSpace extends ApplicationAdapter {
         space.getSceneManager().updateViewport(width, height);
         space.resize(width, height);
         homeScreen.resize(width, height);
-        controlPanel.resize(width, height);
+        modelControlPanel.resize(width, height);
     }
     @Override
     public void render() {
@@ -107,7 +107,7 @@ public class IdeaSpace extends ApplicationAdapter {
             homeScreen.render(deltaTime);
         } else {
             space.render(deltaTime);
-            controlPanel.render(deltaTime);
+            modelControlPanel.render(deltaTime);
             animationHandler.update();
         }
     }

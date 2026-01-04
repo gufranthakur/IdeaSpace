@@ -41,6 +41,11 @@ public class ModelHandler {
         createModel("Drone", "models/misc/cp_drone.glb");
         createModel("Iphone 17", "models/misc/iphone17pro.glb");
         createModel("SSD", "models/misc/ssd.glb");
+        createModel("SSD", "models/misc/ssd.glb");
+        createModel("SSD", "models/misc/ssd.glb");
+        createModel("SSD", "models/misc/ssd.glb");
+        createModel("SSD", "models/misc/ssd.glb");
+        createModel("SSD", "models/misc/ssd.glb");
     }
 
     private void createModel(String name, String path) {
@@ -50,7 +55,7 @@ public class ModelHandler {
         if (name.equals("Background")) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, false);
-        ideaSpace.controlPanel.addModelCardToLibrary(modelCard);
+        ideaSpace.modelControlPanel.addModelCardToLibrary(modelCard);
     }
 
     public void loadModel(ModelMesh modelMesh) {
@@ -72,7 +77,7 @@ public class ModelHandler {
         if (modelMesh.modelName.equals("Background")) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, true);
-        ideaSpace.controlPanel.addModelCardToModelsPane(modelCard);
+        ideaSpace.modelControlPanel.addModelCardToModelsPane(modelCard);
 
         selectedModel = modelMesh;
     }
@@ -106,10 +111,10 @@ public class ModelHandler {
 
                 // Find and remove the corresponding ModelCard
                 if (modelCard != null) {
-                    ideaSpace.controlPanel.removeModelCard(modelCard);
+                    ideaSpace.modelControlPanel.removeModelCard(modelCard);
                 } else {
                     // Search for the card by matching the model name
-                    ideaSpace.controlPanel.removeModelCardByName(finalNameToRemove);
+                    ideaSpace.modelControlPanel.removeModelCardByName(finalNameToRemove);
                 }
 
                 // Clear selectedModel if we just removed it
@@ -119,7 +124,7 @@ public class ModelHandler {
             });
         } else if (modelCard != null) {
             // If model doesn't exist but card does, just remove the card
-            ideaSpace.controlPanel.removeModelCard(modelCard);
+            ideaSpace.modelControlPanel.removeModelCard(modelCard);
         }
     }
 
