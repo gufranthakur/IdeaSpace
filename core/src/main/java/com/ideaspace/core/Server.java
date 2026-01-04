@@ -12,18 +12,21 @@ public class Server implements Runnable {
 
     private String scriptPath;
     private int port;
+    private boolean debugFlag;
 
     ProcessBuilder pb;
     Process process;
 
-    public Server(IdeaSpace ideaSpace, String scriptPath, int port) {
+    public Server(IdeaSpace ideaSpace, String scriptPath, int port, boolean debugFlag) {
         this.ideaSpace = ideaSpace;
         this.scriptPath = scriptPath;
         this.port = port;
+
+        this.debugFlag = debugFlag;
     }
 
     public void startServer() {
-        startPythonScript();
+        startPythonScript(debugFlag);
 
         try {
             serverSocket = new ServerSocket(port);
@@ -70,8 +73,14 @@ public class Server implements Runnable {
         System.out.println("Socket Server stopped");
     }
 
-    private void startPythonScript() {
-        pb = new ProcessBuilder("venv/bin/python", scriptPath);
+    private void startPythonScript(boolean debugFlag) {
+
+        if (debugFlag) {
+            pb = new ProcessBuilder("venv/bin/python", scriptPath , "--debug");
+        } else {
+            pb = new ProcessBuilder("venv/bin/python", scriptPath);
+
+        }
         pb.inheritIO(); // This will show Python output directly in your Java console
 
         try {
@@ -87,7 +96,6 @@ public class Server implements Runnable {
             System.out.println("Stopping Python process...");
 
             process.destroy();
-
             try {
                 boolean exited = process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS);
 

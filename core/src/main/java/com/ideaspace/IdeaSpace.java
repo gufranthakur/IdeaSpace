@@ -21,13 +21,20 @@ public class IdeaSpace extends ApplicationAdapter {
     public HomeScreen homeScreen;
     public Space space;
     public ControlPanel controlPanel;
+
+    private Server rightHandServer;
+    private Server leftHandServer;
+    private Server zoomServer;
     private Server canvasServer;
+
     public Decoder decoder;
 
     public ModelHandler modelHandler;
     public AnimationHandler animationHandler;
 
     public Thread canvasThread;
+    public Thread rightHandServerThread;
+
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
@@ -44,7 +51,10 @@ public class IdeaSpace extends ApplicationAdapter {
         controlPanel = new ControlPanel(this);
 
         space = new Space(this);
-        canvasServer = new Server(this, "src/modular/left_main.py", 65003);
+
+        canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, false);
+        rightHandServer = new Server(this, "src/modular/right_main.py", 65001, false);
+
         decoder = new Decoder(this);
 
         modelHandler = new ModelHandler(this);
@@ -60,7 +70,9 @@ public class IdeaSpace extends ApplicationAdapter {
         modelHandler.createModels();
 
         canvasThread = new Thread(canvasServer);
-        canvasThread.start();
+        rightHandServerThread = new Thread(rightHandServer);
+        rightHandServerThread.start();
+        //canvasThread.start();
     }
 
     @Override
@@ -87,7 +99,8 @@ public class IdeaSpace extends ApplicationAdapter {
 
     @Override
     public void dispose() {
-        canvasServer.stopServer();
+        //canvasServer.stopServer();
+        rightHandServer.stopServer();
 
         homeScreen.dispose();
         modelHandler.dispose();
