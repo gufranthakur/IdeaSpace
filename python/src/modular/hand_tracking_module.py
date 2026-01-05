@@ -1,6 +1,6 @@
 import cv2
 import mediapipe as mp
-
+import time
 
 class handDetector():
     def __init__(self, mode=False, maxHands=2, detectionConfidence=0.5, trackConfidence=0.5):
@@ -16,33 +16,16 @@ class handDetector():
             min_tracking_confidence=self.trackConfidence
         )
         self.mpDraw = mp.solutions.drawing_utils
-        self.results = None
+        self.results = None  # Initialize results
 
     def find_hands(self, img, drawHands=True):
-        img = cv2.flip(img, 1)
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         self.results = self.hands.process(imgRGB)
-        hands = []
-
         if self.results.multi_hand_landmarks:
-            for hand_idx, hand_landmarks in enumerate(self.results.multi_hand_landmarks):
+            for hand_landmarks in self.results.multi_hand_landmarks:
                 if drawHands:
                     self.mpDraw.draw_landmarks(img, hand_landmarks, self.mpHands.HAND_CONNECTIONS)
-
-                # Extract hand data
-                hand_data = {
-                    "lmList": [],
-                    "handedness": self.get_handedness(hand_idx)
-                }
-
-                h, w, c = img.shape
-                for id, landmark in enumerate(hand_landmarks.landmark):
-                    cx, cy = int(landmark.x * w), int(landmark.y * h)
-                    hand_data["lmList"].append([cx, cy, landmark.z])
-
-                hands.append(hand_data)
-
-        return hands, img
+        return img
 
     def find_position(self, img, hand_number=0, draw=True):
         landmark_list = []
@@ -53,7 +36,8 @@ class handDetector():
                     h, w, c = img.shape
                     cx, cy = int(landmark.x * w), int(landmark.y * h)
                     landmark_list.append([id, cx, cy])
-                    if draw:
+                    if draw == True:
+                        # Draw filled circle with anti-aliasing
                         cv2.circle(img, (cx, cy), 7, (255, 0, 0), -1, cv2.LINE_AA)
         return landmark_list
 
@@ -63,3 +47,37 @@ class handDetector():
             if hand_number < len(self.results.multi_handedness):
                 return self.results.multi_handedness[hand_number].classification[0].label
         return None
+
+def main():
+    cap = cv2.VideoCapture(0)
+    detector = handDetector()
+    while True:
+        success, img = cap.read()
+        img = cv2.flip(img, 1)
+        img = detector.find_hands(img)
+
+        # Get handedness
+        handedness = detector.get_handedness(0)
+
+        # Only process if right hand is detected
+        if handedness == "Right":
+            lms = detector.find_position(img)
+            if len(lms) != 0:
+                pass
+
+            # Display hand type on screen
+            cv2.putText(img, f"Hand: {handedness}", (10, 30),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        elif handedness:
+            # Show that left hand was detected but not processing
+            cv2.putText(img, f"Hand: {handedness} (Not tracking)", (10, 30),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+        cv2.imshow("Image", img)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()

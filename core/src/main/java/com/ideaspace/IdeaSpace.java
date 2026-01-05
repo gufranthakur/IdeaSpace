@@ -10,6 +10,7 @@ import com.ideaspace.core.Space;
 import com.ideaspace.handlers.AnimationHandler;
 import com.ideaspace.handlers.LectureHandler;
 import com.ideaspace.handlers.ModelHandler;
+import com.ideaspace.ui.panels.ControlPanel;
 import com.ideaspace.ui.panels.ModelControlPanel;
 import com.ideaspace.ui.screens.HomeScreen;
 import com.kotcrab.vis.ui.VisUI;
@@ -20,6 +21,8 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public HomeScreen homeScreen;
     public Space space;
+
+    public ControlPanel controlPanel;
     public ModelControlPanel modelControlPanel;
 
     private Server coreGesturesServer;
@@ -47,15 +50,16 @@ public class IdeaSpace extends ApplicationAdapter {
         lectureHandler = new LectureHandler(this);
 
         homeScreen = new HomeScreen(this);
+
         modelControlPanel = new ModelControlPanel(this);
+        controlPanel = new ControlPanel(this);
 
         space = new Space(this);
-
 
         rotatorServer = new Server(this, "src/modular/rotator_main.py", 65001, false);
         coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 65002, false);
         zoomServer = new Server(this, "src/modular/zoom_main.py", 65004, false);
-        canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, false);
+        canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
 
         decoder = new Decoder(this);
 
@@ -66,6 +70,7 @@ public class IdeaSpace extends ApplicationAdapter {
         multiplexer.addProcessor(space.getCameraController());
         multiplexer.addProcessor(homeScreen.getStage());
         multiplexer.addProcessor(modelControlPanel.getStage());
+        multiplexer.addProcessor(controlPanel);
         Gdx.input.setInputProcessor(multiplexer);
 
         modelHandler.loadInitialModels();
@@ -84,9 +89,9 @@ public class IdeaSpace extends ApplicationAdapter {
         zoomServerThread = new Thread(zoomServer);
 
         //canvasThread.start();
-        //rotatorServerThread.start();
-        //coreGestureServerThread.start();
-        //zoomServerThread.start();
+        rotatorServerThread.start();
+        coreGestureServerThread.start();
+        zoomServerThread.start();
 
     }
 
@@ -96,6 +101,7 @@ public class IdeaSpace extends ApplicationAdapter {
         space.resize(width, height);
         homeScreen.resize(width, height);
         modelControlPanel.resize(width, height);
+        controlPanel.resize(width, height);
     }
     @Override
     public void render() {
@@ -107,7 +113,8 @@ public class IdeaSpace extends ApplicationAdapter {
             homeScreen.render(deltaTime);
         } else {
             space.render(deltaTime);
-            modelControlPanel.render(deltaTime);
+            modelControlPanel.render();
+            controlPanel.render();
             animationHandler.update();
         }
     }

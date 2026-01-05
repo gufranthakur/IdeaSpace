@@ -40,12 +40,7 @@ public class ModelHandler {
         createModel("mechanical_keyboard", "models/misc/mechanical_keyboard.glb");
         createModel("Drone", "models/misc/cp_drone.glb");
         createModel("Iphone 17", "models/misc/iphone17pro.glb");
-        createModel("SSD", "models/misc/ssd.glb");
-        createModel("SSD", "models/misc/ssd.glb");
-        createModel("SSD", "models/misc/ssd.glb");
-        createModel("SSD", "models/misc/ssd.glb");
-        createModel("SSD", "models/misc/ssd.glb");
-        createModel("SSD", "models/misc/ssd.glb");
+
     }
 
     private void createModel(String name, String path) {
