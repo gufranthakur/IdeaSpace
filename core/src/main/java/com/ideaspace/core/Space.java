@@ -6,8 +6,13 @@ import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
+import com.badlogic.gdx.physics.bullet.collision.*;
+import com.badlogic.gdx.physics.bullet.dynamics.*;
+import com.badlogic.gdx.math.Vector3;
 import com.ideaspace.IdeaSpace;
 
+import com.ideaspace.simulationhand.HandLines;
+import com.ideaspace.simulationhand.SimulationHand;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx;
@@ -16,6 +21,7 @@ import net.mgsx.gltf.scene3d.scene.SceneSkybox;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 
 import com.badlogic.gdx.graphics.GL20;
+
 public class Space {
 
     private IdeaSpace ideaSpace;
@@ -36,6 +42,13 @@ public class Space {
     private SimulationHand simulationHand;
     private HandLines handLines;
 
+    // Bullet physics
+    private btCollisionConfiguration collisionConfig;
+    private btCollisionDispatcher dispatcher;
+    private btBroadphaseInterface broadphase;
+    private btSequentialImpulseConstraintSolver solver;
+    private btDiscreteDynamicsWorld dynamicsWorld;
+    private btRigidBody groundBody;
 
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
@@ -45,9 +58,10 @@ public class Space {
         setupLighting();
         setupIBL();
         setupSceneManager();
+        setupPhysicsWorld();
 
         simulationHand = new SimulationHand(65000, camera, sceneManager);
-
+        simulationHand.addBodiesToWorld(this);
 
         handLines = new HandLines(sceneManager);
         canvasRenderer = new CanvasRenderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -83,13 +97,43 @@ public class Space {
     }
 
     private void setupSceneManager() {
-        sceneManager.setAmbientLight(3f); // Reduce from 3f for better PBR rendering
+        sceneManager.setAmbientLight(3f);
         sceneManager.environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
-        //sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubeMap));
         sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubeMap));
 
         skybox = new SceneSkybox(environmentCubeMap);
-        sceneManager.setSkyBox(skybox); // Uncomment this too for visual context
+        sceneManager.setSkyBox(skybox);
+    }
+
+    private void setupPhysicsWorld() {
+        collisionConfig = new btDefaultCollisionConfiguration();
+        dispatcher = new btCollisionDispatcher(collisionConfig);
+        broadphase = new btDbvtBroadphase();
+        solver = new btSequentialImpulseConstraintSolver();
+        dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
+        dynamicsWorld.setGravity(new Vector3(0, -9.8f, 0));
+
+        // Create ground platform
+        btCollisionShape groundShape = new btBoxShape(new Vector3(50, 0.5f, 50));
+        btRigidBody.btRigidBodyConstructionInfo groundInfo =
+            new btRigidBody.btRigidBodyConstructionInfo(0, null, groundShape, Vector3.Zero);
+        groundBody = new btRigidBody(groundInfo);
+        groundBody.translate(new Vector3(0, -1, 0));
+
+        // Set ground friction and restitution
+        groundBody.setRestitution(0.1f); // Low bounce
+        groundBody.setFriction(0.8f);    // High friction
+
+        dynamicsWorld.addRigidBody(groundBody);
+        groundInfo.dispose();
+    }
+
+    public void addRigidBody(btRigidBody body) {
+        dynamicsWorld.addRigidBody(body);
+    }
+
+    public void removeRigidBody(btRigidBody body) {
+        dynamicsWorld.removeRigidBody(body);
     }
 
     public void render(float deltaTime) {
@@ -97,6 +141,9 @@ public class Space {
         cameraController.update();
         ideaSpace.decoder.update(deltaTime);
         camera.update();
+
+        // Update physics
+        dynamicsWorld.stepSimulation(deltaTime, 5, 1f/60f);
 
         simulationHand.update();
         handLines.update(simulationHand);
@@ -119,6 +166,13 @@ public class Space {
         handLines.dispose();
         canvasRenderer.dispose();
 
+        // Dispose physics
+        groundBody.dispose();
+        dynamicsWorld.dispose();
+        solver.dispose();
+        broadphase.dispose();
+        dispatcher.dispose();
+        collisionConfig.dispose();
     }
 
     public void resize(int width, int height) {
@@ -129,14 +183,7 @@ public class Space {
         return cameraController;
     }
 
-
     public SceneManager getSceneManager() {
         return sceneManager;
     }
 }
-
-
-
-
-
-

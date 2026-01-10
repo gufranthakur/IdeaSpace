@@ -2,6 +2,10 @@ package com.ideaspace.handlers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
+import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
+import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.models.ModelMesh;
 import com.ideaspace.ui.components.ModelCard;
@@ -14,25 +18,21 @@ import java.util.HashMap;
 public class ModelHandler {
 
     private IdeaSpace ideaSpace;
-
-    private ModelMesh selectedModel; // Add this as a class field at the top with other fields
+    private ModelMesh selectedModel;
 
     public HashMap<String, ModelMesh> loadedModels;
     public HashMap<String, ModelMesh> modelLibrary;
 
     public ModelHandler(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
-
         loadedModels = new HashMap<>();
         modelLibrary = new HashMap<>();
-
     }
 
     public void loadInitialModels() {
-        createModel("Background", "models/backgrounds/dark_background.glb");
-        loadModel(modelLibrary.get("Background"));
-
-        getModelInstance("Background").transform.idt().scale(50f, 50f, 50f);
+        //createModel("Background", "models/backgrounds/dark_background.glb");
+        //loadModel(modelLibrary.get("Background"), false);
+        //getModelInstance("Background").transform.idt().scale(50f, 50f, 50f);
     }
 
     public void createModels() {
@@ -40,7 +40,6 @@ public class ModelHandler {
         createModel("mechanical_keyboard", "models/misc/mechanical_keyboard.glb");
         createModel("Drone", "models/misc/cp_drone.glb");
         createModel("Iphone 17", "models/misc/iphone17pro.glb");
-
     }
 
     private void createModel(String name, String path) {
@@ -54,7 +53,10 @@ public class ModelHandler {
     }
 
     public void loadModel(ModelMesh modelMesh) {
+        loadModel(modelMesh, true); // Default: enable physics
+    }
 
+    public void loadModel(ModelMesh modelMesh, boolean enablePhysics) {
         if (loadedModels.containsKey(modelMesh.modelName)) {
             System.out.println("Model already exists!");
             return;
@@ -65,6 +67,25 @@ public class ModelHandler {
 
         modelMesh.setScene(scene);
         modelMesh.setModelSceneAsset(sceneAsset);
+
+        // Add physics if enabled
+        if (enablePhysics) {
+            // Calculate bounding box
+            BoundingBox bounds = new BoundingBox();
+            scene.modelInstance.calculateBoundingBox(bounds);
+            Vector3 dimensions = bounds.getDimensions(new Vector3()).scl(0.5f);
+
+            // Create collision shape
+            btCollisionShape shape = new btBoxShape(dimensions);
+
+            // Get current position
+            Vector3 position = new Vector3();
+            scene.modelInstance.transform.getTranslation(position);
+
+            // Create physics body
+            modelMesh.createPhysicsBody(shape, 1f, position);
+            ideaSpace.space.addRigidBody(modelMesh.getRigidBody());
+        }
 
         loadedModels.put(modelMesh.modelName, modelMesh);
         ideaSpace.space.getSceneManager().addScene(modelMesh.getScene());
@@ -78,7 +99,6 @@ public class ModelHandler {
     }
 
     public void unloadModel(String modelName, ModelCard modelCard) {
-
         ModelMesh modelMesh;
         String nameToRemove;
 
@@ -93,32 +113,30 @@ public class ModelHandler {
         if (modelMesh != null) {
             ModelInstance modelInstance = modelMesh.getScene().modelInstance;
 
-            // Capture the name for removal in the lambda
             final String finalNameToRemove = nameToRemove;
             final ModelMesh finalModelMesh = modelMesh;
 
-            // Play remove animation first
             ideaSpace.animationHandler.removeModelAnimation(modelInstance, () -> {
-                // This code runs after animation completes
+                // Remove from physics world if it has a rigid body
+                if (finalModelMesh.getRigidBody() != null) {
+                    ideaSpace.space.removeRigidBody(finalModelMesh.getRigidBody());
+                }
+
                 ideaSpace.space.getSceneManager().removeScene(finalModelMesh.getScene());
-                finalModelMesh.getModelSceneAsset().dispose();
+                finalModelMesh.dispose(); // This will dispose physics components
                 loadedModels.remove(finalNameToRemove);
 
-                // Find and remove the corresponding ModelCard
                 if (modelCard != null) {
                     ideaSpace.modelControlPanel.removeModelCard(modelCard);
                 } else {
-                    // Search for the card by matching the model name
                     ideaSpace.modelControlPanel.removeModelCardByName(finalNameToRemove);
                 }
 
-                // Clear selectedModel if we just removed it
                 if (finalModelMesh == selectedModel) {
                     selectedModel = null;
                 }
             });
         } else if (modelCard != null) {
-            // If model doesn't exist but card does, just remove the card
             ideaSpace.modelControlPanel.removeModelCard(modelCard);
         }
     }
@@ -129,7 +147,7 @@ public class ModelHandler {
 
     public void dispose() {
         for (ModelMesh modelMesh : loadedModels.values()) {
-            modelMesh.getModelSceneAsset().dispose();
+            modelMesh.dispose(); // Now disposes both model and physics
         }
     }
 
@@ -155,22 +173,20 @@ public class ModelHandler {
         String randomModelName = availableModels.get(randomIndex);
 
         ModelMesh randomModel = modelLibrary.get(randomModelName);
-        loadModel(randomModel);
+        loadModel(randomModel, true); // Enable physics for random models
         selectedModel = randomModel;
     }
 
     public void splitModel() {
         if (selectedModel == null) {
             System.out.println("No model selected!");
-
             return;
         }
 
         Scene scene = selectedModel.getScene();
 
-
         if (scene.animationController != null) {
-            scene.animationController.animate("split", 1, 1f, null, 0f);
+            scene.animationController.animate("Split", 1, 1f, null, 0f);
         } else {
             System.out.println("Model has no animation controller!");
         }
@@ -183,5 +199,4 @@ public class ModelHandler {
     public IdeaSpace getIdeaSpace() {
         return ideaSpace;
     }
-
 }

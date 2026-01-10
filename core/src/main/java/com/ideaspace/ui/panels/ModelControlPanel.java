@@ -21,7 +21,7 @@ public class ModelControlPanel extends Stage{
 
     private ISTable root;
     private ISScrollPane loadedModelsScrollPane, libraryModelsScrollPane;
-    private VisTable loadedModelsContentTable, libraryModelsContentTable;
+    private Table loadedModelsContentTable, libraryModelsContentTable;
 
     private ISButton loadedModelButton, libraryModelButton;
 
@@ -73,8 +73,8 @@ public class ModelControlPanel extends Stage{
         loadedModelsScrollPane = new ISScrollPane();
         libraryModelsScrollPane = new ISScrollPane();
 
-        loadedModelsContentTable = new VisTable();
-        libraryModelsContentTable = new VisTable();
+        loadedModelsContentTable = new Table();
+        libraryModelsContentTable = new Table();
 
         loadedModelsScrollPane.setActor(loadedModelsContentTable);
         libraryModelsScrollPane.setActor(libraryModelsContentTable);

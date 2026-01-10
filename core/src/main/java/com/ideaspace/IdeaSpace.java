@@ -4,12 +4,14 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.physics.bullet.Bullet;
 import com.ideaspace.core.Decoder;
 import com.ideaspace.models.Server;
 import com.ideaspace.core.Space;
 import com.ideaspace.handlers.AnimationHandler;
 import com.ideaspace.handlers.LectureHandler;
 import com.ideaspace.handlers.ModelHandler;
+import com.ideaspace.simulationhand.ScriptExecutor;
 import com.ideaspace.ui.panels.ControlPanel;
 import com.ideaspace.ui.panels.ModelControlPanel;
 import com.ideaspace.ui.screens.HomeScreen;
@@ -35,6 +37,9 @@ public class IdeaSpace extends ApplicationAdapter {
     public ModelHandler modelHandler;
     public AnimationHandler animationHandler;
 
+    private ScriptExecutor scriptExecutor;
+    private Thread simulationThread;
+
     public Thread canvasThread, coreGestureServerThread, zoomServerThread, rotatorServerThread;
 
     private InputMultiplexer multiplexer;
@@ -46,6 +51,7 @@ public class IdeaSpace extends ApplicationAdapter {
     @Override
     public void create() {
         VisUI.load();
+        Bullet.init();
 
         lectureHandler = new LectureHandler(this);
 
@@ -60,6 +66,8 @@ public class IdeaSpace extends ApplicationAdapter {
         coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 65002, false);
         zoomServer = new Server(this, "src/modular/zoom_main.py", 65004, false);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
+
+        scriptExecutor = new ScriptExecutor(this);
 
         decoder = new Decoder(this);
 
@@ -88,10 +96,13 @@ public class IdeaSpace extends ApplicationAdapter {
         coreGestureServerThread = new Thread(coreGesturesServer);
         zoomServerThread = new Thread(zoomServer);
 
+        simulationThread = new Thread(scriptExecutor);
+        simulationThread.start();
+
         //canvasThread.start();
-        rotatorServerThread.start();
-        coreGestureServerThread.start();
-        zoomServerThread.start();
+        //rotatorServerThread.start();
+        //coreGestureServerThread.start();
+        //zoomServerThread.start();
 
     }
 
@@ -125,12 +136,12 @@ public class IdeaSpace extends ApplicationAdapter {
         coreGesturesServer.stopServer();
         rotatorServer.stopServer();
         zoomServer.stopServer();
+        scriptExecutor.stopPythonScript();
 
         homeScreen.dispose();
         modelHandler.dispose();
         space.getSceneManager().dispose();
         space.dispose();
-
 
         VisUI.dispose();
     }

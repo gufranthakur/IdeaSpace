@@ -6,7 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.kotcrab.vis.ui.widget.VisScrollPane;
 
-public class ISScrollPane extends VisScrollPane {
+public class ISScrollPane extends ScrollPane {
 
     public ISScrollPane() {
         super(null);

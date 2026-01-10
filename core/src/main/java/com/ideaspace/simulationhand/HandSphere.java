@@ -1,4 +1,4 @@
-package com.ideaspace.core;
+package com.ideaspace.simulationhand;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.Model;

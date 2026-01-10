@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.ideaspace.models.Lecture;
@@ -16,7 +17,7 @@ import com.kotcrab.vis.ui.widget.*;
 
 import java.util.ArrayList;
 
-public class LectureScreen extends VisTable {
+public class LectureScreen extends Table {
 
     private HomeScreen homeScreen;
     private boolean DEBUG_MODE;

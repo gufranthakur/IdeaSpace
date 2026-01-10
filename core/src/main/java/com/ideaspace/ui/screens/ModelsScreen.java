@@ -12,7 +12,7 @@ import com.ideaspace.ui.components.ISTable;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.tabbedpane.Tab;
 
-public class ModelsScreen extends VisTable {
+public class ModelsScreen extends Table {
 
     private HomeScreen homeScreen;
     private ISTable contentTable;

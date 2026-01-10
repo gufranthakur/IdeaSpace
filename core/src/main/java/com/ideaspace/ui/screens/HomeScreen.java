@@ -22,7 +22,7 @@ public class HomeScreen {
     private boolean DEBUG_MODE;
 
     private Stage stage;
-    private VisTable root;
+    private Table root;
 
     private LectureScreen lectureScreen;
     private ModelsScreen modelsScreen;
@@ -43,7 +43,7 @@ public class HomeScreen {
 
         stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
             Gdx.graphics.getWidth() + 400, Gdx.graphics.getHeight() + 200));
-        root = new VisTable();
+        root = new Table();
         root.setFillParent(true);
         root.top().left();
 

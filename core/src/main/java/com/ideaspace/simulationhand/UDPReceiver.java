@@ -1,4 +1,4 @@
-package com.ideaspace.core;
+package com.ideaspace.simulationhand;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
