@@ -31,15 +31,18 @@ public class ModelHandler {
 
     public void loadInitialModels() {
         //createModel("Background", "models/backgrounds/dark_background.glb");
-        //loadModel(modelLibrary.get("Background"), false);
-        //getModelInstance("Background").transform.idt().scale(50f, 50f, 50f);
+        //loadModel(modelLibrary.get("Background"), true);
+        //getModelInstance("Background").transform.idt().scale(1, 1, 1);
     }
 
     public void createModels() {
         createModel("Esp32", "models/microcontrollers/esp32.glb");
         createModel("mechanical_keyboard", "models/misc/mechanical_keyboard.glb");
         createModel("Drone", "models/misc/cp_drone.glb");
+
+
         createModel("Iphone 17", "models/misc/iphone17pro.glb");
+
     }
 
     private void createModel(String name, String path) {
@@ -96,6 +99,7 @@ public class ModelHandler {
         ideaSpace.modelControlPanel.addModelCardToModelsPane(modelCard);
 
         selectedModel = modelMesh;
+
     }
 
     public void unloadModel(String modelName, ModelCard modelCard) {

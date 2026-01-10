@@ -26,7 +26,7 @@ public class SimulationHand implements Disposable {
     public float sphereSize = 0.08f;
     public float handScaleX = 4f;
     public float handScaleY = 4f;
-    public float handScaleZ = 4f;
+    public float handScaleZ = 2f;
 
     public float offsetForward = 2f;
     public float offsetRight = 0f;
@@ -64,7 +64,7 @@ public class SimulationHand implements Disposable {
             sceneManager.addScene(scene);
 
             // Create kinematic rigid body
-            btSphereShape shape = new btSphereShape(sphereSize / 2f);
+            btSphereShape shape = new btSphereShape(sphereSize / 4f);
             handShapes.add(shape);
 
             btRigidBody.btRigidBodyConstructionInfo info =

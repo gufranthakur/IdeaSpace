@@ -6,9 +6,11 @@ import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
+import com.badlogic.gdx.physics.bullet.DebugDrawer;
 import com.badlogic.gdx.physics.bullet.collision.*;
 import com.badlogic.gdx.physics.bullet.dynamics.*;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.ideaspace.IdeaSpace;
 
 import com.ideaspace.simulationhand.HandLines;
@@ -50,6 +52,8 @@ public class Space {
     private btDiscreteDynamicsWorld dynamicsWorld;
     private btRigidBody groundBody;
 
+    private DebugDrawer debugDrawer;
+
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
         sceneManager = new SceneManager();
@@ -65,6 +69,10 @@ public class Space {
 
         handLines = new HandLines(sceneManager);
         canvasRenderer = new CanvasRenderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        debugDrawer = new DebugDrawer();
+        debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_DrawWireframe);
+        dynamicsWorld.setDebugDrawer(debugDrawer);
     }
 
     private void setupCamera() {
@@ -143,6 +151,9 @@ public class Space {
         camera.update();
 
         // Update physics
+        debugDrawer.begin(camera);
+        dynamicsWorld.debugDrawWorld();
+        debugDrawer.end();
         dynamicsWorld.stepSimulation(deltaTime, 5, 1f/60f);
 
         simulationHand.update();
@@ -152,7 +163,7 @@ public class Space {
         sceneManager.render();
 
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
-        canvasRenderer.render();
+        //canvasRenderer.render();
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
 
@@ -165,6 +176,7 @@ public class Space {
         simulationHand.dispose();
         handLines.dispose();
         canvasRenderer.dispose();
+        debugDrawer.dispose();
 
         // Dispose physics
         groundBody.dispose();
