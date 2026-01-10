@@ -15,17 +15,18 @@ serverAddressPort = ("127.0.0.1", 65000)
 while True:
     # Get image frame
     success, img = cap.read()
+    img = cv2.flip(img, 1)  # Flip horizontally
     # Find the hand and its landmarks
-    hands, img = detector.find_hands(img)  # with draw
-    # hands = detector.findHands(img, draw=False)  # without draw
+    img = detector.find_hands(img)  # Returns only img
     data = []
 
-    if hands:
-        # Hand 1
-        hand = hands[0]
-        lmList = hand["lmList"]  # List of 21 Landmark points
-        for lm in lmList:
-            data.extend([lm[0], lm[1], lm[2]])
+    # Check if hands were detected via results
+    if detector.results and detector.results.multi_hand_landmarks:
+        # Process each detected hand
+        for hand_num in range(len(detector.results.multi_hand_landmarks)):
+            lmList = detector.find_position(img, hand_number=hand_num, draw=False)
+            for lm in lmList:
+                data.extend([lm[1], lm[2], 0])  # lm[0] is id, lm[1] is x, lm[2] is y
 
         sock.sendto(str.encode(str(data)), serverAddressPort)
 
