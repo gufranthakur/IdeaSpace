@@ -4,8 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
-import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
-import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
+
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.models.ModelMesh;
 import com.ideaspace.ui.components.ModelCard;
@@ -30,18 +29,21 @@ public class ModelHandler {
     }
 
     public void loadInitialModels() {
-        //createModel("Background", "models/backgrounds/dark_background.glb");
-        //loadModel(modelLibrary.get("Background"), true);
-        //getModelInstance("Background").transform.idt().scale(1, 1, 1);
+        createModel("Background", "models/backgrounds/dark_background.glb");
+        loadModel(modelLibrary.get("Background"));
+        getModelInstance("Background").transform.idt().scale(1, 1, 1);
+
+
     }
 
     public void createModels() {
         createModel("Esp32", "models/microcontrollers/esp32.glb");
         createModel("mechanical_keyboard", "models/misc/mechanical_keyboard.glb");
         createModel("Drone", "models/misc/cp_drone.glb");
-
-
         createModel("Iphone 17", "models/misc/iphone17pro.glb");
+
+        loadModel(modelLibrary.get("Esp32"));
+        getModelInstance("Esp32").transform.idt().scale(0.5f, 0.5f, 0.5f);
 
     }
 
@@ -56,10 +58,6 @@ public class ModelHandler {
     }
 
     public void loadModel(ModelMesh modelMesh) {
-        loadModel(modelMesh, true); // Default: enable physics
-    }
-
-    public void loadModel(ModelMesh modelMesh, boolean enablePhysics) {
         if (loadedModels.containsKey(modelMesh.modelName)) {
             System.out.println("Model already exists!");
             return;
@@ -71,27 +69,11 @@ public class ModelHandler {
         modelMesh.setScene(scene);
         modelMesh.setModelSceneAsset(sceneAsset);
 
-        // Add physics if enabled
-        if (enablePhysics) {
-            // Calculate bounding box
-            BoundingBox bounds = new BoundingBox();
-            scene.modelInstance.calculateBoundingBox(bounds);
-            Vector3 dimensions = bounds.getDimensions(new Vector3()).scl(0.5f);
-
-            // Create collision shape
-            btCollisionShape shape = new btBoxShape(dimensions);
-
-            // Get current position
-            Vector3 position = new Vector3();
-            scene.modelInstance.transform.getTranslation(position);
-
-            // Create physics body
-            modelMesh.createPhysicsBody(shape, 1f, position);
-            ideaSpace.space.addRigidBody(modelMesh.getRigidBody());
-        }
-
         loadedModels.put(modelMesh.modelName, modelMesh);
         ideaSpace.space.getSceneManager().addScene(modelMesh.getScene());
+
+        // Update grab handler with current loaded models
+        ideaSpace.space.getGrabHandler().setLoadedModels(loadedModels.values());
 
         if (modelMesh.modelName.equals("Background")) return;
 
@@ -99,7 +81,6 @@ public class ModelHandler {
         ideaSpace.modelControlPanel.addModelCardToModelsPane(modelCard);
 
         selectedModel = modelMesh;
-
     }
 
     public void unloadModel(String modelName, ModelCard modelCard) {
@@ -121,14 +102,13 @@ public class ModelHandler {
             final ModelMesh finalModelMesh = modelMesh;
 
             ideaSpace.animationHandler.removeModelAnimation(modelInstance, () -> {
-                // Remove from physics world if it has a rigid body
-                if (finalModelMesh.getRigidBody() != null) {
-                    ideaSpace.space.removeRigidBody(finalModelMesh.getRigidBody());
-                }
 
                 ideaSpace.space.getSceneManager().removeScene(finalModelMesh.getScene());
-                finalModelMesh.dispose(); // This will dispose physics components
+                finalModelMesh.dispose();
                 loadedModels.remove(finalNameToRemove);
+
+                // Update grab handler after removal
+                ideaSpace.space.getGrabHandler().setLoadedModels(loadedModels.values());
 
                 if (modelCard != null) {
                     ideaSpace.modelControlPanel.removeModelCard(modelCard);
@@ -151,7 +131,7 @@ public class ModelHandler {
 
     public void dispose() {
         for (ModelMesh modelMesh : loadedModels.values()) {
-            modelMesh.dispose(); // Now disposes both model and physics
+            modelMesh.dispose();
         }
     }
 
@@ -177,7 +157,7 @@ public class ModelHandler {
         String randomModelName = availableModels.get(randomIndex);
 
         ModelMesh randomModel = modelLibrary.get(randomModelName);
-        loadModel(randomModel, true); // Enable physics for random models
+        loadModel(randomModel);
         selectedModel = randomModel;
     }
 

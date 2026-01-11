@@ -8,7 +8,6 @@
     api "com.github.mgsx-dev.gdx-gltf:gltf:$gdxGltfVersion"
     api "com.kotcrab.vis:vis-ui:$visUiVersion"
     api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
-    api "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
 
 
 

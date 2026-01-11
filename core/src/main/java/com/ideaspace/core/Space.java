@@ -6,12 +6,10 @@ import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
-import com.badlogic.gdx.physics.bullet.DebugDrawer;
-import com.badlogic.gdx.physics.bullet.collision.*;
-import com.badlogic.gdx.physics.bullet.dynamics.*;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
+
 import com.ideaspace.IdeaSpace;
+import com.ideaspace.handlers.GrabHandler;
 
 import com.ideaspace.simulationhand.HandLines;
 import com.ideaspace.simulationhand.SimulationHand;
@@ -43,16 +41,8 @@ public class Space {
 
     private SimulationHand simulationHand;
     private HandLines handLines;
+    private GrabHandler grabHandler;
 
-    // Bullet physics
-    private btCollisionConfiguration collisionConfig;
-    private btCollisionDispatcher dispatcher;
-    private btBroadphaseInterface broadphase;
-    private btSequentialImpulseConstraintSolver solver;
-    private btDiscreteDynamicsWorld dynamicsWorld;
-    private btRigidBody groundBody;
-
-    private DebugDrawer debugDrawer;
 
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
@@ -62,21 +52,17 @@ public class Space {
         setupLighting();
         setupIBL();
         setupSceneManager();
-        setupPhysicsWorld();
 
         simulationHand = new SimulationHand(65000, camera, sceneManager);
-        simulationHand.addBodiesToWorld(this);
+        grabHandler = new GrabHandler(simulationHand, camera);
 
         handLines = new HandLines(sceneManager);
         canvasRenderer = new CanvasRenderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        debugDrawer = new DebugDrawer();
-        debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_DrawWireframe);
-        dynamicsWorld.setDebugDrawer(debugDrawer);
     }
 
     private void setupCamera() {
-        camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        camera = new PerspectiveCamera(80f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 20f / 1000f;
         camera.far = 600;
         sceneManager.setCamera(camera);
@@ -113,35 +99,8 @@ public class Space {
         sceneManager.setSkyBox(skybox);
     }
 
-    private void setupPhysicsWorld() {
-        collisionConfig = new btDefaultCollisionConfiguration();
-        dispatcher = new btCollisionDispatcher(collisionConfig);
-        broadphase = new btDbvtBroadphase();
-        solver = new btSequentialImpulseConstraintSolver();
-        dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
-        dynamicsWorld.setGravity(new Vector3(0, -9.8f, 0));
-
-        // Create ground platform
-        btCollisionShape groundShape = new btBoxShape(new Vector3(50, 0.5f, 50));
-        btRigidBody.btRigidBodyConstructionInfo groundInfo =
-            new btRigidBody.btRigidBodyConstructionInfo(0, null, groundShape, Vector3.Zero);
-        groundBody = new btRigidBody(groundInfo);
-        groundBody.translate(new Vector3(0, -1, 0));
-
-        // Set ground friction and restitution
-        groundBody.setRestitution(0.1f); // Low bounce
-        groundBody.setFriction(0.8f);    // High friction
-
-        dynamicsWorld.addRigidBody(groundBody);
-        groundInfo.dispose();
-    }
-
-    public void addRigidBody(btRigidBody body) {
-        dynamicsWorld.addRigidBody(body);
-    }
-
-    public void removeRigidBody(btRigidBody body) {
-        dynamicsWorld.removeRigidBody(body);
+    public GrabHandler getGrabHandler() {
+        return grabHandler;
     }
 
     public void render(float deltaTime) {
@@ -150,21 +109,19 @@ public class Space {
         ideaSpace.decoder.update(deltaTime);
         camera.update();
 
-        // Update physics
-        debugDrawer.begin(camera);
-        dynamicsWorld.debugDrawWorld();
-        debugDrawer.end();
-        dynamicsWorld.stepSimulation(deltaTime, 5, 1f/60f);
-
         simulationHand.update();
+        grabHandler.update();
+
         handLines.update(simulationHand);
 
         sceneManager.update(deltaTime);
         sceneManager.render();
 
-        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
-        //canvasRenderer.render();
-        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+
+//
+//        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+//        //canvasRenderer.render();
+//        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
 
     public void dispose() {
@@ -176,15 +133,8 @@ public class Space {
         simulationHand.dispose();
         handLines.dispose();
         canvasRenderer.dispose();
-        debugDrawer.dispose();
+        grabHandler.dispose();
 
-        // Dispose physics
-        groundBody.dispose();
-        dynamicsWorld.dispose();
-        solver.dispose();
-        broadphase.dispose();
-        dispatcher.dispose();
-        collisionConfig.dispose();
     }
 
     public void resize(int width, int height) {

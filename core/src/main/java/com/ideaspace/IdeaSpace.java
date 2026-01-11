@@ -4,9 +4,6 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.physics.bullet.Bullet;
-import com.badlogic.gdx.physics.bullet.DebugDrawer;
-import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.ideaspace.core.Decoder;
 import com.ideaspace.models.Server;
 import com.ideaspace.core.Space;
@@ -47,14 +44,12 @@ public class IdeaSpace extends ApplicationAdapter {
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
-    private DebugDrawer debugDrawer;
     private boolean lectureFlag = true;
 
 
     @Override
     public void create() {
         VisUI.load();
-        Bullet.init();
 
         lectureHandler = new LectureHandler(this);
 
@@ -86,9 +81,6 @@ public class IdeaSpace extends ApplicationAdapter {
 
         modelHandler.loadInitialModels();
         modelHandler.createModels();
-
-        debugDrawer = new DebugDrawer();
-        debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_DrawWireframe);
 
         initThreads();
     }

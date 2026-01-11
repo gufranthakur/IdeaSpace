@@ -7,8 +7,6 @@ import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
-import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
@@ -26,19 +24,20 @@ public class SimulationHand implements Disposable {
     public float sphereSize = 0.08f;
     public float handScaleX = 4f;
     public float handScaleY = 4f;
-    public float handScaleZ = 2f;
+    public float handScaleZ = 4f;
 
-    public float offsetForward = 2f;
+    public float offsetForward = 1f;
     public float offsetRight = 0f;
     public float offsetUp = 0f;
 
     public float imgWidth = 640f;
     public float imgHeight = 480f;
 
+    public float lerpAlpha = 0.50f; // Smoothing factor (lower = smoother, higher = more responsive)
+
     private UDPReceiver receiver;
     private Array<Scene> handScenes;
-    private Array<btRigidBody> handBodies;
-    private Array<btSphereShape> handShapes;
+
     private Model sphereModel;
     private Camera camera;
     private SceneManager sceneManager;
@@ -47,13 +46,16 @@ public class SimulationHand implements Disposable {
     private Vector3 tempRight = new Vector3();
     private Vector3 tempUp = new Vector3();
 
+    // Interpolation arrays
+    private Vector3[] currentPositions = new Vector3[LANDMARK_COUNT];
+    private Vector3[] targetPositions = new Vector3[LANDMARK_COUNT];
+    private boolean hasInitialData = false;
+
     public SimulationHand(int port, Camera camera, SceneManager sceneManager) {
         this.camera = camera;
         this.sceneManager = sceneManager;
         receiver = new UDPReceiver(port);
         handScenes = new Array<>(LANDMARK_COUNT);
-        handBodies = new Array<>(LANDMARK_COUNT);
-        handShapes = new Array<>(LANDMARK_COUNT);
 
         createSphereModel();
 
@@ -63,34 +65,11 @@ public class SimulationHand implements Disposable {
             handScenes.add(scene);
             sceneManager.addScene(scene);
 
-            // Create kinematic rigid body
-            btSphereShape shape = new btSphereShape(sphereSize / 4f);
-            handShapes.add(shape);
-
-            btRigidBody.btRigidBodyConstructionInfo info =
-                new btRigidBody.btRigidBodyConstructionInfo(0, null, shape, Vector3.Zero);
-            btRigidBody body = new btRigidBody(info);
-
-            // Make it kinematic (not affected by forces, but affects others)
-            body.setCollisionFlags(body.getCollisionFlags() |
-                btRigidBody.CollisionFlags.CF_KINEMATIC_OBJECT);
-            body.setActivationState(4); // DISABLE_DEACTIVATION
-
-            // Set friction for grabbing
-            body.setFriction(1.0f);
-            body.setRestitution(0.0f);
-
-            handBodies.add(body);
-            info.dispose();
+            currentPositions[i] = new Vector3();
+            targetPositions[i] = new Vector3();
         }
 
         receiver.start();
-    }
-
-    public void addBodiesToWorld(com.ideaspace.core.Space space) {
-        for (btRigidBody body : handBodies) {
-            space.addRigidBody(body);
-        }
     }
 
     private void createSphereModel() {
@@ -107,7 +86,7 @@ public class SimulationHand implements Disposable {
         Material mat = scene.modelInstance.materials.get(0);
         mat.set(PBRColorAttribute.createBaseColorFactor(color));
         mat.set(PBRFloatAttribute.createMetallic(0.2f));
-        mat.set(PBRFloatAttribute.createRoughness(0.5f));
+        mat.set(PBRFloatAttribute.createRoughness(0.0f));
         return scene;
     }
 
@@ -122,6 +101,15 @@ public class SimulationHand implements Disposable {
 
     public void update() {
         String data = receiver.getData();
+
+        // Always update visual positions with interpolation
+        for (int i = 0; i < LANDMARK_COUNT; i++) {
+            if (hasInitialData) {
+                currentPositions[i].lerp(targetPositions[i], lerpAlpha);
+            }
+            handScenes.get(i).modelInstance.transform.setToTranslation(currentPositions[i]);
+        }
+
         if (data == null || data.isEmpty()) return;
 
         try {
@@ -142,7 +130,7 @@ public class SimulationHand implements Disposable {
             // Get wrist position (landmark 0) to use as hand base
             float wristX = (parsedData[0] / imgWidth - 0.5f) * handScaleX;
             float wristY = (0.5f - parsedData[1] / imgHeight) * handScaleY;
-            float wristZ = (parsedData[2] / 100f) * handScaleZ; // Use wrist Z as depth offset
+            float wristZ = (parsedData[2] / 100f) * handScaleZ;
 
             // Calculate base position with wrist Z affecting forward offset
             float baseForward = offsetForward + wristZ;
@@ -160,13 +148,20 @@ public class SimulationHand implements Disposable {
                 float y = by + tempRight.y * localX + tempUp.y * localY + tempForward.y * localZ;
                 float z = bz + tempRight.z * localX + tempUp.z * localY + tempForward.z * localZ;
 
-                handScenes.get(i).modelInstance.transform.setToTranslation(x, y, z);
-                handBodies.get(i).setWorldTransform(handScenes.get(i).modelInstance.transform);
+                targetPositions[i].set(x, y, z);
+
+                // Initialize current position on first data
+                if (!hasInitialData) {
+                    currentPositions[i].set(targetPositions[i]);
+                }
             }
+
+            hasInitialData = true;
         } catch (Exception e) {}
     }
+
     public Vector3 getPosition(int index) {
-        return handScenes.get(index).modelInstance.transform.getTranslation(new Vector3());
+        return new Vector3(currentPositions[index]);
     }
 
     public Array<Scene> getHandScenes() {
@@ -179,12 +174,6 @@ public class SimulationHand implements Disposable {
         sphereModel.dispose();
         for (Scene scene : handScenes) {
             sceneManager.removeScene(scene);
-        }
-        for (btRigidBody body : handBodies) {
-            body.dispose();
-        }
-        for (btSphereShape shape : handShapes) {
-            shape.dispose();
         }
     }
 }
