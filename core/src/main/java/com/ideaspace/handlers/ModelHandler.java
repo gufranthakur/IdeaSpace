@@ -31,7 +31,7 @@ public class ModelHandler {
     public void loadInitialModels() {
         createModel("Background", "models/backgrounds/dark_background.glb");
         loadModel(modelLibrary.get("Background"));
-        getModelInstance("Background").transform.idt().scale(1, 1, 1);
+        getModelInstance("Background").transform.idt().scale(10, 10, 10);
 
 
     }

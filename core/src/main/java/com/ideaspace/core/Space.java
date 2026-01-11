@@ -109,16 +109,14 @@ public class Space {
         ideaSpace.decoder.update(deltaTime);
         camera.update();
 
-        simulationHand.update();
-        grabHandler.update();
+        //simulationHand.update();
+       // grabHandler.update();
 
-        handLines.update(simulationHand);
+        //handLines.update(simulationHand);
 
         sceneManager.update(deltaTime);
         sceneManager.render();
 
-
-//
 //        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
 //        //canvasRenderer.render();
 //        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);

@@ -27,9 +27,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public ModelControlPanel modelControlPanel;
 
     private Server coreGesturesServer;
-    private Server zoomServer;
     private Server canvasServer;
-    private Server rotatorServer;
 
     public Decoder decoder;
 
@@ -39,7 +37,7 @@ public class IdeaSpace extends ApplicationAdapter {
     private ScriptExecutor scriptExecutor;
     private Thread simulationThread;
 
-    public Thread canvasThread, coreGestureServerThread, zoomServerThread, rotatorServerThread;
+    public Thread canvasThread, coreGestureServerThread;
 
     private InputMultiplexer multiplexer;
 
@@ -60,9 +58,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
         space = new Space(this);
 
-        rotatorServer = new Server(this, "src/modular/rotator_main.py", 65001, false);
-        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 65002, false);
-        zoomServer = new Server(this, "src/modular/zoom_main.py", 65004, false);
+        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 65000, true);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
 
         scriptExecutor = new ScriptExecutor(this);
@@ -90,17 +86,15 @@ public class IdeaSpace extends ApplicationAdapter {
         canvasThread = new Thread(canvasServer);
 
         //-------------------------------------------------------------------------------
-        rotatorServerThread = new Thread(rotatorServer);
         coreGestureServerThread = new Thread(coreGesturesServer);
-        zoomServerThread = new Thread(zoomServer);
 
         simulationThread = new Thread(scriptExecutor);
         simulationThread.start();
 
-        //canvasThread.start();
-        //rotatorServerThread.start();
-        //coreGestureServerThread.start();
-        //zoomServerThread.start();
+       // canvasThread.start();
+
+        coreGestureServerThread.start();
+
 
     }
 
@@ -132,8 +126,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public void dispose() {
         //canvasServer.stopServer();
         coreGesturesServer.stopServer();
-        rotatorServer.stopServer();
-        zoomServer.stopServer();
+
         scriptExecutor.stopPythonScript();
 
         homeScreen.dispose();
