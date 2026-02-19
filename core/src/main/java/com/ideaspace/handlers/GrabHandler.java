@@ -13,7 +13,7 @@ import java.util.Collection;
 
 public class GrabHandler {
 
-    private static final float PINCH_THRESHOLD = 0.20f;
+    private static final float PINCH_THRESHOLD = 0.15f;
     private static final float RAY_LENGTH = 100f;
 
     private static final int WRIST = 0;
@@ -38,7 +38,7 @@ public class GrabHandler {
 
     // Movement multipliers (applied before lerping)
     public float positionMultiplier = 3.0f;
-    public float rotationMultiplier = 20.0f;
+    public float rotationMultiplier = 10.0f;
 
     // Target values for lerping
     private Vector3 targetPosition = new Vector3();

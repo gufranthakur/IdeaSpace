@@ -134,10 +134,25 @@ try:
 
         # Process ZOOM gesture
         if len(left_lms) > 0 and len(right_lms) > 0:
-            left_index_extended = left_lms[INDEX_FINGER][2] < left_lms[INDEX_POINT][2]
-            right_index_extended = right_lms[INDEX_FINGER][2] < right_lms[INDEX_POINT][2]
+            # Check if only index finger is extended on LEFT hand
+            left_index_extended = left_lms[INDEX_FINGER][2] < left_lms[INDEX_POINT][2] - 20
+            left_middle_curled = left_lms[MIDDLE_FINGER][2] > left_lms[MIDDLE_POINT][2] - 10
+            left_ring_curled = left_lms[RING_FINGER][2] > left_lms[RING_POINT][2] - 10
+            left_pinky_curled = left_lms[PINKY_FINGER][2] > left_lms[PINKY_POINT][2] - 10
 
-            if left_index_extended and right_index_extended:
+            left_valid_pose = (left_index_extended and left_middle_curled and
+                              left_ring_curled and left_pinky_curled)
+
+            # Check if only index finger is extended on RIGHT hand
+            right_index_extended = right_lms[INDEX_FINGER][2] < right_lms[INDEX_POINT][2] - 20
+            right_middle_curled = right_lms[MIDDLE_FINGER][2] > right_lms[MIDDLE_POINT][2] - 10
+            right_ring_curled = right_lms[RING_FINGER][2] > right_lms[RING_POINT][2] - 10
+            right_pinky_curled = right_lms[PINKY_FINGER][2] > right_lms[PINKY_POINT][2] - 10
+
+            right_valid_pose = (right_index_extended and right_middle_curled and
+                               right_ring_curled and right_pinky_curled)
+
+            if left_valid_pose and right_valid_pose:
                 left_index_x, left_index_y = left_lms[INDEX_FINGER][1], left_lms[INDEX_FINGER][2]
                 right_index_x, right_index_y = right_lms[INDEX_FINGER][1], right_lms[INDEX_FINGER][2]
 
