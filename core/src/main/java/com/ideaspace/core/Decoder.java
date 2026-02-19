@@ -10,7 +10,7 @@ public class Decoder {
 
     // Velocity-based movement (units per second)
     public float cameraLookSpeed = 1.5f;   // Look rotation speed
-    public float zoomSpeed = 6.0f;         // Zoom speed
+    public float zoomSpeed = 2.0f;         // Zoom speed
     public float rotationSpeed = 180f;      // Model rotation speed (degrees per second)
 
     // Smoothing factors
@@ -107,7 +107,7 @@ public class Decoder {
                 });
             }
 
-            case "SPLIT" -> {
+            case "SPLIT", "ANIMATE" -> {
                 Gdx.app.postRunnable(() -> {
                     ideaSpace.modelHandler.splitModel();
                 });

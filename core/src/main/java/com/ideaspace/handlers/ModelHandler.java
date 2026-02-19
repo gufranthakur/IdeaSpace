@@ -2,9 +2,8 @@ package com.ideaspace.handlers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
-import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.math.collision.BoundingBox;
 
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.models.ModelMesh;
 import com.ideaspace.ui.components.ModelCard;
@@ -29,25 +28,35 @@ public class ModelHandler {
     }
 
     public void loadInitialModels() {
-        createModel("Background", "models/backgrounds/dark_background.glb");
-        loadModel(modelLibrary.get("Background"));
-        getModelInstance("Background").transform.idt().scale(10, 10, 10);
+        addModelToLibrary("Background", "models/backgrounds/dark_background.glb");
+        //loadModel(modelLibrary.get("Background"));
+        //getModelInstance("Background").transform.idt().scale(10, 10, 10);
 
 
     }
 
     public void createModels() {
-        createModel("Esp32", "models/microcontrollers/esp32.glb");
-        createModel("mechanical_keyboard", "models/misc/mechanical_keyboard.glb");
-        createModel("Drone", "models/misc/cp_drone.glb");
-        createModel("Iphone 17", "models/misc/iphone17pro.glb");
+        addModelToLibrary("Arduino-Uno", "models/microcontrollers/arduino_uno.glb");
+        addModelToLibrary("Esp32", "models/microcontrollers/esp32.glb");
+        addModelToLibrary("Iphone-17", "models/misc/iphone17pro.glb");
+        addModelToLibrary("Joystick-Module", "models/components/joystick_module.glb");
+        addModelToLibrary("Servo-Motor", "models/components/servo_motor.glb");
+        addModelToLibrary("l298motordriver", "models/components/l298motordriver.glb");
+        addModelToLibrary("RaspberryPi", "models/microcontrollers/raspberry_pi.glb");
+        addModelToLibrary("Rpi-cam", "models/components/rpi_cam.glb");
+        addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanical_keyboard.glb");
+        addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanical_keyboard.glb");
+
+
+
+
 
         loadModel(modelLibrary.get("Esp32"));
         getModelInstance("Esp32").transform.idt().scale(0.5f, 0.5f, 0.5f);
 
     }
 
-    private void createModel(String name, String path) {
+    private void addModelToLibrary(String name, String path) {
         ModelMesh modelMesh = new ModelMesh(name, path);
         modelLibrary.put(name, modelMesh);
 
@@ -73,7 +82,8 @@ public class ModelHandler {
         ideaSpace.space.getSceneManager().addScene(modelMesh.getScene());
 
         // Update grab handler with current loaded models
-        ideaSpace.space.getGrabHandler().setLoadedModels(loadedModels.values());
+        ideaSpace.space.getRightGrabHandler().setLoadedModels(loadedModels.values());
+        ideaSpace.space.getLeftGrabHandler().setLoadedModels(loadedModels.values());
 
         if (modelMesh.modelName.equals("Background")) return;
 
@@ -108,7 +118,7 @@ public class ModelHandler {
                 loadedModels.remove(finalNameToRemove);
 
                 // Update grab handler after removal
-                ideaSpace.space.getGrabHandler().setLoadedModels(loadedModels.values());
+                ideaSpace.space.getRightGrabHandler().setLoadedModels(loadedModels.values());
 
                 if (modelCard != null) {
                     ideaSpace.modelControlPanel.removeModelCard(modelCard);
@@ -169,10 +179,18 @@ public class ModelHandler {
 
         Scene scene = selectedModel.getScene();
 
-        if (scene.animationController != null) {
-            scene.animationController.animate("Split", 1, 1f, null, 0f);
-        } else {
-            System.out.println("Model has no animation controller!");
+        try {
+            if (scene.animationController != null) {
+                scene.animationController.animate("split", 1, 1f, null, 0f);
+            }
+        } catch (GdxRuntimeException e) {
+            try {
+                if (scene.animationController != null) {
+                    scene.animationController.animate("Split", 1, 1f, null, 0f);
+                }
+            } catch (GdxRuntimeException exception) {
+                System.out.println("Model has no split animation");
+            }
         }
     }
 

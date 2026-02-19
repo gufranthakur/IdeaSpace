@@ -50,7 +50,7 @@ public class ModelControlPanel extends Stage{
         root.setWidth(260);
         root.setHeight(870);
         root.setPosition(0, Gdx.graphics.getHeight() - root.getHeight());
-        root.padTop(120);
+        root.padTop(30);
 
         loadedModelButton = new ISButton(
             "ui/png/loaded_model_button.png",

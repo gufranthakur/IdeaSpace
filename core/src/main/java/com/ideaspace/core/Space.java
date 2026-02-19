@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
-import com.badlogic.gdx.math.Vector3;
 
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.handlers.GrabHandler;
@@ -19,8 +18,6 @@ import net.mgsx.gltf.scene3d.lights.DirectionalLightEx;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
 import net.mgsx.gltf.scene3d.scene.SceneSkybox;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
-
-import com.badlogic.gdx.graphics.GL20;
 
 public class Space {
 
@@ -39,9 +36,9 @@ public class Space {
 
     public CanvasRenderer canvasRenderer;
 
-    private SimulationHand simulationHand;
-    private HandLines handLines;
-    private GrabHandler grabHandler;
+    private SimulationHand rightHand, leftHand;
+    private HandLines rightHandLines, leftHandLines;
+    private GrabHandler rightGrabHandler, leftGrabHandler;
 
 
     public Space(IdeaSpace ideaSpace) {
@@ -53,10 +50,15 @@ public class Space {
         setupIBL();
         setupSceneManager();
 
-        simulationHand = new SimulationHand(65000, camera, sceneManager);
-        grabHandler = new GrabHandler(simulationHand, camera);
+        rightHand = new SimulationHand(65000, camera, sceneManager);
+        leftHand = new SimulationHand(65005, camera, sceneManager);
 
-        handLines = new HandLines(sceneManager);
+        rightGrabHandler = new GrabHandler(rightHand, camera, true);
+        leftGrabHandler = new GrabHandler(leftHand, camera, false);
+
+        rightHandLines = new HandLines(sceneManager);
+        leftHandLines = new HandLines(sceneManager);
+
         canvasRenderer = new CanvasRenderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
     }
@@ -99,8 +101,12 @@ public class Space {
         sceneManager.setSkyBox(skybox);
     }
 
-    public GrabHandler getGrabHandler() {
-        return grabHandler;
+    public GrabHandler getRightGrabHandler() {
+        return rightGrabHandler;
+    }
+
+    public GrabHandler getLeftGrabHandler() {
+        return leftGrabHandler;
     }
 
     public void render(float deltaTime) {
@@ -109,10 +115,14 @@ public class Space {
         ideaSpace.decoder.update(deltaTime);
         camera.update();
 
-        //simulationHand.update();
-       // grabHandler.update();
+        rightHand.update();
+        leftHand.update();
 
-        //handLines.update(simulationHand);
+        rightGrabHandler.update();
+        leftGrabHandler.update();
+
+        rightHandLines.update(rightHand);
+        leftHandLines.update(leftHand);
 
         sceneManager.update(deltaTime);
         sceneManager.render();
@@ -128,10 +138,10 @@ public class Space {
         specularCubeMap.dispose();
         brdfLUT.dispose();
         skybox.dispose();
-        simulationHand.dispose();
-        handLines.dispose();
+        rightHand.dispose();
+        rightHandLines.dispose();
         canvasRenderer.dispose();
-        grabHandler.dispose();
+        rightGrabHandler.dispose();
 
     }
 

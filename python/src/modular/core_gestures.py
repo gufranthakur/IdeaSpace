@@ -10,8 +10,8 @@ from server import Server
 from hand_tracking_module import handDetector
 from gesture_config import *
 from flick_gesture import FlickGesture
+from drag_gesture import DragGesture
 from swipe_utils import detect_swipe_gesture
-from maths import smooth_position, calculate_velocity, get_direction_from_velocity
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Unified Gesture System')
@@ -30,21 +30,9 @@ detector = handDetector(maxHands=2, detectionConfidence=0.8, trackConfidence=0.8
 # Gesture detectors
 left_flick_gesture = FlickGesture(return_command="REMOVE")
 right_flick_gesture = FlickGesture(return_command="ANIMATE")
-
-# Rotation state
-position_history = deque(maxlen=SMOOTHING_WINDOW)
-prev_index_point = None
-rotation_gesture_hold_frames = 0
-rotation_active = False
-
-# Hysteresis thresholds for stable rotation
-ROTATION_ACTIVATE_THRESHOLD = 40
-ROTATION_DEACTIVATE_THRESHOLD = 55
-ROTATION_FRAMES_THRESHOLD = 15
+right_drag_gesture = DragGesture()
 
 # Command throttling
-rotate_last_command_time = 0
-rotate_last_sent_command = None
 core_left_last_command_time = 0
 core_left_last_sent_command = None
 core_right_last_command_time = 0
@@ -74,23 +62,6 @@ def send_command_throttled(command, last_time, last_command, interval=COMMAND_SE
     return last_time, last_command, False
 
 
-def is_rotation_gesture(lms, img, rotation_currently_active):
-    """Check if thumb and index are pinched together for rotation - with hysteresis"""
-    h, w = img.shape[:2]
-
-    thumb_x, thumb_y = lms[THUMB][1], lms[THUMB][2]
-    index_x, index_y = lms[INDEX_FINGER][1], lms[INDEX_FINGER][2]
-
-    pinch_distance = math.sqrt((thumb_x - index_x)**2 + (thumb_y - index_y)**2)
-
-    if rotation_currently_active:
-        threshold = ROTATION_DEACTIVATE_THRESHOLD
-    else:
-        threshold = ROTATION_ACTIVATE_THRESHOLD
-
-    return pinch_distance <= threshold
-
-
 prev_time = time.time()
 
 try:
@@ -117,7 +88,6 @@ try:
         right_lms = []
         left_action = None
         right_action = None
-        rotation_action = None
         zoom_action = None
 
         # Process all detected hands
@@ -155,66 +125,12 @@ try:
             flick_action = right_flick_gesture.detect(right_lms, img)
             if flick_action:
                 right_action = flick_action
-                if DEBUG_MODE and rotation_active:
-                    print("⚠️ ROTATION STOPPED: Flick detected")
 
-            both_hands_detected = len(left_lms) > 0 and len(right_lms) > 0
-
-            can_check_rotation = not right_action and (not right_flick_gesture.is_active() or rotation_active) and not both_hands_detected
-
-            if DEBUG_MODE and both_hands_detected and rotation_active:
-                print("⛔ ROTATION BLOCKED: Both hands detected")
-
-            if can_check_rotation:
-                is_rot_gesture = is_rotation_gesture(right_lms, img, rotation_active)
-
-                if is_rot_gesture:
-                    rotation_gesture_hold_frames += 1
-
-                    if rotation_gesture_hold_frames >= ROTATION_FRAMES_THRESHOLD:
-                        if not rotation_active:
-                            rotation_active = True
-                            if DEBUG_MODE:
-                                print("✅ ROTATION ACTIVATED")
-
-                        thumb_x, thumb_y = right_lms[THUMB][1], right_lms[THUMB][2]
-                        index_x, index_y = right_lms[INDEX_FINGER][1], right_lms[INDEX_FINGER][2]
-                        midpoint_x = (thumb_x + index_x) // 2
-                        midpoint_y = (thumb_y + index_y) // 2
-
-                        smoothed_pos = smooth_position(position_history, np, (midpoint_x, midpoint_y))
-
-                        if prev_index_point is not None:
-                            dx, dy = calculate_velocity(smoothed_pos, prev_index_point)
-                            direction = get_direction_from_velocity(np, DEAD_ZONE, dx, dy)
-                            if direction:
-                                rotation_action = f"ROTATE {direction}"
-
-                        prev_index_point = smoothed_pos
-                else:
-                    if rotation_active and DEBUG_MODE:
-                        print("❌ ROTATION STOPPED: Pinch lost")
-
-                    prev_index_point = None
-                    rotation_gesture_hold_frames = 0
-                    rotation_active = False
-                    position_history.clear()
-            else:
-                if rotation_active and DEBUG_MODE:
-                    if both_hands_detected:
-                        print("❌ ROTATION STOPPED: Both hands")
-                    else:
-                        print("❌ ROTATION STOPPED: Other gesture blocking")
-
-                prev_index_point = None
-                rotation_gesture_hold_frames = 0
-                rotation_active = False
-                position_history.clear()
-        else:
-            prev_index_point = None
-            rotation_gesture_hold_frames = 0
-            rotation_active = False
-            position_history.clear()
+            # Check drag gesture if flick is not active
+            if not right_action and not right_flick_gesture.is_active():
+                drag_action = right_drag_gesture.detect(right_lms, img)
+                if drag_action:
+                    right_action = drag_action
 
         # Process ZOOM gesture
         if len(left_lms) > 0 and len(right_lms) > 0:
@@ -259,16 +175,6 @@ try:
                     "NULL", core_right_last_command_time, core_right_last_sent_command
                 )
 
-        if rotation_action:
-            rotate_last_command_time, rotate_last_sent_command, _ = send_command_throttled(
-                rotation_action, rotate_last_command_time, rotate_last_sent_command
-            )
-        else:
-            if rotate_last_sent_command is not None and rotate_last_sent_command != "NULL":
-                rotate_last_command_time, rotate_last_sent_command, _ = send_command_throttled(
-                    "NULL", rotate_last_command_time, rotate_last_sent_command
-                )
-
         if zoom_action:
             zoom_last_command_time, zoom_last_sent_command, _ = send_command_throttled(
                 zoom_action, zoom_last_command_time, zoom_last_sent_command, interval=0.1
@@ -287,8 +193,6 @@ try:
                 action_text = f"LEFT: {left_action}"
             elif right_action:
                 action_text = f"RIGHT: {right_action}"
-            elif rotation_action:
-                action_text = f"ROTATE: {rotation_action}"
             elif zoom_action:
                 action_text = f"ZOOM: {zoom_action}"
 

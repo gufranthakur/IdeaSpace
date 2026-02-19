@@ -69,10 +69,7 @@ public class IdeaSpace extends ApplicationAdapter {
         animationHandler = new AnimationHandler(this);
 
         multiplexer = new InputMultiplexer();
-        multiplexer.addProcessor(space.getCameraController());
-        multiplexer.addProcessor(homeScreen.getStage());
-        multiplexer.addProcessor(modelControlPanel.getStage());
-        multiplexer.addProcessor(controlPanel);
+        toggleLectureFlag(lectureFlag);
         Gdx.input.setInputProcessor(multiplexer);
 
         modelHandler.loadInitialModels();
@@ -92,7 +89,6 @@ public class IdeaSpace extends ApplicationAdapter {
         simulationThread.start();
 
        // canvasThread.start();
-
         coreGestureServerThread.start();
 
 
@@ -117,7 +113,7 @@ public class IdeaSpace extends ApplicationAdapter {
         } else {
             space.render(deltaTime);
             modelControlPanel.render();
-            controlPanel.render();
+            //controlPanel.render();
             animationHandler.update();
         }
     }
@@ -137,8 +133,24 @@ public class IdeaSpace extends ApplicationAdapter {
         VisUI.dispose();
     }
 
+    public void toggleLectureFlag(boolean lectureFlag) {
+
+        multiplexer.getProcessors().clear();
+
+        if (lectureFlag) {
+            multiplexer.addProcessor(modelControlPanel.getStage());
+            multiplexer.addProcessor(space.getCameraController());
+
+            //multiplexer.addProcessor(controlPanel);
+        } else {
+            multiplexer.addProcessor(homeScreen.getStage());
+        }
+
+    }
+
     public void setLectureFlag(boolean lectureFlag) {
         this.lectureFlag = lectureFlag;
+        toggleLectureFlag(lectureFlag);
     }
 
     public LectureHandler getLectureHandler() {

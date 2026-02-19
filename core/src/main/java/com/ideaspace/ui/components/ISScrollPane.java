@@ -10,6 +10,10 @@ public class ISScrollPane extends ScrollPane {
 
     public ISScrollPane() {
         super(null);
+
+        setForceScroll(false, true);
+        setScrollBarPositions(false, true);
+
         addListener(new InputListener() {
             public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
                 getStage().setScrollFocus(ISScrollPane.this);

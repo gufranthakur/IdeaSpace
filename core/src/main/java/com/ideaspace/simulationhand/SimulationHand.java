@@ -33,7 +33,7 @@ public class SimulationHand implements Disposable {
     public float imgWidth = 640f;
     public float imgHeight = 480f;
 
-    public float lerpAlpha = 0.50f; // Smoothing factor (lower = smoother, higher = more responsive)
+    public float lerpAlpha = 0.30f; // Linear interpolation factor (0-1, higher = more responsive)
 
     private UDPReceiver receiver;
     private Array<Scene> handScenes;
@@ -50,6 +50,8 @@ public class SimulationHand implements Disposable {
     private Vector3[] currentPositions = new Vector3[LANDMARK_COUNT];
     private Vector3[] targetPositions = new Vector3[LANDMARK_COUNT];
     private boolean hasInitialData = false;
+
+    public boolean hasData = false;
 
     public SimulationHand(int port, Camera camera, SceneManager sceneManager) {
         this.camera = camera;
@@ -102,7 +104,7 @@ public class SimulationHand implements Disposable {
     public void update() {
         String data = receiver.getData();
 
-        // Always update visual positions with interpolation
+        // Always update visual positions with linear interpolation
         for (int i = 0; i < LANDMARK_COUNT; i++) {
             if (hasInitialData) {
                 currentPositions[i].lerp(targetPositions[i], lerpAlpha);
@@ -111,6 +113,8 @@ public class SimulationHand implements Disposable {
         }
 
         if (data == null || data.isEmpty()) return;
+
+        hasData = true;
 
         try {
             if (data.startsWith("[")) data = data.substring(1);
