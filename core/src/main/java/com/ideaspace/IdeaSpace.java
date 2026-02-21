@@ -2,9 +2,11 @@ package com.ideaspace;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.*;
 import com.ideaspace.core.Decoder;
+import com.ideaspace.handlers.InputHandler;
 import com.ideaspace.models.Server;
 import com.ideaspace.core.Space;
 import com.ideaspace.handlers.AnimationHandler;
@@ -39,10 +41,12 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public Thread canvasThread, coreGestureServerThread;
 
+    private InputHandler inputHandler;
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
     private boolean lectureFlag = true;
+    private boolean panelFlag = true;
 
 
     @Override
@@ -68,7 +72,10 @@ public class IdeaSpace extends ApplicationAdapter {
         modelHandler = new ModelHandler(this);
         animationHandler = new AnimationHandler(this);
 
+        inputHandler = new InputHandler(this);
+
         multiplexer = new InputMultiplexer();
+
         toggleLectureFlag(lectureFlag);
         Gdx.input.setInputProcessor(multiplexer);
 
@@ -112,8 +119,9 @@ public class IdeaSpace extends ApplicationAdapter {
             homeScreen.render(deltaTime);
         } else {
             space.render(deltaTime);
-            modelControlPanel.render();
-            //controlPanel.render();
+
+            if (getPanelFlag() == true) modelControlPanel.render();
+
             animationHandler.update();
         }
     }
@@ -136,6 +144,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public void toggleLectureFlag(boolean lectureFlag) {
 
         multiplexer.getProcessors().clear();
+        multiplexer.addProcessor(inputHandler);
 
         if (lectureFlag) {
             multiplexer.addProcessor(modelControlPanel.getStage());
@@ -146,6 +155,14 @@ public class IdeaSpace extends ApplicationAdapter {
             multiplexer.addProcessor(homeScreen.getStage());
         }
 
+    }
+
+    public void setPanelFlag(boolean panelFlag) {
+        this.panelFlag = panelFlag;
+    }
+
+    public boolean getPanelFlag() {
+        return panelFlag;
     }
 
     public void setLectureFlag(boolean lectureFlag) {

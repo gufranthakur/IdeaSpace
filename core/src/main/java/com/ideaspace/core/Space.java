@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 
+import com.badlogic.gdx.math.Vector3;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.handlers.GrabHandler;
 
@@ -66,9 +67,12 @@ public class Space {
     private void setupCamera() {
         camera = new PerspectiveCamera(80f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 20f / 1000f;
-        camera.far = 600;
+        camera.far = 1000f;
         sceneManager.setCamera(camera);
-        camera.position.set(0,0, 0);
+        camera.position.set(0f,2.0f, 3.0f);
+        camera.lookAt(0f, 0.5f, 0f);
+        camera.up.set(Vector3.Y);
+        camera.update();
 
         cameraController = new FirstPersonCameraController(camera);
     }

@@ -38,7 +38,7 @@ public class GrabHandler {
 
     // Movement multipliers (applied before lerping)
     public float positionMultiplier = 3.0f;
-    public float rotationMultiplier = 10.0f;
+    public float rotationMultiplier = 7.5f;
 
     // Target values for lerping
     private Vector3 targetPosition = new Vector3();
@@ -119,7 +119,7 @@ public class GrabHandler {
         Vector3 closestIntersection = new Vector3();
 
         for (ModelMesh model : loadedModels) {
-            if (model.modelName.equals("Background")) continue;
+            if (model.modelName.equals("Background") || model.modelName.equals("Room")) continue;
             if (model.getScene() == null || model.getScene().modelInstance == null) continue;
 
             model.getScene().modelInstance.calculateBoundingBox(boundingBox);

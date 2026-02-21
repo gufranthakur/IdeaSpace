@@ -28,10 +28,18 @@ public class ModelHandler {
     }
 
     public void loadInitialModels() {
-        addModelToLibrary("Background", "models/backgrounds/dark_background.glb");
-        //loadModel(modelLibrary.get("Background"));
-        //getModelInstance("Background").transform.idt().scale(10, 10, 10);
+        addModelToLibrary("Background", "models/backgrounds/monitoring_station.glb");
+        loadModel(modelLibrary.get("Background"));
+        getModelInstance("Background").transform.idt().scale(5f, 5f, 5f)
+            .rotate(0f, -1f, 0f, 90f)
+            .translate(-0.35f, -0.75f, 0f);
 
+
+        addModelToLibrary("Room", "models/backgrounds/room.glb");
+        loadModel(modelLibrary.get("Room"));
+        getModelInstance("Room").transform.idt()
+            .scale(5f, 5f, 5f)
+            .translate(0f, -0.75f, 0.6f);
 
     }
 
@@ -52,7 +60,7 @@ public class ModelHandler {
 
 
         loadModel(modelLibrary.get("Esp32"));
-        getModelInstance("Esp32").transform.idt().scale(0.5f, 0.5f, 0.5f);
+        getModelInstance("Esp32").transform.idt().scale(0.35f, 0.35f, 0.35f);
 
     }
 
@@ -60,7 +68,7 @@ public class ModelHandler {
         ModelMesh modelMesh = new ModelMesh(name, path);
         modelLibrary.put(name, modelMesh);
 
-        if (name.equals("Background")) return;
+        if (name.equals("Background") || name.equals("Room")) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, false);
         ideaSpace.modelControlPanel.addModelCardToLibrary(modelCard);
@@ -153,7 +161,7 @@ public class ModelHandler {
 
         java.util.List<String> availableModels = new java.util.ArrayList<>();
         for (String modelName : modelLibrary.keySet()) {
-            if (!modelName.equals("Background")) {
+            if (!(modelName.equals("Background") || modelName.equals("Room"))) {
                 availableModels.add(modelName);
             }
         }
