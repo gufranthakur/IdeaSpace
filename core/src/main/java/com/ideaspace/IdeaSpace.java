@@ -143,6 +143,8 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public void toggleLectureFlag(boolean lectureFlag) {
 
+        this.lectureFlag = lectureFlag;
+
         multiplexer.getProcessors().clear();
         multiplexer.addProcessor(inputHandler);
 
@@ -164,10 +166,6 @@ public class IdeaSpace extends ApplicationAdapter {
         return panelFlag;
     }
 
-    public void setLectureFlag(boolean lectureFlag) {
-        this.lectureFlag = lectureFlag;
-        toggleLectureFlag(lectureFlag);
-    }
 
     public LectureHandler getLectureHandler() {
         return lectureHandler;

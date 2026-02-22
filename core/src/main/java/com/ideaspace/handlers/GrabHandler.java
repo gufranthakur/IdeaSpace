@@ -120,7 +120,10 @@ public class GrabHandler {
 
         for (ModelMesh model : loadedModels) {
             if (model.modelName.equals("Spaceship")
-                || model.modelName.equals("Vintage"))
+                || model.modelName.equals("Vintage")
+                || model.modelName.equals("Office")
+                || model.modelName.equals("Classroom")
+                || model.modelName.equals("Cube"))
                 continue;
             if (model.getScene() == null || model.getScene().modelInstance == null) continue;
 

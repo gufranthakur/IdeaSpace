@@ -23,7 +23,7 @@ public class LectureHandler {
     }
 
     public void openLecture(Lecture lecture) {
-        ideaSpace.setLectureFlag(true);
+        ideaSpace.toggleLectureFlag(true);
         this.selectedLecture = lecture;
 
     }

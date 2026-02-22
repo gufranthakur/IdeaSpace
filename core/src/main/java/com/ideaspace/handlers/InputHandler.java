@@ -18,6 +18,8 @@ public class InputHandler extends InputAdapter {
         if (keycode == Input.Keys.P) {
             ideaSpace.setPanelFlag(!ideaSpace.getPanelFlag());
             System.out.println(ideaSpace.getPanelFlag());
+        } else if (keycode == Input.Keys.M) {
+            ideaSpace.modelHandler.changeMap();
         }
 
         return false;

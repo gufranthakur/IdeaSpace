@@ -17,11 +17,11 @@ public class HUDPanel extends Stage {
     private IdeaSpace ideaSpace;
 
     private Table root;
-    private ISButton homeHUDButton, settingsHUDButton, panelHUDButton;
+    private ISButton homeHUDButton, settingsHUDButton, panelHUDButton, changeMapHUDButton;
 
 
     public HUDPanel(IdeaSpace ideaSpace) {
-        super(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
+        super(new ExtendViewport(Gdx.graphics.getWidth() - 450, Gdx.graphics.getHeight()));
         this.ideaSpace = ideaSpace;
 
         root = new Table();
@@ -46,9 +46,15 @@ public class HUDPanel extends Stage {
             "ui/png/panelHUDButton.png",
             "ui/png/panelHUDButton_hovered.png");
 
+        changeMapHUDButton = new ISButton(
+            "ui/png/changeMapHUDButton.png",
+            "ui/png/changeMapHUDButton_hovered.png"
+        );
+
 
         float buttonSize = 40f;
 
+        root.add(changeMapHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(panelHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(settingsHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(homeHUDButton).width(buttonSize).height(buttonSize).pad(3);
@@ -60,6 +66,20 @@ public class HUDPanel extends Stage {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 ideaSpace.setPanelFlag(!ideaSpace.getPanelFlag());
+            }
+        });
+
+        homeHUDButton.addListener(new ClickListener() {
+           @Override
+           public void clicked(InputEvent event, float x, float y) {
+               ideaSpace.toggleLectureFlag(false);
+           }
+        });
+
+        changeMapHUDButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent e, float x, float y) {
+                ideaSpace.modelHandler.changeMap();
             }
         });
     }
