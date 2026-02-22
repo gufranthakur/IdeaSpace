@@ -28,19 +28,24 @@ public class ModelHandler {
     }
 
     public void loadInitialModels() {
-        addModelToLibrary("Background", "models/backgrounds/monitoring_station.glb");
-        loadModel(modelLibrary.get("Background"));
-        getModelInstance("Background").transform.idt().scale(5f, 5f, 5f)
-            .rotate(0f, -1f, 0f, 90f)
-            .translate(-0.35f, -0.75f, 0f);
+
+//        addModelToLibrary("Spaceship", "models/backgrounds/spaceship.glb");
+//        loadModel(modelLibrary.get("Spaceship"));
+//        getModelInstance("Spaceship").transform.idt()
+//            .scale(5f, 5f, 5f)
+//            .translate(0f, -0.75f, 0.6f);
+
+//
+//        addModelToLibrary("Vintage", "models/backgrounds/vintage.glb");
+//        loadModel(modelLibrary.get("Vintage"));
+//        getModelInstance("Vintage").transform.idt()
+//            .scale(0.20f, 0.20f, 0.20f)
+//            .rotate(0f, 1f, 0f, 180f)
+//            .translate(-37.5f, -25f, 70f);
 
 
-        addModelToLibrary("Room", "models/backgrounds/room.glb");
-        loadModel(modelLibrary.get("Room"));
-        getModelInstance("Room").transform.idt()
-            .scale(5f, 5f, 5f)
-            .translate(0f, -0.75f, 0.6f);
-
+        addModelToLibrary("Office", "models/backgrounds/office.glb");
+        loadModel(modelLibrary.get("Office"));
     }
 
     public void createModels() {
@@ -56,9 +61,6 @@ public class ModelHandler {
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanical_keyboard.glb");
 
 
-
-
-
         loadModel(modelLibrary.get("Esp32"));
         getModelInstance("Esp32").transform.idt().scale(0.35f, 0.35f, 0.35f);
 
@@ -68,10 +70,11 @@ public class ModelHandler {
         ModelMesh modelMesh = new ModelMesh(name, path);
         modelLibrary.put(name, modelMesh);
 
-        if (name.equals("Background") || name.equals("Room")) return;
+        if (name.equals("Spaceship")) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, false);
-        ideaSpace.modelControlPanel.addModelCardToLibrary(modelCard);
+
+        ideaSpace.controlPanel.addModelCardToLibrary(modelCard);
     }
 
     public void loadModel(ModelMesh modelMesh) {
@@ -93,10 +96,10 @@ public class ModelHandler {
         ideaSpace.space.getRightGrabHandler().setLoadedModels(loadedModels.values());
         ideaSpace.space.getLeftGrabHandler().setLoadedModels(loadedModels.values());
 
-        if (modelMesh.modelName.equals("Background")) return;
+        if (modelMesh.modelName.equals("Spaceship")) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, true);
-        ideaSpace.modelControlPanel.addModelCardToModelsPane(modelCard);
+        ideaSpace.controlPanel.addModelCardToModelsPane(modelCard);
 
         selectedModel = modelMesh;
     }
@@ -129,9 +132,9 @@ public class ModelHandler {
                 ideaSpace.space.getRightGrabHandler().setLoadedModels(loadedModels.values());
 
                 if (modelCard != null) {
-                    ideaSpace.modelControlPanel.removeModelCard(modelCard);
+                    ideaSpace.controlPanel.removeModelCard(modelCard);
                 } else {
-                    ideaSpace.modelControlPanel.removeModelCardByName(finalNameToRemove);
+                    ideaSpace.controlPanel.removeModelCardByName(finalNameToRemove);
                 }
 
                 if (finalModelMesh == selectedModel) {
@@ -139,7 +142,7 @@ public class ModelHandler {
                 }
             });
         } else if (modelCard != null) {
-            ideaSpace.modelControlPanel.removeModelCard(modelCard);
+            ideaSpace.controlPanel.removeModelCard(modelCard);
         }
     }
 

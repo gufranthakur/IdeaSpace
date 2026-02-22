@@ -119,7 +119,9 @@ public class GrabHandler {
         Vector3 closestIntersection = new Vector3();
 
         for (ModelMesh model : loadedModels) {
-            if (model.modelName.equals("Background") || model.modelName.equals("Room")) continue;
+            if (model.modelName.equals("Spaceship")
+                || model.modelName.equals("Vintage"))
+                continue;
             if (model.getScene() == null || model.getScene().modelInstance == null) continue;
 
             model.getScene().modelInstance.calculateBoundingBox(boundingBox);

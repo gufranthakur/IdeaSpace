@@ -33,9 +33,7 @@ public class HomeScreen {
 
     public HomeScreen(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
-        Gdx.app.setLogLevel(Application.LOG_DEBUG);
 
-        Gdx.app.debug("Crazy", "Hello world");
 
         DEBUG_MODE = ideaSpace.getDebugMode();
         lectureScreen = new LectureScreen(this, DEBUG_MODE);

@@ -2,7 +2,6 @@ package com.ideaspace;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.*;
 import com.ideaspace.core.Decoder;
@@ -14,7 +13,7 @@ import com.ideaspace.handlers.LectureHandler;
 import com.ideaspace.handlers.ModelHandler;
 import com.ideaspace.simulationhand.ScriptExecutor;
 import com.ideaspace.ui.panels.ControlPanel;
-import com.ideaspace.ui.panels.ModelControlPanel;
+import com.ideaspace.ui.panels.HUDPanel;
 import com.ideaspace.ui.screens.HomeScreen;
 import com.kotcrab.vis.ui.VisUI;
 
@@ -24,9 +23,8 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public HomeScreen homeScreen;
     public Space space;
-
     public ControlPanel controlPanel;
-    public ModelControlPanel modelControlPanel;
+    public HUDPanel hudPanel;
 
     private Server coreGesturesServer;
     private Server canvasServer;
@@ -57,12 +55,12 @@ public class IdeaSpace extends ApplicationAdapter {
 
         homeScreen = new HomeScreen(this);
 
-        modelControlPanel = new ModelControlPanel(this);
         controlPanel = new ControlPanel(this);
+        hudPanel = new HUDPanel(this);
 
         space = new Space(this);
 
-        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 65000, true);
+        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 65000, false);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
 
         scriptExecutor = new ScriptExecutor(this);
@@ -86,10 +84,7 @@ public class IdeaSpace extends ApplicationAdapter {
     }
 
     private void initThreads() {
-        //--------these ones are not always active so no memory issues I hope so---------
         canvasThread = new Thread(canvasServer);
-
-        //-------------------------------------------------------------------------------
         coreGestureServerThread = new Thread(coreGesturesServer);
 
         simulationThread = new Thread(scriptExecutor);
@@ -106,8 +101,9 @@ public class IdeaSpace extends ApplicationAdapter {
         space.getSceneManager().updateViewport(width, height);
         space.resize(width, height);
         homeScreen.resize(width, height);
-        modelControlPanel.resize(width, height);
         controlPanel.resize(width, height);
+        hudPanel.resize(width, height);
+
     }
     @Override
     public void render() {
@@ -120,8 +116,9 @@ public class IdeaSpace extends ApplicationAdapter {
         } else {
             space.render(deltaTime);
 
-            if (getPanelFlag() == true) modelControlPanel.render();
+            if (getPanelFlag() == true) controlPanel.render();
 
+            hudPanel.render();
             animationHandler.update();
         }
     }
@@ -138,6 +135,9 @@ public class IdeaSpace extends ApplicationAdapter {
         space.getSceneManager().dispose();
         space.dispose();
 
+        hudPanel.dispose();
+        controlPanel.dispose();
+
         VisUI.dispose();
     }
 
@@ -147,10 +147,9 @@ public class IdeaSpace extends ApplicationAdapter {
         multiplexer.addProcessor(inputHandler);
 
         if (lectureFlag) {
-            multiplexer.addProcessor(modelControlPanel.getStage());
+            multiplexer.addProcessor(controlPanel.getStage());
             multiplexer.addProcessor(space.getCameraController());
-
-            //multiplexer.addProcessor(controlPanel);
+            multiplexer.addProcessor(hudPanel.getStage());
         } else {
             multiplexer.addProcessor(homeScreen.getStage());
         }

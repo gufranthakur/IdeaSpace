@@ -1,0 +1,82 @@
+package com.ideaspace.ui.panels;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.ideaspace.IdeaSpace;
+import com.ideaspace.ui.components.ISButton;
+import com.ideaspace.ui.components.ISTable;
+
+public class HUDPanel extends Stage {
+
+    private IdeaSpace ideaSpace;
+
+    private Table root;
+    private ISButton homeHUDButton, settingsHUDButton, panelHUDButton;
+
+
+    public HUDPanel(IdeaSpace ideaSpace) {
+        super(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
+        this.ideaSpace = ideaSpace;
+
+        root = new Table();
+        root.setFillParent(true);
+        root.top().right();
+
+
+        createUI();
+        addListeners();
+    }
+
+    private void createUI() {
+        homeHUDButton = new ISButton(
+            "ui/png/homeHUDButton.png",
+            "ui/png/homeHUDButton_hovered.png");
+
+        settingsHUDButton = new ISButton(
+            "ui/png/settingsHUDButton.png",
+            "ui/png/settingsHUDButton_hovered.png");
+
+        panelHUDButton = new ISButton(
+            "ui/png/panelHUDButton.png",
+            "ui/png/panelHUDButton_hovered.png");
+
+
+        float buttonSize = 40f;
+
+        root.add(panelHUDButton).width(buttonSize).height(buttonSize).pad(3);
+        root.add(settingsHUDButton).width(buttonSize).height(buttonSize).pad(3);
+        root.add(homeHUDButton).width(buttonSize).height(buttonSize).pad(3);
+        this.addActor(root);
+    }
+
+    private void addListeners() {
+        panelHUDButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                ideaSpace.setPanelFlag(!ideaSpace.getPanelFlag());
+            }
+        });
+    }
+
+    public void render() {
+        this.act();
+        this.draw();
+    }
+
+
+    public void resize(int width, int height) {
+        this.getViewport().update(width, height, false);
+    }
+
+
+    public Stage getStage() {
+        return this;
+    }
+
+}
