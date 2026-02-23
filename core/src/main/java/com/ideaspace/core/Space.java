@@ -80,8 +80,8 @@ public class Space {
         camera.near = 20f / 1000f;
         camera.far = 1000f;
         sceneManager.setCamera(camera);
-        camera.position.set(0f,2.0f, 3.0f);
-        camera.lookAt(0f, 0.5f, 0f);
+        camera.position.set(0f,2.0f, 3.0f); // Top view (0.024993863,2.5312417,0.42255044)
+        camera.lookAt(0f, 0.5f, 0f); //Direction (-0.0012064216,-0.9904221,-0.13806608)
         camera.up.set(Vector3.Y);
         camera.update();
 
@@ -141,6 +141,9 @@ public class Space {
         rightHandLines.update(rightHand);
         leftHandLines.update(leftHand);
 
+        System.out.println(camera.position);
+        System.out.println(camera.direction);
+
         sceneManager.update(deltaTime);
         sceneManager.render();
 
@@ -148,6 +151,12 @@ public class Space {
 //        //canvasRenderer.render();
 //        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
+
+    // Top view (0.024993863,2.5312417,0.42255044)
+    // Direction (-0.0012064216,-0.9904221,-0.13806608)
+
+    //right view (1.4210716,0.2590296,0.011377649)
+    // direction (-0.9912965,-0.13164817,3.1571835E-7)
 
     public void dispose() {
         environmentCubeMap.dispose();
@@ -166,7 +175,10 @@ public class Space {
 
         switch (view) {
             case View.TOP_VIEW : {
-
+                camera.position.set(0.024993f,2.531241f, 0.42255f);
+                camera.lookAt(-0.0012064f, -0.990f, -0.13806608f);
+                camera.up.set(Vector3.Y);
+                camera.update();
             } break;
         }
 
