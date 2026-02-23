@@ -22,6 +22,17 @@ import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 
 public class Space {
 
+    public enum View {
+        FRONT_VIEW ,
+        BACK_VIEW,
+        TOP_VIEW,
+        BOTTOM_VIEW,
+        RIGHT_VIEW,
+        LEFT_VIEW
+    }
+
+    View currentView;
+
     private IdeaSpace ideaSpace;
 
     private SceneManager sceneManager;
@@ -73,6 +84,8 @@ public class Space {
         camera.lookAt(0f, 0.5f, 0f);
         camera.up.set(Vector3.Y);
         camera.update();
+
+        currentView = View.FRONT_VIEW;
 
         cameraController = new FirstPersonCameraController(camera);
     }
@@ -146,6 +159,16 @@ public class Space {
         rightHandLines.dispose();
         canvasRenderer.dispose();
         rightGrabHandler.dispose();
+
+    }
+
+    public void switchView(View view) {
+
+        switch (view) {
+            case View.TOP_VIEW : {
+
+            } break;
+        }
 
     }
 
