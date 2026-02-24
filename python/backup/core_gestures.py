@@ -36,15 +36,13 @@ zoom_last_command_time = 0
 zoom_last_sent_command = None
 
 # One-shot tracking for directional gestures
-top_view_was_active   = {"Left": False, "Right": False}
+top_view_was_active = {"Left": False, "Right": False}
 front_view_was_active = {"Left": False, "Right": False}
-left_view_was_active  = {"Left": False, "Right": False}
-right_view_was_active = {"Left": False, "Right": False}
 
 # Hold duration — gesture must be held this many consecutive frames before firing
-VIEW_HOLD_FRAMES = 3  # tune this value up/down as needed
+VIEW_HOLD_FRAMES = 6  # tune this value up/down as needed
 view_hold_counter = {"Left": 0, "Right": 0}
-view_hold_type    = {"Left": None, "Right": None}
+view_hold_type = {"Left": None, "Right": None}
 
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
@@ -53,7 +51,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
 
-PROCESS_WIDTH  = 640
+PROCESS_WIDTH = 640
 PROCESS_HEIGHT = 480
 
 
@@ -76,40 +74,27 @@ def is_top_view_gesture(lms):
 
 
 def is_front_view_gesture(lms):
-    """Index + middle pointing down, thumb extended out, pinky curled."""
     index_down   = lms[8][2]  > lms[6][2] + 20
     middle_down  = lms[12][2] > lms[10][2] + 20
     thumb_out    = abs(lms[4][1] - lms[2][1]) > 35
     pinky_curled = lms[20][2] < lms[18][2]
     return index_down and middle_down and thumb_out and pinky_curled
 
-
 def is_left_view_gesture(lms):
-    """Right hand: index + middle pointing left, pinky curled."""
-    index_left   = lms[8][1] < lms[6][1] - 20
-    middle_left  = lms[12][1] < lms[10][1] - 20
-    pinky_curled = lms[20][1] > lms[18][1]
-    return index_left and middle_left and pinky_curled
-
+    print(f"lm6x={lms[6][1]} lm8x={lms[8][1]} | lm10x={lms[10][1]} lm12x={lms[12][1]} | lm18x={lms[18][1]} lm20x={lms[20][1]} | thumb_dist={abs(lms[4][1] - lms[2][1])}")
+    return False
 
 def is_right_view_gesture(lms):
-    """Left hand: index + middle pointing right, pinky curled."""
-    index_right  = lms[8][1] > lms[6][1] + 20
-    middle_right = lms[12][1] > lms[10][1] + 20
-    pinky_curled = lms[20][1] < lms[18][1]
-    return index_right and middle_right and pinky_curled
+    print(f"lm6x={lms[6][1]} lm8x={lms[8][1]} | lm10x={lms[10][1]} lm12x={lms[12][1]} | lm18x={lms[18][1]} lm20x={lms[20][1]} | thumb_dist={abs(lms[4][1] - lms[2][1])}")
+    return False
 
 
-def detect_view_gesture(lms, hand):
+def detect_view_gesture(lms):
     """Returns view command string or None."""
     if is_top_view_gesture(lms):
         return "TOP_VIEW"
     if is_front_view_gesture(lms):
         return "FRONT_VIEW"
-    if hand == "Right" and is_left_view_gesture(lms):
-        return "LEFT_VIEW"
-    if hand == "Left" and is_right_view_gesture(lms):
-        return "RIGHT_VIEW"
     return None
 
 
@@ -135,16 +120,16 @@ try:
         scale_x = w_full / PROCESS_WIDTH
         scale_y = h_full / PROCESS_HEIGHT
 
-        left_lms  = []
+        left_lms = []
         right_lms = []
-        left_action  = None
+        left_action = None
         right_action = None
-        zoom_action  = None
+        zoom_action = None
 
         if detector.results and detector.results.multi_hand_landmarks:
             for hand_idx in range(len(detector.results.multi_hand_landmarks)):
                 handedness = detector.get_handedness(hand_idx)
-                lms_small  = detector.find_position(img_small, hand_idx, draw=False)
+                lms_small = detector.find_position(img_small, hand_idx, draw=False)
                 lms_scaled = [[l[0], int(l[1] * scale_x), int(l[2] * scale_y)] for l in lms_small]
 
                 if handedness == "Left":
@@ -158,33 +143,34 @@ try:
                         for lm in right_lms:
                             cv2.circle(img, (lm[1], lm[2]), 5, (0, 255, 255), -1)
 
-        # ── LEFT hand gestures ────────────────────────────────────────────────
+        # Process LEFT hand gestures
         if len(left_lms) > 0:
-            view_cmd = detect_view_gesture(left_lms, "Left")
-            if view_cmd in ("TOP_VIEW", "FRONT_VIEW", "RIGHT_VIEW"):
-                if view_hold_type["Left"] == view_cmd:
+            view_cmd = detect_view_gesture(left_lms)
+            if view_cmd == "TOP_VIEW":
+                if view_hold_type["Left"] == "TOP_VIEW":
                     view_hold_counter["Left"] += 1
                 else:
-                    view_hold_type["Left"]    = view_cmd
+                    view_hold_type["Left"] = "TOP_VIEW"
                     view_hold_counter["Left"] = 1
-
-                if view_hold_counter["Left"] >= VIEW_HOLD_FRAMES:
-                    was_active = {
-                        "TOP_VIEW":   top_view_was_active["Left"],
-                        "FRONT_VIEW": front_view_was_active["Left"],
-                        "RIGHT_VIEW": right_view_was_active["Left"],
-                    }
-                    if not was_active[view_cmd]:
-                        left_action = view_cmd
-                        top_view_was_active["Left"]   = (view_cmd == "TOP_VIEW")
-                        front_view_was_active["Left"] = (view_cmd == "FRONT_VIEW")
-                        right_view_was_active["Left"] = (view_cmd == "RIGHT_VIEW")
-            else:
-                top_view_was_active["Left"]   = False
+                if view_hold_counter["Left"] >= VIEW_HOLD_FRAMES and not top_view_was_active["Left"]:
+                    left_action = "TOP_VIEW"
+                    top_view_was_active["Left"] = True
                 front_view_was_active["Left"] = False
-                right_view_was_active["Left"] = False
+            elif view_cmd == "FRONT_VIEW":
+                if view_hold_type["Left"] == "FRONT_VIEW":
+                    view_hold_counter["Left"] += 1
+                else:
+                    view_hold_type["Left"] = "FRONT_VIEW"
+                    view_hold_counter["Left"] = 1
+                if view_hold_counter["Left"] >= VIEW_HOLD_FRAMES and not front_view_was_active["Left"]:
+                    left_action = "FRONT_VIEW"
+                    front_view_was_active["Left"] = True
+                top_view_was_active["Left"] = False
+            else:
+                top_view_was_active["Left"] = False
+                front_view_was_active["Left"] = False
                 view_hold_counter["Left"] = 0
-                view_hold_type["Left"]    = None
+                view_hold_type["Left"] = None
                 flick_action = left_flick_gesture.detect(left_lms, img)
                 if flick_action:
                     left_action = flick_action
@@ -193,39 +179,39 @@ try:
                     if swipe_action:
                         left_action = swipe_action
         else:
-            top_view_was_active["Left"]   = False
+            top_view_was_active["Left"] = False
             front_view_was_active["Left"] = False
-            right_view_was_active["Left"] = False
             view_hold_counter["Left"] = 0
-            view_hold_type["Left"]    = None
+            view_hold_type["Left"] = None
 
-        # ── RIGHT hand gestures ───────────────────────────────────────────────
+        # Process RIGHT hand gestures
         if len(right_lms) > 0:
-            view_cmd = detect_view_gesture(right_lms, "Right")
-            if view_cmd in ("TOP_VIEW", "FRONT_VIEW", "LEFT_VIEW"):
-                if view_hold_type["Right"] == view_cmd:
+            view_cmd = detect_view_gesture(right_lms)
+            if view_cmd == "TOP_VIEW":
+                if view_hold_type["Right"] == "TOP_VIEW":
                     view_hold_counter["Right"] += 1
                 else:
-                    view_hold_type["Right"]    = view_cmd
+                    view_hold_type["Right"] = "TOP_VIEW"
                     view_hold_counter["Right"] = 1
-
-                if view_hold_counter["Right"] >= VIEW_HOLD_FRAMES:
-                    was_active = {
-                        "TOP_VIEW":   top_view_was_active["Right"],
-                        "FRONT_VIEW": front_view_was_active["Right"],
-                        "LEFT_VIEW":  left_view_was_active["Right"],
-                    }
-                    if not was_active[view_cmd]:
-                        right_action = view_cmd
-                        top_view_was_active["Right"]   = (view_cmd == "TOP_VIEW")
-                        front_view_was_active["Right"] = (view_cmd == "FRONT_VIEW")
-                        left_view_was_active["Right"]  = (view_cmd == "LEFT_VIEW")
-            else:
-                top_view_was_active["Right"]   = False
+                if view_hold_counter["Right"] >= VIEW_HOLD_FRAMES and not top_view_was_active["Right"]:
+                    right_action = "TOP_VIEW"
+                    top_view_was_active["Right"] = True
                 front_view_was_active["Right"] = False
-                left_view_was_active["Right"]  = False
+            elif view_cmd == "FRONT_VIEW":
+                if view_hold_type["Right"] == "FRONT_VIEW":
+                    view_hold_counter["Right"] += 1
+                else:
+                    view_hold_type["Right"] = "FRONT_VIEW"
+                    view_hold_counter["Right"] = 1
+                if view_hold_counter["Right"] >= VIEW_HOLD_FRAMES and not front_view_was_active["Right"]:
+                    right_action = "FRONT_VIEW"
+                    front_view_was_active["Right"] = True
+                top_view_was_active["Right"] = False
+            else:
+                top_view_was_active["Right"] = False
+                front_view_was_active["Right"] = False
                 view_hold_counter["Right"] = 0
-                view_hold_type["Right"]    = None
+                view_hold_type["Right"] = None
                 flick_action = right_flick_gesture.detect(right_lms, img)
                 if flick_action:
                     right_action = flick_action
@@ -234,43 +220,37 @@ try:
                     if drag_action:
                         right_action = drag_action
         else:
-            top_view_was_active["Right"]   = False
+            top_view_was_active["Right"] = False
             front_view_was_active["Right"] = False
-            left_view_was_active["Right"]  = False
             view_hold_counter["Right"] = 0
-            view_hold_type["Right"]    = None
+            view_hold_type["Right"] = None
 
-        # ── ZOOM gesture ──────────────────────────────────────────────────────
-        any_view_active = (
-            top_view_was_active["Left"]   or top_view_was_active["Right"]   or
-            front_view_was_active["Left"] or front_view_was_active["Right"] or
-            left_view_was_active["Right"] or right_view_was_active["Left"]
-        )
+        # Process ZOOM gesture
+        any_view_active = (top_view_was_active["Left"] or top_view_was_active["Right"] or
+                           front_view_was_active["Left"] or front_view_was_active["Right"])
 
         if len(left_lms) > 0 and len(right_lms) > 0 and not any_view_active:
             left_index_extended = left_lms[INDEX_FINGER][2] < left_lms[INDEX_POINT][2] - 20
             left_middle_curled  = left_lms[MIDDLE_FINGER][2] > left_lms[MIDDLE_POINT][2] - 10
-            left_ring_curled    = left_lms[RING_FINGER][2]   > left_lms[RING_POINT][2]   - 10
-            left_pinky_curled   = left_lms[PINKY_FINGER][2]  > left_lms[PINKY_POINT][2]  - 10
+            left_ring_curled    = left_lms[RING_FINGER][2] > left_lms[RING_POINT][2] - 10
+            left_pinky_curled   = left_lms[PINKY_FINGER][2] > left_lms[PINKY_POINT][2] - 10
             left_valid_pose = (left_index_extended and left_middle_curled and
                                left_ring_curled and left_pinky_curled)
 
             right_index_extended = right_lms[INDEX_FINGER][2] < right_lms[INDEX_POINT][2] - 20
             right_middle_curled  = right_lms[MIDDLE_FINGER][2] > right_lms[MIDDLE_POINT][2] - 10
-            right_ring_curled    = right_lms[RING_FINGER][2]   > right_lms[RING_POINT][2]   - 10
-            right_pinky_curled   = right_lms[PINKY_FINGER][2]  > right_lms[PINKY_POINT][2]  - 10
+            right_ring_curled    = right_lms[RING_FINGER][2] > right_lms[RING_POINT][2] - 10
+            right_pinky_curled   = right_lms[PINKY_FINGER][2] > right_lms[PINKY_POINT][2] - 10
             right_valid_pose = (right_index_extended and right_middle_curled and
                                 right_ring_curled and right_pinky_curled)
 
             if left_valid_pose and right_valid_pose:
-                left_index_x  = left_lms[INDEX_FINGER][1]
-                left_index_y  = left_lms[INDEX_FINGER][2]
-                right_index_x = right_lms[INDEX_FINGER][1]
-                right_index_y = right_lms[INDEX_FINGER][2]
+                left_index_x, left_index_y = left_lms[INDEX_FINGER][1], left_lms[INDEX_FINGER][2]
+                right_index_x, right_index_y = right_lms[INDEX_FINGER][1], right_lms[INDEX_FINGER][2]
 
                 distance = math.sqrt(
-                    (right_index_x - left_index_x) ** 2 +
-                    (right_index_y - left_index_y) ** 2
+                    (right_index_x - left_index_x)**2 +
+                    (right_index_y - left_index_y)**2
                 ) / w_full
 
                 if distance < 0.15:
@@ -278,7 +258,7 @@ try:
                 elif distance > 0.35:
                     zoom_action = "ZOOM IN"
 
-        # ── Send commands ─────────────────────────────────────────────────────
+        # Send commands
         if left_action:
             core_left_last_command_time, core_left_last_sent_command, _ = send_command_throttled(
                 left_action, core_left_last_command_time, core_left_last_sent_command
@@ -309,7 +289,6 @@ try:
                     "NULL", zoom_last_command_time, zoom_last_sent_command, interval=0.1
                 )
 
-        # ── Debug overlay ─────────────────────────────────────────────────────
         if DEBUG_MODE:
             action_text = None
             if left_action:
@@ -323,13 +302,12 @@ try:
                 cv2.putText(img, action_text, (10, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
+            # Show hold progress for each hand
             for i, hand in enumerate(["Left", "Right"]):
                 if view_hold_counter[hand] > 0:
                     color = (255, 200, 0) if hand == "Left" else (0, 200, 255)
-                    cv2.putText(img,
-                                f"{hand} [{view_hold_type[hand]}] {view_hold_counter[hand]}/{VIEW_HOLD_FRAMES}",
-                                (10, 60 + i * 30),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                    cv2.putText(img, f"{hand} hold: {view_hold_counter[hand]}/{VIEW_HOLD_FRAMES}",
+                                (10, 60 + i * 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
             cv2.namedWindow("Gestures", cv2.WINDOW_AUTOSIZE)
             cv2.imshow("Gestures", img)

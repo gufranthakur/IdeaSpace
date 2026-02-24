@@ -39,7 +39,7 @@ public class ModelHandler {
         loadModel(modelLibrary.get("Spaceship"));
         getModelInstance("Spaceship").transform.idt()
             .scale(5f, 5f, 5f)
-            .translate(0f, -0.75f, 0.6f);
+            .translate(0.3f, -0.75f, 0.6f);
 
         addModelToLibrary("Vintage", "models/backgrounds/vintage.glb", maps);
         addModelToLibrary("Office", "models/backgrounds/office.glb", maps);
@@ -231,7 +231,7 @@ public class ModelHandler {
         if (nextMap.modelName.equals("Spaceship")) {
             getModelInstance("Spaceship").transform.idt()
                 .scale(5f, 5f, 5f)
-                .translate(0f, -0.75f, 0.6f);
+                .translate(0.3f, -0.75f, 0.6f);
         } else if (nextMap.modelName.equals("Vintage")) {
             getModelInstance("Vintage").transform.idt()
                 .scale(0.20f, 0.20f, 0.20f)

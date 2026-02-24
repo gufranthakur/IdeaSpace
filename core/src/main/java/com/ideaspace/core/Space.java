@@ -24,9 +24,7 @@ public class Space {
 
     public enum View {
         FRONT_VIEW ,
-        BACK_VIEW,
         TOP_VIEW,
-        BOTTOM_VIEW,
         RIGHT_VIEW,
         LEFT_VIEW
     }
@@ -132,17 +130,15 @@ public class Space {
         ideaSpace.decoder.update(deltaTime);
         camera.update();
 
+
         rightHand.update();
         leftHand.update();
 
         rightGrabHandler.update();
         leftGrabHandler.update();
-
         rightHandLines.update(rightHand);
         leftHandLines.update(leftHand);
 
-        System.out.println(camera.position);
-        System.out.println(camera.direction);
 
         sceneManager.update(deltaTime);
         sceneManager.render();
@@ -152,11 +148,17 @@ public class Space {
 //        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
 
-    // Top view (0.024993863,2.5312417,0.42255044)
-    // Direction (-0.0012064216,-0.9904221,-0.13806608)
+    //top view
+    // Pos: (0.12647918,2.8108501,0.77340674)
+    //Dir: (0.0024682502,-0.9591379,-0.28292692)
 
-    //right view (1.4210716,0.2590296,0.011377649)
-    // direction (-0.9912965,-0.13164817,3.1571835E-7)
+    //right view
+   // Pos: (4.383636,0.16763468,0.026943728)
+    // Dir: (-0.9985318,-0.05345491,0.008718704)
+
+    //left view
+    //Pos: (-3.684233,0.088000536,-0.040506694)
+    //Dir: (0.9778776,-0.20899758,-0.008555933)
 
     public void dispose() {
         environmentCubeMap.dispose();
@@ -175,11 +177,34 @@ public class Space {
 
         switch (view) {
             case View.TOP_VIEW : {
-                camera.position.set(0.024993f,2.531241f, 0.42255f);
+                camera.position.set(0.1624249f,3.985626f,-0.030935928f);
+                camera.lookAt (-6.4930646E-7f,-0.99820155f,-0.059939645f);
+                camera.up.set(Vector3.Y);
+                camera.update();
+            } break;
+
+            case View.RIGHT_VIEW : {
+                camera.position.set(4.383636f ,0.16763468f ,0.026943728f);
+                camera.lookAt(-0.9985318f ,-0.05345491f ,0.008718704f );
+                camera.up.set(Vector3.Y);
+                camera.update();
+            } break;
+
+            case View.LEFT_VIEW : {
+                camera.position.set(-3.684233f ,0.088000536f ,-0.040506694f );
                 camera.lookAt(-0.0012064f, -0.990f, -0.13806608f);
                 camera.up.set(Vector3.Y);
                 camera.update();
             } break;
+
+            case FRONT_VIEW : {
+                camera.position.set(0f,2.0f, 3.0f); // Top view (0.024993863,2.5312417,0.42255044)
+                camera.lookAt(0f, 0.5f, 0f); //Direction (-0.0012064216,-0.9904221,-0.13806608)
+                camera.up.set(Vector3.Y);
+                camera.update();
+            } break;
+
+
         }
 
     }

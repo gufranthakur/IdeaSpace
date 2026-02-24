@@ -113,13 +113,18 @@ public class Decoder {
                 });
             }
 
+            case "TOP_VIEW" -> ideaSpace.space.switchView(Space.View.TOP_VIEW);
+            case "FRONT_VIEW" -> ideaSpace.space.switchView(Space.View.FRONT_VIEW);
+            case "RIGHT_VIEW" -> ideaSpace.space.switchView(Space.View.RIGHT_VIEW);
+            case "LEFT_VIEW" -> ideaSpace.space.switchView(Space.View.LEFT_VIEW);
+
             case "NULL" -> {
                 // Let smoothing naturally decay to zero
             }
 
             default -> {
                 if (!command.equals("NULL")) {
-                    System.out.println("Invalid command received: " + command);
+                    System.out.println("Unknown command received: " + command);
                 }
             }
         }
