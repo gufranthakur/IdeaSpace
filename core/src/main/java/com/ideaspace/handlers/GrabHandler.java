@@ -34,7 +34,7 @@ public class GrabHandler {
 
     // Lerp factors
     private float positionLerpFactor = 0.15f;
-    private float rotationLerpFactor = 0.25f;
+    private float rotationLerpFactor = 0.50f;
 
     // Movement multipliers (applied before lerping)
     public float positionMultiplier = 3.0f;

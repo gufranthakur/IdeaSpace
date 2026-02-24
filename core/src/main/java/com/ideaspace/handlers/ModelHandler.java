@@ -39,7 +39,7 @@ public class ModelHandler {
         loadModel(modelLibrary.get("Spaceship"));
         getModelInstance("Spaceship").transform.idt()
             .scale(5f, 5f, 5f)
-            .translate(0.3f, -0.75f, 0.6f);
+            .translate(0.3f, -0.95f, 0.6f);
 
         addModelToLibrary("Vintage", "models/backgrounds/vintage.glb", maps);
         addModelToLibrary("Office", "models/backgrounds/office.glb", maps);
@@ -50,14 +50,18 @@ public class ModelHandler {
     }
 
     public void createModels() {
-        addModelToLibrary("Arduino-Uno", "models/microcontrollers/arduino_uno.glb");
+        addModelToLibrary("Arduino-Uno", "models/microcontrollers/arduino_uno2222.glb");
         addModelToLibrary("Esp32", "models/microcontrollers/esp32.glb");
         addModelToLibrary("Iphone-17", "models/misc/iphone17pro.glb");
         addModelToLibrary("Joystick-Module", "models/components/joystick_module.glb");
-        addModelToLibrary("Servo-Motor", "models/components/servo_motor.glb");
+        addModelToLibrary("Servo-Motor", "models/components/servomotor.glb");
         addModelToLibrary("l298motordriver", "models/components/l298motordriver.glb");
-        addModelToLibrary("RaspberryPi", "models/microcontrollers/raspberry_pi.glb");
-        addModelToLibrary("Rpi-cam", "models/components/rpi_cam.glb");
+        addModelToLibrary("RaspberryPi", "models/microcontrollers/rpi4.glb");
+        addModelToLibrary("Rpi-cam", "models/components/rpicamera_split.glb");
+        addModelToLibrary("SD-Card Module", "models/components/sdcard.glb");
+        addModelToLibrary("DC Motor", "models/components/dcmotor.glb");
+        addModelToLibrary("DDR4", "models/components/ddr4.glb");
+        addModelToLibrary("Laptop Fan","models/components/laptop_fan.glb");
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanical_keyboard.glb");
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanical_keyboard.glb");
 

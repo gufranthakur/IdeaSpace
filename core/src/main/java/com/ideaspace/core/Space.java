@@ -1,10 +1,7 @@
 package com.ideaspace.core;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Cubemap;
-import com.badlogic.gdx.graphics.PerspectiveCamera;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 
 import com.badlogic.gdx.math.Vector3;
@@ -143,9 +140,9 @@ public class Space {
         sceneManager.update(deltaTime);
         sceneManager.render();
 
-//        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
-//        //canvasRenderer.render();
-//        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+        canvasRenderer.render();
+        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
 
     //top view
@@ -153,7 +150,7 @@ public class Space {
     //Dir: (0.0024682502,-0.9591379,-0.28292692)
 
     //right view
-   // Pos: (4.383636,0.16763468,0.026943728)
+    // Pos: (4.383636,0.16763468,0.026943728)
     // Dir: (-0.9985318,-0.05345491,0.008718704)
 
     //left view
