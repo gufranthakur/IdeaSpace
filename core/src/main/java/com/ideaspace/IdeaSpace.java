@@ -11,7 +11,6 @@ import com.ideaspace.core.Space;
 import com.ideaspace.handlers.AnimationHandler;
 import com.ideaspace.handlers.LectureHandler;
 import com.ideaspace.handlers.ModelHandler;
-import com.ideaspace.simulationhand.ScriptExecutor;
 import com.ideaspace.ui.panels.ControlPanel;
 import com.ideaspace.ui.panels.HUDPanel;
 import com.ideaspace.ui.screens.HomeScreen;
@@ -33,8 +32,6 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public ModelHandler modelHandler;
     public AnimationHandler animationHandler;
-
-    private ScriptExecutor scriptExecutor;
     private Thread simulationThread;
 
     public Thread canvasThread, coreGestureServerThread;
@@ -63,7 +60,6 @@ public class IdeaSpace extends ApplicationAdapter {
         coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, true);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
 
-        scriptExecutor = new ScriptExecutor(this);
 
         decoder = new Decoder(this);
 
@@ -87,10 +83,6 @@ public class IdeaSpace extends ApplicationAdapter {
         canvasThread = new Thread(canvasServer);
         coreGestureServerThread = new Thread(coreGesturesServer);
 
-        simulationThread = new Thread(scriptExecutor);
-
-        //simulationThread.start();
-        // canvasThread.start();
         coreGestureServerThread.start();
 
 
@@ -128,8 +120,6 @@ public class IdeaSpace extends ApplicationAdapter {
     public void dispose() {
         //canvasServer.stopServer();
         coreGesturesServer.stopServer();
-
-        scriptExecutor.stopPythonScript();
 
         homeScreen.dispose();
         modelHandler.dispose();
