@@ -39,7 +39,7 @@ public class Server implements Runnable {
             }
 
         } catch (IOException e) {
-            System.out.println("Exception occurred: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -65,7 +65,7 @@ public class Server implements Runnable {
         try {
             if (serverSocket != null) serverSocket.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Socket stopped");
         }
 
         stopPythonScript();
@@ -81,7 +81,8 @@ public class Server implements Runnable {
             pb = new ProcessBuilder("venv/bin/python", scriptPath);
 
         }
-       // pb.inheritIO(); // This will show Python output directly in your Java console
+
+        pb.inheritIO();
 
         try {
             pb.directory(new File("../python"));

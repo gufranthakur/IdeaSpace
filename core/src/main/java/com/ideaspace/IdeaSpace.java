@@ -60,8 +60,8 @@ public class IdeaSpace extends ApplicationAdapter {
 
         space = new Space(this);
 
-        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 65000, false);
-        canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, false);
+        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, true);
+        canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
 
         scriptExecutor = new ScriptExecutor(this);
 
@@ -88,10 +88,11 @@ public class IdeaSpace extends ApplicationAdapter {
         coreGestureServerThread = new Thread(coreGesturesServer);
 
         simulationThread = new Thread(scriptExecutor);
-        simulationThread.start();
 
-       // canvasThread.start();
+        //simulationThread.start();
+        // canvasThread.start();
         coreGestureServerThread.start();
+
 
 
     }

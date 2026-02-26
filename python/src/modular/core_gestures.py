@@ -1,51 +1,58 @@
+from hand_tracking_module import handDetector
 import cv2
+import socket
 import time
 import sys
 import math
 import argparse
-import numpy as np
-from collections import deque
 
 from server import Server
-from hand_tracking_module import handDetector
 from gesture_config import *
 from flick_gesture import FlickGesture
 from drag_gesture import DragGesture
 from swipe_utils import detect_swipe_gesture
 
-parser = argparse.ArgumentParser(description='Unified Gesture System')
+# ── Args ──────────────────────────────────────────────────────────────────────
+parser = argparse.ArgumentParser(description='Unified Gesture + Simulation System')
 parser.add_argument('--debug', action='store_true', help='Enable debug mode (camera view, landmarks, FPS)')
 args = parser.parse_args()
 
 DEBUG_MODE = args.debug
 
-PORT = 65000
+# ── Gesture Server (TCP) ──────────────────────────────────────────────────────
+PORT = 64000
 server = Server(PORT)
 
+# ── Simulation UDP Socket ─────────────────────────────────────────────────────
+sim_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+SIM_RIGHT_PORT = ("127.0.0.1", 65000)
+SIM_LEFT_PORT  = ("127.0.0.1", 65005)
+
+# ── Detector ──────────────────────────────────────────────────────────────────
 detector = handDetector(maxHands=2, detectionConfidence=0.8, trackConfidence=0.8)
 
-left_flick_gesture = FlickGesture(return_command="REMOVE")
+# ── Gesture State ─────────────────────────────────────────────────────────────
+left_flick_gesture  = FlickGesture(return_command="REMOVE")
 right_flick_gesture = FlickGesture(return_command="ANIMATE")
-right_drag_gesture = DragGesture()
+right_drag_gesture  = DragGesture()
 
-core_left_last_command_time = 0
-core_left_last_sent_command = None
+core_left_last_command_time  = 0
+core_left_last_sent_command  = None
 core_right_last_command_time = 0
 core_right_last_sent_command = None
-zoom_last_command_time = 0
-zoom_last_sent_command = None
+zoom_last_command_time       = 0
+zoom_last_sent_command       = None
 
-# One-shot tracking for directional gestures
 top_view_was_active   = {"Left": False, "Right": False}
 front_view_was_active = {"Left": False, "Right": False}
 left_view_was_active  = {"Left": False, "Right": False}
 right_view_was_active = {"Left": False, "Right": False}
 
-# Hold duration — gesture must be held this many consecutive frames before firing
-VIEW_HOLD_FRAMES = 3  # tune this value up/down as needed
+VIEW_HOLD_FRAMES  = 3
 view_hold_counter = {"Left": 0, "Right": 0}
 view_hold_type    = {"Left": None, "Right": None}
 
+# ── Camera ────────────────────────────────────────────────────────────────────
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 cap.set(cv2.CAP_PROP_FPS, TARGET_FPS)
@@ -56,7 +63,7 @@ cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
 PROCESS_WIDTH  = 640
 PROCESS_HEIGHT = 480
 
-
+# ── Helpers ───────────────────────────────────────────────────────────────────
 def send_command_throttled(command, last_time, last_command, interval=COMMAND_SEND_INTERVAL):
     current_time = time.time()
     if command != last_command or (current_time - last_time) >= interval:
@@ -66,7 +73,6 @@ def send_command_throttled(command, last_time, last_command, interval=COMMAND_SE
 
 
 def is_top_view_gesture(lms):
-    """Index + middle extended upward, ring + pinky + thumb curled."""
     index_up   = lms[8][2]  < lms[6][2]
     middle_up  = lms[12][2] < lms[10][2]
     ring_down  = lms[16][2] > lms[14][2]
@@ -76,7 +82,6 @@ def is_top_view_gesture(lms):
 
 
 def is_front_view_gesture(lms):
-    """Index + middle pointing down, thumb extended out, pinky curled."""
     index_down   = lms[8][2]  > lms[6][2] + 20
     middle_down  = lms[12][2] > lms[10][2] + 20
     thumb_out    = abs(lms[4][1] - lms[2][1]) > 35
@@ -85,7 +90,6 @@ def is_front_view_gesture(lms):
 
 
 def is_left_view_gesture(lms):
-    """Right hand: index + middle pointing left, pinky curled."""
     index_left   = lms[8][1] < lms[6][1] - 20
     middle_left  = lms[12][1] < lms[10][1] - 20
     pinky_curled = lms[20][1] > lms[18][1]
@@ -93,7 +97,6 @@ def is_left_view_gesture(lms):
 
 
 def is_right_view_gesture(lms):
-    """Left hand: index + middle pointing right, pinky curled."""
     index_right  = lms[8][1] > lms[6][1] + 20
     middle_right = lms[12][1] > lms[10][1] + 20
     pinky_curled = lms[20][1] < lms[18][1]
@@ -101,20 +104,14 @@ def is_right_view_gesture(lms):
 
 
 def detect_view_gesture(lms, hand):
-    """Returns view command string or None."""
-    if is_top_view_gesture(lms):
-        return "TOP_VIEW"
-    if is_front_view_gesture(lms):
-        return "FRONT_VIEW"
-    if hand == "Right" and is_left_view_gesture(lms):
-        return "LEFT_VIEW"
-    if hand == "Left" and is_right_view_gesture(lms):
-        return "RIGHT_VIEW"
+    if is_top_view_gesture(lms):   return "TOP_VIEW"
+    if is_front_view_gesture(lms): return "FRONT_VIEW"
+    if hand == "Right" and is_left_view_gesture(lms):  return "LEFT_VIEW"
+    if hand == "Left"  and is_right_view_gesture(lms): return "RIGHT_VIEW"
     return None
 
 
-prev_time = time.time()
-
+# ── Main Loop ─────────────────────────────────────────────────────────────────
 try:
     while True:
         current_time = time.time()
@@ -157,6 +154,18 @@ try:
                     if DEBUG_MODE:
                         for lm in right_lms:
                             cv2.circle(img, (lm[1], lm[2]), 5, (0, 255, 255), -1)
+
+                # ── Send simulation landmark data via UDP ─────────────────────
+                # Uses raw MediaPipe landmarks (normalized, scaled to frame size)
+                hand_landmarks_raw = detector.results.multi_hand_landmarks[hand_idx]
+                sim_data = []
+                for landmark in hand_landmarks_raw.landmark:
+                    sim_data.extend([landmark.x * w_full, landmark.y * h_full, landmark.z * 200])
+
+                if handedness == "Right":
+                    sim_sock.sendto(str.encode(str(sim_data)), SIM_RIGHT_PORT)
+                elif handedness == "Left":
+                    sim_sock.sendto(str.encode(str(sim_data)), SIM_LEFT_PORT)
 
         # ── LEFT hand gestures ────────────────────────────────────────────────
         if len(left_lms) > 0:
@@ -278,7 +287,7 @@ try:
                 elif distance > 0.35:
                     zoom_action = "ZOOM IN"
 
-        # ── Send commands ─────────────────────────────────────────────────────
+        # ── Send gesture commands ─────────────────────────────────────────────
         if left_action:
             core_left_last_command_time, core_left_last_sent_command, _ = send_command_throttled(
                 left_action, core_left_last_command_time, core_left_last_sent_command
@@ -334,8 +343,6 @@ try:
             cv2.namedWindow("Gestures", cv2.WINDOW_AUTOSIZE)
             cv2.imshow("Gestures", img)
 
-        prev_time = time.time()
-
         elapsed = time.time() - current_time
         if elapsed < FRAME_TIME:
             time.sleep(FRAME_TIME - elapsed)
@@ -348,6 +355,7 @@ try:
 finally:
     send_command_throttled("NULL", 0, None)
     server.close()
+    sim_sock.close()
     cap.release()
     if DEBUG_MODE:
         cv2.destroyAllWindows()

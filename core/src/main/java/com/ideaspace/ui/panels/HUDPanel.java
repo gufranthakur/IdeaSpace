@@ -9,6 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.ideaspace.IdeaSpace;
+import com.ideaspace.core.Space;
 import com.ideaspace.ui.components.ISButton;
 import com.ideaspace.ui.components.ISTable;
 
@@ -17,7 +18,7 @@ public class HUDPanel extends Stage {
     private IdeaSpace ideaSpace;
 
     private Table root;
-    private ISButton homeHUDButton, settingsHUDButton, panelHUDButton, changeMapHUDButton;
+    private ISButton homeHUDButton, settingsHUDButton, panelHUDButton, changeMapHUDButton, defaultViewHUDButton;
 
 
     public HUDPanel(IdeaSpace ideaSpace) {
@@ -51,9 +52,15 @@ public class HUDPanel extends Stage {
             "ui/png/changeMapHUDButton_hovered.png"
         );
 
+        defaultViewHUDButton = new ISButton(
+            "ui/png/defaultViewHUDButton.png",
+            "ui/png/defaultViewHUDButton_hovered.png"
+        );
+
 
         float buttonSize = 40f;
 
+        root.add(defaultViewHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(changeMapHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(panelHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(settingsHUDButton).width(buttonSize).height(buttonSize).pad(3);
@@ -62,6 +69,13 @@ public class HUDPanel extends Stage {
     }
 
     private void addListeners() {
+        defaultViewHUDButton.addListener(new ClickListener() {
+           @Override
+           public void clicked(InputEvent event, float x, float y) {
+               ideaSpace.modelHandler.rotateSelectedModelToFaceView(Space.View.NONE_VIEW);
+           }
+        });
+
         panelHUDButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

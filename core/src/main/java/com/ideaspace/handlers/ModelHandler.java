@@ -2,10 +2,11 @@ package com.ideaspace.handlers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
-
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.ideaspace.IdeaSpace;
+import com.ideaspace.core.Space;
 import com.ideaspace.models.ModelMesh;
 import com.ideaspace.ui.components.ModelCard;
 import com.kotcrab.vis.ui.util.OsUtils;
@@ -34,7 +35,6 @@ public class ModelHandler {
     }
 
     public void loadInitialModels() {
-
         addModelToLibrary("Spaceship", "models/backgrounds/spaceship.glb", maps);
         loadModel(modelLibrary.get("Spaceship"));
         getModelInstance("Spaceship").transform.idt()
@@ -45,8 +45,6 @@ public class ModelHandler {
         addModelToLibrary("Office", "models/backgrounds/office.glb", maps);
         addModelToLibrary("Classroom", "models/backgrounds/classroom.glb", maps);
         addModelToLibrary("Cube", "models/backgrounds/light_background.glb", maps);
-
-
     }
 
     public void createModels() {
@@ -61,14 +59,13 @@ public class ModelHandler {
         addModelToLibrary("SD-Card Module", "models/components/sdcard.glb");
         addModelToLibrary("DC Motor", "models/components/dcmotor.glb");
         addModelToLibrary("DDR4", "models/components/ddr4.glb");
-        addModelToLibrary("Laptop Fan","models/components/laptop_fan.glb");
-        addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanical_keyboard.glb");
-        addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanical_keyboard.glb");
-
+        addModelToLibrary("Laptop Fan", "models/components/laptop_fan.glb");
+        addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanicalkeyboard_split.glb");
+        // Removed duplicate Mechanical-Keyboard entry
 
         loadModel(modelLibrary.get("Esp32"));
-        getModelInstance("Esp32").transform.idt().scale(0.35f, 0.35f, 0.35f);
-
+        getModelInstance("Esp32").transform.idt()
+            .scale(0.35f, 0.35f, 0.35f);
     }
 
     private void addModelToLibrary(String name, String path) {
@@ -78,7 +75,6 @@ public class ModelHandler {
         if (name.equals("Spaceship")) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, false);
-
         ideaSpace.controlPanel.addModelCardToLibrary(modelCard);
     }
 
@@ -90,7 +86,6 @@ public class ModelHandler {
         if (name.equals("Spaceship")) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, false);
-
         ideaSpace.controlPanel.addModelCardToLibrary(modelCard);
     }
 
@@ -109,7 +104,6 @@ public class ModelHandler {
         loadedModels.put(modelMesh.modelName, modelMesh);
         ideaSpace.space.getSceneManager().addScene(modelMesh.getScene());
 
-        // Update grab handler with current loaded models
         ideaSpace.space.getRightGrabHandler().setLoadedModels(loadedModels.values());
         ideaSpace.space.getLeftGrabHandler().setLoadedModels(loadedModels.values());
 
@@ -140,12 +134,10 @@ public class ModelHandler {
             final ModelMesh finalModelMesh = modelMesh;
 
             ideaSpace.animationHandler.removeModelAnimation(modelInstance, () -> {
-
                 ideaSpace.space.getSceneManager().removeScene(finalModelMesh.getScene());
                 finalModelMesh.dispose();
                 loadedModels.remove(finalNameToRemove);
 
-                // Update grab handler after removal
                 ideaSpace.space.getRightGrabHandler().setLoadedModels(loadedModels.values());
 
                 if (modelCard != null) {
@@ -223,15 +215,13 @@ public class ModelHandler {
     }
 
     public void changeMap() {
-        // Unload current map before incrementing
         String currentMap = maps.get(mapIndex).modelName;
 
-        mapIndex = (mapIndex + 1) % maps.size(); // wraps automatically
+        mapIndex = (mapIndex + 1) % maps.size();
 
         ModelMesh nextMap = maps.get(mapIndex);
         loadModel(nextMap);
 
-        // Apply transforms per map
         if (nextMap.modelName.equals("Spaceship")) {
             getModelInstance("Spaceship").transform.idt()
                 .scale(5f, 5f, 5f)
@@ -247,17 +237,49 @@ public class ModelHandler {
                 .rotate(0f, 1f, 0f, 270f)
                 .translate(0f, 0.75f, 0f);
         } else if (nextMap.modelName.equals("Classroom")) {
-            loadModel(modelLibrary.get("Classroom"));
             getModelInstance("Classroom").transform.idt()
                 .translate(0f, -5f, -18.5f)
                 .scale(0.05f, 0.05f, 0.05f);
         } else if (nextMap.modelName.equals("Cube")) {
-            loadModel(modelLibrary.get("Cube"));
             getModelInstance("Cube").transform.idt().scale(10f, 10f, 10f);
         }
 
         unloadModel(currentMap, null);
     }
+
+    // ── NEW METHOD ──────────────────────────────────────────────────────────────
+    public void rotateSelectedModelToFaceView(Space.View view) {
+        if (selectedModel == null || selectedModel.getScene() == null) return;
+
+        ModelInstance instance = selectedModel.getScene().modelInstance;
+
+        Vector3 scale = new Vector3();
+        Vector3 translation = new Vector3();
+        instance.transform.getScale(scale);
+        instance.transform.getTranslation(translation);
+
+        instance.transform.idt().translate(translation);
+
+        switch (view) {
+            case FRONT_VIEW:
+                instance.transform.rotate(Vector3.X, 90f);
+                break;
+
+            case TOP_VIEW:
+                // Tilt on X-axis to show bottom (charging port side)
+                instance.transform.rotate(Vector3.X, -90f);
+                break;
+            case LEFT_VIEW:
+                instance.transform.rotate(Vector3.Y, -90f);
+                break;
+            case RIGHT_VIEW:
+                instance.transform.rotate(Vector3.Y, 90f);
+                break;
+        }
+
+        instance.transform.scale(scale.x, scale.y, scale.z);
+    }
+    // ────────────────────────────────────────────────────────────────────────────
 
     public ModelMesh getSelectedModel() {
         return selectedModel;

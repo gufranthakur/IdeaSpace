@@ -53,6 +53,8 @@ public class Decoder {
         targetRotationX = 0f;
         targetRotationY = 0f;
 
+        
+
         // Handle CANVAS commands
         if (command.startsWith("CANVAS ")) {
             System.out.println("Handling canvas command");
@@ -96,9 +98,7 @@ public class Decoder {
             }
 
             case "DRAG" -> {
-                Gdx.app.postRunnable(() -> {
-                    ideaSpace.modelHandler.loadRandomModel();
-                });
+                System.out.println("NO DRAG FOR YOUUUUUUU");
             }
 
             case "REMOVE" -> {

@@ -17,7 +17,10 @@ public class ScriptExecutor implements Runnable{
     }
 
     public void startPythonScript() {
+
         processBuilder = new ProcessBuilder("venv/bin/python", "src/modular/simulation_main.py");
+        processBuilder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+        processBuilder.redirectError(ProcessBuilder.Redirect.DISCARD);
         try {
             processBuilder.directory(new File("../python"));
             process = processBuilder.start();
