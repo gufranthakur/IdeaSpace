@@ -53,7 +53,7 @@ public class Decoder {
         targetRotationX = 0f;
         targetRotationY = 0f;
 
-        
+
 
         // Handle CANVAS commands
         if (command.startsWith("CANVAS ")) {

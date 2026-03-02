@@ -253,20 +253,11 @@ public class ModelHandler {
 
         ModelInstance instance = selectedModel.getScene().modelInstance;
 
-        Vector3 scale = new Vector3();
-        Vector3 translation = new Vector3();
-        instance.transform.getScale(scale);
-        instance.transform.getTranslation(translation);
-
-        instance.transform.idt().translate(translation);
-
         switch (view) {
             case FRONT_VIEW:
                 instance.transform.rotate(Vector3.X, 90f);
                 break;
-
             case TOP_VIEW:
-                // Tilt on X-axis to show bottom (charging port side)
                 instance.transform.rotate(Vector3.X, -90f);
                 break;
             case LEFT_VIEW:
@@ -276,8 +267,6 @@ public class ModelHandler {
                 instance.transform.rotate(Vector3.Y, 90f);
                 break;
         }
-
-        instance.transform.scale(scale.x, scale.y, scale.z);
     }
     // ────────────────────────────────────────────────────────────────────────────
 

@@ -16,7 +16,6 @@ public class GrabHandler {
     private static final float PINCH_THRESHOLD = 0.15f;
     private static final float RAY_LENGTH = 100f;
 
-    private static final int WRIST = 0;
     private static final int THUMB_TIP = 4;
     private static final int INDEX_TIP = 8;
 
@@ -25,47 +24,44 @@ public class GrabHandler {
     private Collection<ModelMesh> loadedModels;
 
     private boolean isGrabbing = false;
-    private boolean isRotating = false;
     private ModelMesh grabbedModel = null;
 
+    // --- Left hand only ---
     public float maxGrabDistance = 20.0f;
     private float grabDistance;
     private Vector3 grabOffset = new Vector3();
-
-    // Lerp factors
     private float positionLerpFactor = 0.15f;
-    private float rotationLerpFactor = 0.50f;
-
-    // Movement multipliers (applied before lerping)
     public float positionMultiplier = 3.0f;
-    public float rotationMultiplier = 7.5f;
-
-    // Target values for lerping
     private Vector3 targetPosition = new Vector3();
-    private Quaternion targetRotation = new Quaternion();
 
-    // Rotation tracking
-    private Vector3 initialRotationVector = new Vector3();
-    private Quaternion initialRotation = new Quaternion();
-    private Quaternion currentRotation = new Quaternion();
-    private Quaternion deltaRotation = new Quaternion();
+    // --- Right hand only ---
+    public float rotationMultiplier = 70f;
+    private Vector3 lastPinchCenter = new Vector3();
+    private boolean hasLastPinchCenter = false;
 
-    // Temp vectors
-    private Vector3 wristPos = new Vector3();
+    // Snapshot of object rotation at grab start
+    private Quaternion rotationAtGrabStart = new Quaternion();
+    // Accumulated delta since this grab session started
+    private float sessionYaw   = 0f;
+    private float sessionPitch = 0f;
+
+    // Temp
     private Vector3 thumbPos = new Vector3();
     private Vector3 indexPos = new Vector3();
     private Vector3 pinchCenter = new Vector3();
     private Vector3 rayDir = new Vector3();
     private Vector3 tempVec = new Vector3();
     private Vector3 intersection = new Vector3();
-    private Vector3 rotationVector = new Vector3();
     private Matrix4 tempTransform = new Matrix4();
+    private Quaternion yawQuat   = new Quaternion();
+    private Quaternion pitchQuat = new Quaternion();
+    private Quaternion tempQuat  = new Quaternion();
 
     private Ray ray = new Ray();
     private BoundingBox boundingBox = new BoundingBox();
 
-
     private boolean isRightHand;
+
     public GrabHandler(SimulationHand hand, Camera camera, boolean isRightHand) {
         this.hand = hand;
         this.camera = camera;
@@ -77,36 +73,28 @@ public class GrabHandler {
     }
 
     public void update() {
-        if (hand == null || loadedModels == null) return;
+        if (hand == null || loadedModels == null || !hand.hasData) return;
 
-        if (!hand.hasData) return;
-
-        wristPos.set(hand.getPosition(WRIST));
         thumbPos.set(hand.getPosition(THUMB_TIP));
         indexPos.set(hand.getPosition(INDEX_TIP));
 
-        float indexPinchDistance = thumbPos.dst(indexPos);
-        boolean isIndexPinching = indexPinchDistance < PINCH_THRESHOLD;
+        boolean isIndexPinching = thumbPos.dst(indexPos) < PINCH_THRESHOLD;
+        pinchCenter.set(thumbPos).add(indexPos).scl(0.5f);
 
-        // Grab with thumb-index
         if (isIndexPinching && !isGrabbing) {
-            pinchCenter.set(thumbPos).add(indexPos).scl(0.5f);
             tryGrabWithRaycast();
-        }
-        // Release grab
-        else if (!isIndexPinching && isGrabbing) {
+        } else if (!isIndexPinching && isGrabbing) {
             release();
+        } else if (isGrabbing && grabbedModel != null && isIndexPinching) {
+            if (isRightHand) updateRotation();
+            else             updateGrabbedObjectPosition();
         }
-        // Update grabbed object (includes rotation)
-        else if (isGrabbing && grabbedModel != null && isIndexPinching) {
-            pinchCenter.set(thumbPos).add(indexPos).scl(0.5f);
 
-            if (!isRotating) {
-                startRotation();
-            }
-
-            updateRotation();
-            updateGrabbedObject();
+        if (isIndexPinching) {
+            lastPinchCenter.set(pinchCenter);
+            hasLastPinchCenter = true;
+        } else {
+            hasLastPinchCenter = false;
         }
     }
 
@@ -115,16 +103,14 @@ public class GrabHandler {
         ray.set(camera.position, rayDir);
 
         ModelMesh closestModel = null;
-        float closestDistance = Float.MAX_VALUE;
-        Vector3 closestIntersection = new Vector3();
+        float closestDistance  = Float.MAX_VALUE;
 
         for (ModelMesh model : loadedModels) {
             if (model.modelName.equals("Spaceship")
                 || model.modelName.equals("Vintage")
                 || model.modelName.equals("Office")
                 || model.modelName.equals("Classroom")
-                || model.modelName.equals("Cube"))
-                continue;
+                || model.modelName.equals("Cube")) continue;
             if (model.getScene() == null || model.getScene().modelInstance == null) continue;
 
             model.getScene().modelInstance.calculateBoundingBox(boundingBox);
@@ -134,96 +120,66 @@ public class GrabHandler {
                 float distance = camera.position.dst(intersection);
                 if (distance < closestDistance && distance < RAY_LENGTH && distance <= maxGrabDistance) {
                     closestDistance = distance;
-                    closestModel = model;
-                    closestIntersection.set(intersection);
+                    closestModel    = model;
                 }
             }
         }
 
         if (closestModel != null) {
             grabbedModel = closestModel;
-            grabDistance = closestDistance;
+            isGrabbing   = true;
 
-            tempVec.set(rayDir).scl(grabDistance).add(camera.position);
-            Vector3 objectPos = grabbedModel.getScene().modelInstance.transform.getTranslation(new Vector3());
-            grabOffset.set(objectPos).sub(tempVec);
+            if (!isRightHand) {
+                grabDistance = closestDistance;
+                tempVec.set(rayDir).scl(grabDistance).add(camera.position);
+                Vector3 objectPos = grabbedModel.getScene().modelInstance.transform.getTranslation(new Vector3());
+                grabOffset.set(objectPos).sub(tempVec);
+                targetPosition.set(objectPos);
+            } else {
+                // Snapshot the current rotation and reset session deltas
+                grabbedModel.getScene().modelInstance.transform.getRotation(rotationAtGrabStart);
+                sessionYaw   = 0f;
+                sessionPitch = 0f;
+            }
 
-            // Initialize target position to current position
-            targetPosition.set(objectPos);
-
-            isGrabbing = true;
+            hasLastPinchCenter = false;
         }
     }
 
-    private void startRotation() {
-        if (grabbedModel == null) return;
-
-        // Store initial rotation vector (wrist to pinch center)
-        initialRotationVector.set(pinchCenter).sub(wristPos).nor();
-
-        // Store initial object rotation
-        grabbedModel.getScene().modelInstance.transform.getRotation(initialRotation);
-        targetRotation.set(initialRotation);
-
-        isRotating = true;
-    }
-
     private void updateRotation() {
-        if (grabbedModel == null) return;
+        if (grabbedModel == null || !hasLastPinchCenter) return;
 
-        // Current rotation vector (wrist to pinch center)
-        rotationVector.set(pinchCenter).sub(wristPos).nor();
+        float deltaX = pinchCenter.x - lastPinchCenter.x;
+        float deltaY = pinchCenter.y - lastPinchCenter.y;
 
-        // Calculate rotation between initial and current vectors
-        deltaRotation.setFromCross(initialRotationVector, rotationVector);
+        if (Math.abs(deltaX) >= Math.abs(deltaY)) deltaY = 0f;
+        else                                       deltaX = 0f;
 
-        // Apply rotation multiplier by scaling the angle
-        float angle = deltaRotation.getAxisAngle(tempVec);
-        deltaRotation.setFromAxis(tempVec, angle * rotationMultiplier);
+        sessionYaw   +=  deltaX * rotationMultiplier;
+        sessionPitch += -deltaY * rotationMultiplier;
 
-        // Calculate target rotation
-        targetRotation.set(initialRotation).mul(deltaRotation);
+        // Build delta rotation for this session in world space
+        yawQuat.set(Vector3.Y, sessionYaw);
+        pitchQuat.set(Vector3.X, sessionPitch);
+        tempQuat.set(yawQuat).mul(pitchQuat);
 
-        // Get current rotation and slerp towards target
-        Quaternion currentRot = grabbedModel.getScene().modelInstance.transform.getRotation(new Quaternion());
-        currentRot.slerp(targetRotation, rotationLerpFactor);
+        // Apply session delta ON TOP of the snapshotted rotation
+        tempQuat.mul(rotationAtGrabStart);
 
-        // Apply slerped rotation while preserving position
         Vector3 currentPos = grabbedModel.getScene().modelInstance.transform.getTranslation(tempVec);
-        tempTransform.set(grabbedModel.getScene().modelInstance.transform);
-        tempTransform.set(currentPos, currentRot);
+        tempTransform.set(currentPos, tempQuat);
         grabbedModel.getScene().modelInstance.transform.set(tempTransform);
-
-        // Update initial for continuous rotation
-        initialRotationVector.set(rotationVector);
-        grabbedModel.getScene().modelInstance.transform.getRotation(initialRotation);
     }
 
-    private void stopRotation() {
-        isRotating = false;
-        initialRotationVector.setZero();
-    }
-
-    private void release() {
-        grabbedModel = null;
-        isGrabbing = false;
-        isRotating = false;
-        grabOffset.setZero();
-        initialRotationVector.setZero();
-    }
-
-    private void updateGrabbedObject() {
+    private void updateGrabbedObjectPosition() {
         if (grabbedModel == null || grabbedModel.getScene() == null) return;
 
         rayDir.set(pinchCenter).sub(camera.position).nor();
         targetPosition.set(rayDir).scl(grabDistance).add(camera.position).add(grabOffset);
 
-        // Apply position multiplier to the movement delta
-        Vector3 currentPos = grabbedModel.getScene().modelInstance.transform.getTranslation(tempVec);
-        Vector3 movementDelta = targetPosition.cpy().sub(currentPos).scl(positionMultiplier);
+        Vector3 currentPos     = grabbedModel.getScene().modelInstance.transform.getTranslation(tempVec);
+        Vector3 movementDelta  = targetPosition.cpy().sub(currentPos).scl(positionMultiplier);
         Vector3 amplifiedTarget = currentPos.cpy().add(movementDelta);
-
-        // Lerp current position towards amplified target
         currentPos.lerp(amplifiedTarget, positionLerpFactor);
 
         tempTransform.set(grabbedModel.getScene().modelInstance.transform);
@@ -231,17 +187,17 @@ public class GrabHandler {
         grabbedModel.getScene().modelInstance.transform.set(tempTransform);
     }
 
-    public boolean isGrabbing() {
-        return isGrabbing;
+    private void release() {
+        grabbedModel       = null;
+        isGrabbing         = false;
+        hasLastPinchCenter = false;
+        grabOffset.setZero();
+        lastPinchCenter.setZero();
+        sessionYaw   = 0f;
+        sessionPitch = 0f;
     }
 
-    public ModelMesh getGrabbedModel() {
-        return grabbedModel;
-    }
-
-    public void dispose() {
-        if (isGrabbing) {
-            release();
-        }
-    }
+    public boolean isGrabbing()          { return isGrabbing; }
+    public ModelMesh getGrabbedModel()   { return grabbedModel; }
+    public void dispose()                { if (isGrabbing) release(); }
 }

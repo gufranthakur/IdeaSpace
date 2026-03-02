@@ -2,12 +2,15 @@ package com.ideaspace.core;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.handlers.GrabHandler;
 
+import com.ideaspace.models.ModelMesh;
 import com.ideaspace.simulationhand.HandLines;
 import com.ideaspace.simulationhand.SimulationHand;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
@@ -47,6 +50,11 @@ public class Space {
     private SimulationHand rightHand, leftHand;
     private HandLines rightHandLines, leftHandLines;
     private GrabHandler rightGrabHandler, leftGrabHandler;
+
+    private Quaternion currentViewRotation = new Quaternion();
+    private Quaternion targetViewRotation  = new Quaternion();
+    private boolean isSmoothRotating = false;
+    private float viewRotationLerpFactor = 0.1f;
 
 
     public Space(IdeaSpace ideaSpace) {
@@ -138,6 +146,24 @@ public class Space {
         sceneManager.update(deltaTime);
         sceneManager.render();
 
+        if (!isSmoothRotating || ideaSpace.modelHandler.getSelectedModel() == null) {
+            return;
+        }
+
+        ModelInstance instance = ideaSpace.modelHandler.getSelectedModel().getScene().modelInstance;
+        Vector3 translation = instance.transform.getTranslation(new Vector3());
+        Vector3 scale       = instance.transform.getScale(new Vector3());
+
+        instance.transform.getRotation(currentViewRotation);
+        currentViewRotation.slerp(targetViewRotation, viewRotationLerpFactor);
+
+        if (currentViewRotation.dot(targetViewRotation) > 0.9999f) {
+            currentViewRotation.set(targetViewRotation);
+            isSmoothRotating = false;
+        }
+
+        instance.transform.set(translation, currentViewRotation, scale);
+
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         canvasRenderer.render();
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
@@ -145,7 +171,31 @@ public class Space {
 
     public void switchView(View view) {
         currentView = view;
-        ideaSpace.modelHandler.rotateSelectedModelToFaceView(view);
+        rotateSelectedModelToFaceView(view);
+    }
+
+    public void rotateSelectedModelToFaceView(Space.View view) {
+
+        ModelMesh selectedModel = ideaSpace.modelHandler.getSelectedModel();
+
+        if (selectedModel == null || selectedModel.getScene() == null) return;
+
+        ModelInstance instance = selectedModel.getScene().modelInstance;
+
+        switch (view) {
+            case FRONT_VIEW:
+                instance.transform.rotate(Vector3.X, 90f);
+                break;
+            case TOP_VIEW:
+                instance.transform.rotate(Vector3.X, -90f);
+                break;
+            case LEFT_VIEW:
+                instance.transform.rotate(Vector3.Y, -90f);
+                break;
+            case RIGHT_VIEW:
+                instance.transform.rotate(Vector3.Y, 90f);
+                break;
+        }
     }
 
     public void dispose() {
