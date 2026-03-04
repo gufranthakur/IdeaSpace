@@ -22,15 +22,15 @@ import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 
 public class Space {
 
-    public enum View {
-        FRONT_VIEW,
-        TOP_VIEW,
-        RIGHT_VIEW,
-        LEFT_VIEW,
+    public enum Rotation {
+        BOTTOM_ROTATE,
+        TOP_ROTATE,
+        RIGHT_ROTATE,
+        LEFT_ROTATE,
         NONE_VIEW
     }
 
-    View currentView;
+    Rotation currentRotation;
 
     private IdeaSpace ideaSpace;
 
@@ -46,6 +46,12 @@ public class Space {
     private FirstPersonCameraController cameraController;
 
     public CanvasRenderer canvasRenderer;
+
+    private Quaternion slerpFrom = new Quaternion();
+    private Quaternion slerpTo   = new Quaternion();
+    private Vector3    slerpTranslation = new Vector3();
+    private Vector3    slerpScale       = new Vector3();
+    private float      slerpAlpha = 1f;
 
     private SimulationHand rightHand, leftHand;
     private HandLines rightHandLines, leftHandLines;
@@ -78,12 +84,12 @@ public class Space {
         camera.near = 20f / 1000f;
         camera.far = 1000f;
         sceneManager.setCamera(camera);
-        camera.position.set(-0.036988314f,0.20096034f,3.1463299f);
-        camera.lookAt(0.008157247f,-0.18134354f,-0.9833858f);
+        camera.position.set(-0.036988314f, 0.20096034f, 3.1463299f);
+        camera.lookAt(0.008157247f, -0.18134354f, -0.9833858f);
         camera.up.set(Vector3.Y);
         camera.update();
 
-        currentView = View.FRONT_VIEW;
+        currentRotation = Rotation.BOTTOM_ROTATE;
 
         cameraController = new FirstPersonCameraController(camera);
     }
@@ -141,47 +147,54 @@ public class Space {
         sceneManager.update(deltaTime);
         sceneManager.render();
 
-        System.out.println("Camera Pos: [" + camera.position + "] | Camera dir: [" + camera.direction + "]");
+        if (slerpAlpha < 1f && ideaSpace.modelHandler.getSelectedModel() != null) {
+            slerpAlpha = Math.min(slerpAlpha + deltaTime * 5f, 1f);
+            Quaternion current = new Quaternion(slerpFrom).slerp(slerpTo, slerpAlpha);
+            ideaSpace.modelHandler.getSelectedModel().getScene().modelInstance
+                .transform.set(slerpTranslation, current, slerpScale);
+        }
 
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         canvasRenderer.render();
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
 
-    public void switchView(View view) {
-        currentView = view;
-        rotateSelectedModelToFaceView(view);
+    public void switchView(Rotation rotation) {
+        currentRotation = rotation;
+        rotateSelectedModelToFaceView(rotation);
     }
 
-    public void rotateSelectedModelToFaceView(Space.View view) {
+    public void rotateSelectedModelToFaceView(Rotation rotation) {
         ModelMesh selectedModel = ideaSpace.modelHandler.getSelectedModel();
         if (selectedModel == null || selectedModel.getScene() == null) return;
 
         ModelInstance instance = selectedModel.getScene().modelInstance;
 
-        Vector3 translation = instance.transform.getTranslation(new Vector3());
-        Vector3 scale       = instance.transform.getScale(new Vector3());
-        Quaternion current  = instance.transform.getRotation(new Quaternion());
-        Quaternion delta    = new Quaternion();
+        instance.transform.getRotation(slerpFrom);
+        instance.transform.getTranslation(slerpTranslation);
+        instance.transform.getScale(slerpScale);
 
-        switch (view) {
-            case FRONT_VIEW:
-                delta.setEulerAngles(0, 0, 0);
-                break;
-            case TOP_VIEW:
+        Quaternion delta = new Quaternion();
+
+        switch (rotation) {
+            case BOTTOM_ROTATE:
                 delta.setEulerAngles(0, 90, 0);
                 break;
-            case LEFT_VIEW:
+            case TOP_ROTATE:
+                delta.setEulerAngles(0, 0, 0);
+                break;
+            case LEFT_ROTATE:
                 delta.setEulerAngles(270, 0, 0);
                 break;
-            case RIGHT_VIEW:
+            case RIGHT_ROTATE:
                 delta.setEulerAngles(90, 0, 0);
                 break;
             default:
                 return;
         }
 
-        instance.transform.set(translation, current.mul(delta), scale);
+        slerpTo.set(slerpFrom).mul(delta);
+        slerpAlpha = 0f;
     }
 
     public void dispose() {

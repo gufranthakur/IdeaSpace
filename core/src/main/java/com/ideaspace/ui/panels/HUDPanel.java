@@ -3,15 +3,12 @@ package com.ideaspace.ui.panels;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.core.Space;
 import com.ideaspace.ui.components.ISButton;
-import com.ideaspace.ui.components.ISTable;
 
 public class HUDPanel extends Stage {
 
@@ -72,7 +69,7 @@ public class HUDPanel extends Stage {
         defaultViewHUDButton.addListener(new ClickListener() {
            @Override
            public void clicked(InputEvent event, float x, float y) {
-               ideaSpace.space.rotateSelectedModelToFaceView(Space.View.NONE_VIEW);
+               ideaSpace.space.rotateSelectedModelToFaceView(Space.Rotation.NONE_VIEW);
            }
         });
 

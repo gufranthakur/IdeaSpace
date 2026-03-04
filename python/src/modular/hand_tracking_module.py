@@ -2,6 +2,8 @@ import cv2
 import mediapipe as mp
 import time
 
+# use mediapipe==0.10.9 and python version 3.9
+
 class handDetector():
     def __init__(self, mode=False, maxHands=2, detectionConfidence=0.5, trackConfidence=0.5):
         self.mode = mode

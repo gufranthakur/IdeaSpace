@@ -22,10 +22,10 @@ public class LectureScreen extends Table {
     private HomeScreen homeScreen;
     private boolean DEBUG_MODE;
 
-    private final int LECTURE_BUTTON_WIDTH = 200;
-    private final int LECTURE_BUTTON_HEIGHT = 120;
+    private final int LECTURE_BUTTON_WIDTH = 100;
+    private final int LECTURE_BUTTON_HEIGHT = 60;
 
-    private ISTable lectureTable, historyTable;
+    private ISTable historyTable;
 
     private ISButton createSlideButton; //285, 80
     private ArrayList<HistoryLectureTable> historyLectureTables;
@@ -36,10 +36,8 @@ public class LectureScreen extends Table {
         this.pad(10);
         this.DEBUG_MODE = DEBUG_MODE;
 
-        lectureTable = new ISTable("ui/png/LecturesTable.png");
         historyTable = new ISTable("ui/png/HistoriesTable.png");
 
-        lectureTable.setDebug(DEBUG_MODE);
         historyTable.setDebug(DEBUG_MODE);
 
         historyLectureTables =  new ArrayList<>();
@@ -52,7 +50,7 @@ public class LectureScreen extends Table {
         createLectureTable();
         createHistoryTable();
 
-        this.add(lectureTable).expand().fill().height(200).padBottom(10f).row();
+        this.add(createSlideButton).height(LECTURE_BUTTON_HEIGHT).center().padBottom(10f).row();
         this.add(historyTable).fill().height(700).row();
     }
 
@@ -62,9 +60,6 @@ public class LectureScreen extends Table {
             "ui/png/CreateLectureButton_hovered.png"
         );
 
-        lectureTable.left();
-        lectureTable.padLeft(20).padTop(5);
-
         createSlideButton.left();
         createSlideButton.addListener(new ChangeListener() {
             @Override
@@ -72,8 +67,6 @@ public class LectureScreen extends Table {
                 createNewLectureDialog(homeScreen.getStage());
             }
         });
-
-        lectureTable.add(createSlideButton).size(LECTURE_BUTTON_WIDTH, LECTURE_BUTTON_HEIGHT);
 
     }
 
@@ -145,7 +138,6 @@ public class LectureScreen extends Table {
         for (HistoryLectureTable table : historyLectureTables) table.dispose();
 
 
-        lectureTable.dispose();
         historyTable.dispose();
     }
 

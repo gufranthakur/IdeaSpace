@@ -22,13 +22,13 @@ public class InputHandler extends InputAdapter {
 
             case Input.Keys.M -> ideaSpace.modelHandler.changeMap();
 
-            case Input.Keys.T -> ideaSpace.space.switchView(Space.View.TOP_VIEW);
+            case Input.Keys.T -> ideaSpace.space.switchView(Space.Rotation.TOP_ROTATE);
 
-            case Input.Keys.F -> ideaSpace.space.switchView(Space.View.FRONT_VIEW);
+            case Input.Keys.F -> ideaSpace.space.switchView(Space.Rotation.BOTTOM_ROTATE);
 
-            case Input.Keys.R -> ideaSpace.space.switchView(Space.View.RIGHT_VIEW);
+            case Input.Keys.R -> ideaSpace.space.switchView(Space.Rotation.RIGHT_ROTATE);
 
-            case Input.Keys.L -> ideaSpace.space.switchView(Space.View.LEFT_VIEW);
+            case Input.Keys.L -> ideaSpace.space.switchView(Space.Rotation.LEFT_ROTATE);
 
         }
 
