@@ -1,6 +1,7 @@
 package com.ideaspace.handlers;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -10,10 +11,14 @@ import com.ideaspace.core.Space;
 import com.ideaspace.models.ModelMesh;
 import com.ideaspace.ui.components.ModelCard;
 import com.kotcrab.vis.ui.util.OsUtils;
+import com.kotcrab.vis.ui.widget.file.FileChooser;
+import com.kotcrab.vis.ui.widget.file.FileChooserAdapter;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
 import net.mgsx.gltf.scene3d.scene.Scene;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -60,7 +65,7 @@ public class ModelHandler {
         addModelToLibrary("DDR4", "models/components/ddr4.glb");
         addModelToLibrary("Laptop Fan", "models/components/laptop_fan.glb");
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanicalkeyboard_split.glb");
-        // Removed duplicate Mechanical-Keyboard entry
+
 
         loadModel(modelLibrary.get("Iphone-17"));
     }
@@ -240,6 +245,97 @@ public class ModelHandler {
         }
 
         unloadModel(currentMap, null);
+    }
+
+
+    public void loadCustomModel() {
+        String os = System.getProperty("os.name").toLowerCase();
+
+        boolean isMac     = os.contains("mac");
+        boolean isWindows = os.contains("win");
+        boolean isLinux   = os.contains("nux") || os.contains("nix");
+
+        if (isMac) loadCustomModelMac();
+        if (isWindows) loadCustomModelWindows();
+        if (isLinux) loadCustomModelLinux();
+    }
+    public void loadCustomModelMac() {
+        Thread thread = new Thread(() -> {
+            try {
+                // Use osascript to show a native macOS file picker
+                String[] cmd = {
+                    "osascript", "-e",
+                    "POSIX path of (choose file of type {\"glb\"} with prompt \"Select a GLB Model\")"
+                };
+
+                Process process = Runtime.getRuntime().exec(cmd);
+                String filePath = new String(process.getInputStream().readAllBytes()).trim();
+                process.waitFor();
+
+                if (!filePath.isEmpty()) {
+                    Gdx.app.postRunnable(() -> addModelToLibrary(
+                        filePath.substring(filePath.lastIndexOf("/") + 1, filePath.lastIndexOf(".")),
+                        filePath
+                    ));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    public void loadCustomModelWindows() {
+        Thread thread = new Thread(() -> {
+            try {
+                String[] cmd = {
+                    "powershell", "-Command",
+                    "Add-Type -AssemblyName System.Windows.Forms;" +
+                        "$f = New-Object System.Windows.Forms.OpenFileDialog;" +
+                        "$f.Filter = 'GLB Files (*.glb)|*.glb';" +
+                        "$f.Title = 'Select a GLB Model';" +
+                        "if ($f.ShowDialog() -eq 'OK') { $f.FileName }"
+                };
+
+                Process process = Runtime.getRuntime().exec(cmd);
+                String filePath = new String(process.getInputStream().readAllBytes()).trim();
+                process.waitFor();
+
+                if (!filePath.isEmpty()) {
+                    Gdx.app.postRunnable(() -> System.out.println(filePath));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    public void loadCustomModelLinux() {
+
+        FileChooser fileChooser = new FileChooser(FileChooser.Mode.OPEN);
+        fileChooser.setSelectionMode(FileChooser.SelectionMode.FILES);
+
+        ideaSpace.hudPanel.getStage().addActor(fileChooser.fadeIn());
+
+        fileChooser.setListener(new FileChooserAdapter() {
+            @Override
+            public void selected(Array<FileHandle> files) {
+                // Do stuff with the selected file, e.g., load it
+                if (!files.isEmpty()) {
+                    FileHandle file = files.first();
+                    System.out.println("Selected file: " + file.path());
+                }
+            }
+        });
+
+
+    }
+
+    private void loadCustomModelFromFilePath(String filepath) {
+
     }
 
 

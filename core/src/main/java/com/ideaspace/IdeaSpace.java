@@ -5,12 +5,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.*;
 import com.ideaspace.core.Decoder;
-import com.ideaspace.handlers.InputHandler;
+import com.ideaspace.handlers.*;
 import com.ideaspace.models.Server;
 import com.ideaspace.core.Space;
-import com.ideaspace.handlers.AnimationHandler;
-import com.ideaspace.handlers.LectureHandler;
-import com.ideaspace.handlers.ModelHandler;
 import com.ideaspace.ui.panels.ControlPanel;
 import com.ideaspace.ui.panels.HUDPanel;
 import com.ideaspace.ui.screens.HomeScreen;
@@ -32,6 +29,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public ModelHandler modelHandler;
     public AnimationHandler animationHandler;
+    public FileLoaderHandler fileLoaderHandler;
     private Thread simulationThread;
 
     public Thread canvasThread, coreGestureServerThread;
@@ -65,6 +63,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
         modelHandler = new ModelHandler(this);
         animationHandler = new AnimationHandler(this);
+        fileLoaderHandler = new FileLoaderHandler(this);
 
         inputHandler = new InputHandler(this);
 
@@ -83,7 +82,7 @@ public class IdeaSpace extends ApplicationAdapter {
         canvasThread = new Thread(canvasServer);
         coreGestureServerThread = new Thread(coreGesturesServer);
 
-        coreGestureServerThread.start();
+//        coreGestureServerThread.start();
 
 
 

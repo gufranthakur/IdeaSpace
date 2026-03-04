@@ -15,7 +15,7 @@ public class HUDPanel extends Stage {
     private IdeaSpace ideaSpace;
 
     private Table root;
-    private ISButton homeHUDButton, settingsHUDButton, panelHUDButton, changeMapHUDButton, defaultViewHUDButton;
+    private ISButton homeHUDButton, settingsHUDButton, panelHUDButton, changeMapHUDButton, importModelHUDButton;
 
 
     public HUDPanel(IdeaSpace ideaSpace) {
@@ -49,15 +49,15 @@ public class HUDPanel extends Stage {
             "ui/png/changeMapHUDButton_hovered.png"
         );
 
-        defaultViewHUDButton = new ISButton(
-            "ui/png/defaultViewHUDButton.png",
-            "ui/png/defaultViewHUDButton_hovered.png"
+        importModelHUDButton = new ISButton(
+            "ui/png/importHUDButton.png",
+            "ui/png/importHUDButton_hovered.png"
         );
 
 
         float buttonSize = 40f;
 
-        root.add(defaultViewHUDButton).width(buttonSize).height(buttonSize).pad(3);
+        root.add(importModelHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(changeMapHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(panelHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(settingsHUDButton).width(buttonSize).height(buttonSize).pad(3);
@@ -66,10 +66,10 @@ public class HUDPanel extends Stage {
     }
 
     private void addListeners() {
-        defaultViewHUDButton.addListener(new ClickListener() {
+        importModelHUDButton.addListener(new ClickListener() {
            @Override
            public void clicked(InputEvent event, float x, float y) {
-               ideaSpace.space.rotateSelectedModelToFaceView(Space.Rotation.NONE_VIEW);
+                ideaSpace.modelHandler.loadCustomModel();
            }
         });
 
