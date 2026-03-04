@@ -78,8 +78,8 @@ public class Space {
         camera.near = 20f / 1000f;
         camera.far = 1000f;
         sceneManager.setCamera(camera);
-        camera.position.set(0f, 2.0f, 3.0f);
-        camera.lookAt(0f, 0.5f, 0f);
+        camera.position.set(-0.036988314f,0.20096034f,3.1463299f);
+        camera.lookAt(0.008157247f,-0.18134354f,-0.9833858f);
         camera.up.set(Vector3.Y);
         camera.update();
 
@@ -140,6 +140,8 @@ public class Space {
 
         sceneManager.update(deltaTime);
         sceneManager.render();
+
+        System.out.println("Camera Pos: [" + camera.position + "] | Camera dir: [" + camera.direction + "]");
 
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         canvasRenderer.render();

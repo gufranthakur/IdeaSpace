@@ -44,7 +44,6 @@ public class ModelHandler {
         addModelToLibrary("Vintage", "models/backgrounds/vintage.glb", maps);
         addModelToLibrary("Office", "models/backgrounds/office.glb", maps);
         addModelToLibrary("Classroom", "models/backgrounds/classroom.glb", maps);
-        addModelToLibrary("Cube", "models/backgrounds/light_background.glb", maps);
     }
 
     public void createModels() {
@@ -63,16 +62,14 @@ public class ModelHandler {
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanicalkeyboard_split.glb");
         // Removed duplicate Mechanical-Keyboard entry
 
-        loadModel(modelLibrary.get("Esp32"));
-        getModelInstance("Esp32").transform.idt()
-            .scale(0.35f, 0.35f, 0.35f);
+        loadModel(modelLibrary.get("Iphone-17"));
     }
 
     private void addModelToLibrary(String name, String path) {
         ModelMesh modelMesh = new ModelMesh(name, path);
         modelLibrary.put(name, modelMesh);
 
-        if (name.equals("Spaceship")) return;
+        if (isBackground(name)) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, false);
         ideaSpace.controlPanel.addModelCardToLibrary(modelCard);
@@ -83,7 +80,7 @@ public class ModelHandler {
         modelLibrary.put(name, modelMesh);
         maps.add(modelMesh);
 
-        if (name.equals("Spaceship")) return;
+        if (isBackground(name)) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, false);
         ideaSpace.controlPanel.addModelCardToLibrary(modelCard);
@@ -107,7 +104,7 @@ public class ModelHandler {
         ideaSpace.space.getRightGrabHandler().setLoadedModels(loadedModels.values());
         ideaSpace.space.getLeftGrabHandler().setLoadedModels(loadedModels.values());
 
-        if (modelMesh.modelName.equals("Spaceship")) return;
+        if (isBackground(modelMesh.modelName)) return;
 
         ModelCard modelCard = new ModelCard(this, modelMesh, true);
         ideaSpace.controlPanel.addModelCardToModelsPane(modelCard);
@@ -173,7 +170,7 @@ public class ModelHandler {
 
         java.util.List<String> availableModels = new java.util.ArrayList<>();
         for (String modelName : modelLibrary.keySet()) {
-            if (!(modelName.equals("Background") || modelName.equals("Room"))) {
+            if (!isBackground(modelName)) {
                 availableModels.add(modelName);
             }
         }
@@ -240,8 +237,6 @@ public class ModelHandler {
             getModelInstance("Classroom").transform.idt()
                 .translate(0f, -5f, -18.5f)
                 .scale(0.05f, 0.05f, 0.05f);
-        } else if (nextMap.modelName.equals("Cube")) {
-            getModelInstance("Cube").transform.idt().scale(10f, 10f, 10f);
         }
 
         unloadModel(currentMap, null);
@@ -249,6 +244,13 @@ public class ModelHandler {
 
 
     // ────────────────────────────────────────────────────────────────────────────
+
+    public boolean isBackground(String name) {
+        if (name.equals("Spaceship") || name.equals("Vintage") || name.equals("Office") || name.equals("Classroom")) {
+            return true;
+        }
+        return false;
+    }
 
     public ModelMesh getSelectedModel() {
         return selectedModel;
