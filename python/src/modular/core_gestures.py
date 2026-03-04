@@ -43,14 +43,17 @@ core_right_last_sent_command = None
 zoom_last_command_time       = 0
 zoom_last_sent_command       = None
 
-top_view_was_active   = {"Left": False, "Right": False}
-front_view_was_active = {"Left": False, "Right": False}
-left_view_was_active  = {"Left": False, "Right": False}
-right_view_was_active = {"Left": False, "Right": False}
+# Right hand: TOP_ROTATE, BOTTOM_ROTATE, LEFT_ROTATE
+top_rotate_was_active    = {"Right": False}
+bottom_rotate_was_active = {"Right": False}
+left_rotate_was_active   = {"Right": False}
 
-VIEW_HOLD_FRAMES  = 3
-view_hold_counter = {"Left": 0, "Right": 0}
-view_hold_type    = {"Left": None, "Right": None}
+# Left hand: RIGHT_ROTATE
+right_rotate_was_active  = {"Left": False}
+
+ROTATE_HOLD_FRAMES  = 3
+rotate_hold_counter = {"Left": 0, "Right": 0}
+rotate_hold_type    = {"Left": None, "Right": None}
 
 # ── Camera ────────────────────────────────────────────────────────────────────
 cap = cv2.VideoCapture(0)
@@ -72,7 +75,8 @@ def send_command_throttled(command, last_time, last_command, interval=COMMAND_SE
     return last_time, last_command, False
 
 
-def is_top_view_gesture(lms):
+# ── Rotate gesture detectors ──────────────────────────────────────────────────
+def is_top_rotate_gesture(lms):
     index_up   = lms[8][2]  < lms[6][2]
     middle_up  = lms[12][2] < lms[10][2]
     ring_down  = lms[16][2] > lms[14][2]
@@ -81,7 +85,7 @@ def is_top_view_gesture(lms):
     return index_up and middle_up and ring_down and pinky_down and thumb_down
 
 
-def is_front_view_gesture(lms):
+def is_bottom_rotate_gesture(lms):
     index_down   = lms[8][2]  > lms[6][2] + 20
     middle_down  = lms[12][2] > lms[10][2] + 20
     thumb_out    = abs(lms[4][1] - lms[2][1]) > 35
@@ -89,25 +93,31 @@ def is_front_view_gesture(lms):
     return index_down and middle_down and thumb_out and pinky_curled
 
 
-def is_left_view_gesture(lms):
+def is_left_rotate_gesture(lms):
     index_left   = lms[8][1] < lms[6][1] - 20
     middle_left  = lms[12][1] < lms[10][1] - 20
     pinky_curled = lms[20][1] > lms[18][1]
     return index_left and middle_left and pinky_curled
 
 
-def is_right_view_gesture(lms):
+def is_right_rotate_gesture(lms):
     index_right  = lms[8][1] > lms[6][1] + 20
     middle_right = lms[12][1] > lms[10][1] + 20
     pinky_curled = lms[20][1] < lms[18][1]
     return index_right and middle_right and pinky_curled
 
 
-def detect_view_gesture(lms, hand):
-    if is_top_view_gesture(lms):   return "TOP_VIEW"
-    if is_front_view_gesture(lms): return "FRONT_VIEW"
-    if hand == "Right" and is_left_view_gesture(lms):  return "LEFT_VIEW"
-    if hand == "Left"  and is_right_view_gesture(lms): return "RIGHT_VIEW"
+def detect_right_hand_rotate(lms):
+    """Right hand: TOP_ROTATE, BOTTOM_ROTATE, LEFT_ROTATE."""
+    if is_top_rotate_gesture(lms):    return "TOP_ROTATE"
+    if is_bottom_rotate_gesture(lms): return "BOTTOM_ROTATE"
+    if is_left_rotate_gesture(lms):   return "LEFT_ROTATE"
+    return None
+
+
+def detect_left_hand_rotate(lms):
+    """Left hand: RIGHT_ROTATE."""
+    if is_right_rotate_gesture(lms): return "RIGHT_ROTATE"
     return None
 
 
@@ -156,7 +166,6 @@ try:
                             cv2.circle(img, (lm[1], lm[2]), 5, (0, 255, 255), -1)
 
                 # ── Send simulation landmark data via UDP ─────────────────────
-                # Uses raw MediaPipe landmarks (normalized, scaled to frame size)
                 hand_landmarks_raw = detector.results.multi_hand_landmarks[hand_idx]
                 sim_data = []
                 for landmark in hand_landmarks_raw.landmark:
@@ -167,33 +176,24 @@ try:
                 elif handedness == "Left":
                     sim_sock.sendto(str.encode(str(sim_data)), SIM_LEFT_PORT)
 
-        # ── LEFT hand gestures ────────────────────────────────────────────────
+        # ── LEFT hand gestures (RIGHT_ROTATE + flick + swipe) ─────────────────
         if len(left_lms) > 0:
-            view_cmd = detect_view_gesture(left_lms, "Left")
-            if view_cmd in ("TOP_VIEW", "FRONT_VIEW", "RIGHT_VIEW"):
-                if view_hold_type["Left"] == view_cmd:
-                    view_hold_counter["Left"] += 1
+            rotate_cmd = detect_left_hand_rotate(left_lms)
+            if rotate_cmd == "RIGHT_ROTATE":
+                if rotate_hold_type["Left"] == rotate_cmd:
+                    rotate_hold_counter["Left"] += 1
                 else:
-                    view_hold_type["Left"]    = view_cmd
-                    view_hold_counter["Left"] = 1
+                    rotate_hold_type["Left"]    = rotate_cmd
+                    rotate_hold_counter["Left"] = 1
 
-                if view_hold_counter["Left"] >= VIEW_HOLD_FRAMES:
-                    was_active = {
-                        "TOP_VIEW":   top_view_was_active["Left"],
-                        "FRONT_VIEW": front_view_was_active["Left"],
-                        "RIGHT_VIEW": right_view_was_active["Left"],
-                    }
-                    if not was_active[view_cmd]:
-                        left_action = view_cmd
-                        top_view_was_active["Left"]   = (view_cmd == "TOP_VIEW")
-                        front_view_was_active["Left"] = (view_cmd == "FRONT_VIEW")
-                        right_view_was_active["Left"] = (view_cmd == "RIGHT_VIEW")
+                if rotate_hold_counter["Left"] >= ROTATE_HOLD_FRAMES:
+                    if not right_rotate_was_active["Left"]:
+                        left_action = rotate_cmd
+                        right_rotate_was_active["Left"] = True
             else:
-                top_view_was_active["Left"]   = False
-                front_view_was_active["Left"] = False
-                right_view_was_active["Left"] = False
-                view_hold_counter["Left"] = 0
-                view_hold_type["Left"]    = None
+                right_rotate_was_active["Left"] = False
+                rotate_hold_counter["Left"] = 0
+                rotate_hold_type["Left"]    = None
                 flick_action = left_flick_gesture.detect(left_lms, img)
                 if flick_action:
                     left_action = flick_action
@@ -202,39 +202,37 @@ try:
                     if swipe_action:
                         left_action = swipe_action
         else:
-            top_view_was_active["Left"]   = False
-            front_view_was_active["Left"] = False
-            right_view_was_active["Left"] = False
-            view_hold_counter["Left"] = 0
-            view_hold_type["Left"]    = None
+            right_rotate_was_active["Left"] = False
+            rotate_hold_counter["Left"] = 0
+            rotate_hold_type["Left"]    = None
 
-        # ── RIGHT hand gestures ───────────────────────────────────────────────
+        # ── RIGHT hand gestures (TOP/BOTTOM/LEFT_ROTATE + flick + drag) ───────
         if len(right_lms) > 0:
-            view_cmd = detect_view_gesture(right_lms, "Right")
-            if view_cmd in ("TOP_VIEW", "FRONT_VIEW", "LEFT_VIEW"):
-                if view_hold_type["Right"] == view_cmd:
-                    view_hold_counter["Right"] += 1
+            rotate_cmd = detect_right_hand_rotate(right_lms)
+            if rotate_cmd in ("TOP_ROTATE", "BOTTOM_ROTATE", "LEFT_ROTATE"):
+                if rotate_hold_type["Right"] == rotate_cmd:
+                    rotate_hold_counter["Right"] += 1
                 else:
-                    view_hold_type["Right"]    = view_cmd
-                    view_hold_counter["Right"] = 1
+                    rotate_hold_type["Right"]    = rotate_cmd
+                    rotate_hold_counter["Right"] = 1
 
-                if view_hold_counter["Right"] >= VIEW_HOLD_FRAMES:
+                if rotate_hold_counter["Right"] >= ROTATE_HOLD_FRAMES:
                     was_active = {
-                        "TOP_VIEW":   top_view_was_active["Right"],
-                        "FRONT_VIEW": front_view_was_active["Right"],
-                        "LEFT_VIEW":  left_view_was_active["Right"],
+                        "TOP_ROTATE":    top_rotate_was_active["Right"],
+                        "BOTTOM_ROTATE": bottom_rotate_was_active["Right"],
+                        "LEFT_ROTATE":   left_rotate_was_active["Right"],
                     }
-                    if not was_active[view_cmd]:
-                        right_action = view_cmd
-                        top_view_was_active["Right"]   = (view_cmd == "TOP_VIEW")
-                        front_view_was_active["Right"] = (view_cmd == "FRONT_VIEW")
-                        left_view_was_active["Right"]  = (view_cmd == "LEFT_VIEW")
+                    if not was_active[rotate_cmd]:
+                        right_action = rotate_cmd
+                        top_rotate_was_active["Right"]    = (rotate_cmd == "TOP_ROTATE")
+                        bottom_rotate_was_active["Right"] = (rotate_cmd == "BOTTOM_ROTATE")
+                        left_rotate_was_active["Right"]   = (rotate_cmd == "LEFT_ROTATE")
             else:
-                top_view_was_active["Right"]   = False
-                front_view_was_active["Right"] = False
-                left_view_was_active["Right"]  = False
-                view_hold_counter["Right"] = 0
-                view_hold_type["Right"]    = None
+                top_rotate_was_active["Right"]    = False
+                bottom_rotate_was_active["Right"] = False
+                left_rotate_was_active["Right"]   = False
+                rotate_hold_counter["Right"] = 0
+                rotate_hold_type["Right"]    = None
                 flick_action = right_flick_gesture.detect(right_lms, img)
                 if flick_action:
                     right_action = flick_action
@@ -243,20 +241,21 @@ try:
                     if drag_action:
                         right_action = drag_action
         else:
-            top_view_was_active["Right"]   = False
-            front_view_was_active["Right"] = False
-            left_view_was_active["Right"]  = False
-            view_hold_counter["Right"] = 0
-            view_hold_type["Right"]    = None
+            top_rotate_was_active["Right"]    = False
+            bottom_rotate_was_active["Right"] = False
+            left_rotate_was_active["Right"]   = False
+            rotate_hold_counter["Right"] = 0
+            rotate_hold_type["Right"]    = None
 
         # ── ZOOM gesture ──────────────────────────────────────────────────────
-        any_view_active = (
-            top_view_was_active["Left"]   or top_view_was_active["Right"]   or
-            front_view_was_active["Left"] or front_view_was_active["Right"] or
-            left_view_was_active["Right"] or right_view_was_active["Left"]
+        any_rotate_active = (
+            top_rotate_was_active["Right"]    or
+            bottom_rotate_was_active["Right"] or
+            left_rotate_was_active["Right"]   or
+            right_rotate_was_active["Left"]
         )
 
-        if len(left_lms) > 0 and len(right_lms) > 0 and not any_view_active:
+        if len(left_lms) > 0 and len(right_lms) > 0 and not any_rotate_active:
             left_index_extended = left_lms[INDEX_FINGER][2] < left_lms[INDEX_POINT][2] - 20
             left_middle_curled  = left_lms[MIDDLE_FINGER][2] > left_lms[MIDDLE_POINT][2] - 10
             left_ring_curled    = left_lms[RING_FINGER][2]   > left_lms[RING_POINT][2]   - 10
@@ -332,11 +331,10 @@ try:
                 cv2.putText(img, action_text, (10, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
-            for i, hand in enumerate(["Left", "Right"]):
-                if view_hold_counter[hand] > 0:
-                    color = (255, 200, 0) if hand == "Left" else (0, 200, 255)
+            for i, (hand, color) in enumerate([("Left", (255, 200, 0)), ("Right", (0, 200, 255))]):
+                if rotate_hold_counter[hand] > 0:
                     cv2.putText(img,
-                                f"{hand} [{view_hold_type[hand]}] {view_hold_counter[hand]}/{VIEW_HOLD_FRAMES}",
+                                f"{hand} [{rotate_hold_type[hand]}] {rotate_hold_counter[hand]}/{ROTATE_HOLD_FRAMES}",
                                 (10, 60 + i * 30),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 

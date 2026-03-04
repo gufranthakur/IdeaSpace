@@ -181,7 +181,7 @@ public class Space {
                 delta.setEulerAngles(0, 90, 0);
                 break;
             case TOP_ROTATE:
-                delta.setEulerAngles(0, 0, 0);
+                delta.setEulerAngles(0, -90, 0);
                 break;
             case LEFT_ROTATE:
                 delta.setEulerAngles(270, 0, 0);
