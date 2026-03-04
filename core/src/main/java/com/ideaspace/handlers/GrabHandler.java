@@ -1,10 +1,10 @@
 package com.ideaspace.handlers;
 
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.Ray;
 import com.ideaspace.models.ModelMesh;
 import com.ideaspace.simulationhand.SimulationHand;
@@ -13,7 +13,7 @@ import java.util.Collection;
 
 public class GrabHandler {
 
-    private static final float PINCH_THRESHOLD = 0.15f;
+    private static final float PINCH_THRESHOLD = 0.25f;
     private static final float RAY_LENGTH = 100f;
 
     private static final int THUMB_TIP = 4;
@@ -35,7 +35,7 @@ public class GrabHandler {
     private Vector3 targetPosition = new Vector3();
 
     // --- Right hand only ---
-    public float rotationMultiplier = 70f;
+    public float rotationMultiplier = 120f;
     private Vector3 lastPinchCenter = new Vector3();
     private boolean hasLastPinchCenter = false;
 
@@ -45,20 +45,21 @@ public class GrabHandler {
     private float sessionYaw   = 0f;
     private float sessionPitch = 0f;
 
+    // Sphere grab radius — increase to make selection more forgiving
+    public float grabSphereRadius = 0.5f;
+
     // Temp
     private Vector3 thumbPos = new Vector3();
     private Vector3 indexPos = new Vector3();
     private Vector3 pinchCenter = new Vector3();
     private Vector3 rayDir = new Vector3();
     private Vector3 tempVec = new Vector3();
-    private Vector3 intersection = new Vector3();
     private Matrix4 tempTransform = new Matrix4();
     private Quaternion yawQuat   = new Quaternion();
     private Quaternion pitchQuat = new Quaternion();
     private Quaternion tempQuat  = new Quaternion();
 
     private Ray ray = new Ray();
-    private BoundingBox boundingBox = new BoundingBox();
 
     private boolean isRightHand;
 
@@ -113,12 +114,13 @@ public class GrabHandler {
                 || model.modelName.equals("Cube")) continue;
             if (model.getScene() == null || model.getScene().modelInstance == null) continue;
 
-            model.getScene().modelInstance.calculateBoundingBox(boundingBox);
-            boundingBox.mul(model.getScene().modelInstance.transform);
+            Vector3 modelPos = model.getScene().modelInstance.transform.getTranslation(new Vector3());
+            float distance = camera.position.dst(modelPos);
 
-            if (com.badlogic.gdx.math.Intersector.intersectRayBounds(ray, boundingBox, intersection)) {
-                float distance = camera.position.dst(intersection);
-                if (distance < closestDistance && distance < RAY_LENGTH && distance <= maxGrabDistance) {
+            if (distance > RAY_LENGTH || distance > maxGrabDistance) continue;
+
+            if (Intersector.intersectRaySphere(ray, modelPos, grabSphereRadius, null)) {
+                if (distance < closestDistance) {
                     closestDistance = distance;
                     closestModel    = model;
                 }
@@ -136,7 +138,6 @@ public class GrabHandler {
                 grabOffset.set(objectPos).sub(tempVec);
                 targetPosition.set(objectPos);
             } else {
-                // Snapshot the current rotation and reset session deltas
                 grabbedModel.getScene().modelInstance.transform.getRotation(rotationAtGrabStart);
                 sessionYaw   = 0f;
                 sessionPitch = 0f;
@@ -158,12 +159,9 @@ public class GrabHandler {
         sessionYaw   +=  deltaX * rotationMultiplier;
         sessionPitch += -deltaY * rotationMultiplier;
 
-        // Build delta rotation for this session in world space
         yawQuat.set(Vector3.Y, sessionYaw);
         pitchQuat.set(Vector3.X, sessionPitch);
         tempQuat.set(yawQuat).mul(pitchQuat);
-
-        // Apply session delta ON TOP of the snapshotted rotation
         tempQuat.mul(rotationAtGrabStart);
 
         Vector3 currentPos = grabbedModel.getScene().modelInstance.transform.getTranslation(tempVec);
@@ -174,13 +172,18 @@ public class GrabHandler {
     private void updateGrabbedObjectPosition() {
         if (grabbedModel == null || grabbedModel.getScene() == null) return;
 
-        rayDir.set(pinchCenter).sub(camera.position).nor();
-        targetPosition.set(rayDir).scl(grabDistance).add(camera.position).add(grabOffset);
+        if (grabbedModel.modelName.equals("Spaceship") ||
+            grabbedModel.modelName.equals("Office") ||
+            grabbedModel.modelName.equals("Vintage")) {
+            return;
+        }
 
-        Vector3 currentPos     = grabbedModel.getScene().modelInstance.transform.getTranslation(tempVec);
-        Vector3 movementDelta  = targetPosition.cpy().sub(currentPos).scl(positionMultiplier);
-        Vector3 amplifiedTarget = currentPos.cpy().add(movementDelta);
-        currentPos.lerp(amplifiedTarget, positionLerpFactor);
+        if (!hasLastPinchCenter) return;
+
+        Vector3 delta = tempVec.set(pinchCenter).sub(lastPinchCenter).scl(positionMultiplier);
+
+        Vector3 currentPos = grabbedModel.getScene().modelInstance.transform.getTranslation(new Vector3());
+        currentPos.add(delta);
 
         tempTransform.set(grabbedModel.getScene().modelInstance.transform);
         tempTransform.setTranslation(currentPos);

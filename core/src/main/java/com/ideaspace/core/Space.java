@@ -165,6 +165,9 @@ public class Space {
     }
 
     public void rotateSelectedModelToFaceView(Rotation rotation) {
+
+        if (ideaSpace.space.leftGrabHandler.isGrabbing()) return;
+
         ModelMesh selectedModel = ideaSpace.modelHandler.getSelectedModel();
         if (selectedModel == null || selectedModel.getScene() == null) return;
 
