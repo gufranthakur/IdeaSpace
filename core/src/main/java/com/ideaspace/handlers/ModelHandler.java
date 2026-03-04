@@ -247,27 +247,7 @@ public class ModelHandler {
         unloadModel(currentMap, null);
     }
 
-    // ── NEW METHOD ──────────────────────────────────────────────────────────────
-    public void rotateSelectedModelToFaceView(Space.View view) {
-        if (selectedModel == null || selectedModel.getScene() == null) return;
 
-        ModelInstance instance = selectedModel.getScene().modelInstance;
-
-        switch (view) {
-            case FRONT_VIEW:
-                instance.transform.rotate(Vector3.X, 90f);
-                break;
-            case TOP_VIEW:
-                instance.transform.rotate(Vector3.X, -90f);
-                break;
-            case LEFT_VIEW:
-                instance.transform.rotate(Vector3.Y, -90f);
-                break;
-            case RIGHT_VIEW:
-                instance.transform.rotate(Vector3.Y, 90f);
-                break;
-        }
-    }
     // ────────────────────────────────────────────────────────────────────────────
 
     public ModelMesh getSelectedModel() {

@@ -51,11 +51,6 @@ public class Space {
     private HandLines rightHandLines, leftHandLines;
     private GrabHandler rightGrabHandler, leftGrabHandler;
 
-    private Quaternion currentViewRotation = new Quaternion();
-    private Quaternion targetViewRotation  = new Quaternion();
-    private boolean isSmoothRotating = false;
-    private float viewRotationLerpFactor = 0.1f;
-
 
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
@@ -146,24 +141,6 @@ public class Space {
         sceneManager.update(deltaTime);
         sceneManager.render();
 
-        if (!isSmoothRotating || ideaSpace.modelHandler.getSelectedModel() == null) {
-            return;
-        }
-
-        ModelInstance instance = ideaSpace.modelHandler.getSelectedModel().getScene().modelInstance;
-        Vector3 translation = instance.transform.getTranslation(new Vector3());
-        Vector3 scale       = instance.transform.getScale(new Vector3());
-
-        instance.transform.getRotation(currentViewRotation);
-        currentViewRotation.slerp(targetViewRotation, viewRotationLerpFactor);
-
-        if (currentViewRotation.dot(targetViewRotation) > 0.9999f) {
-            currentViewRotation.set(targetViewRotation);
-            isSmoothRotating = false;
-        }
-
-        instance.transform.set(translation, currentViewRotation, scale);
-
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         canvasRenderer.render();
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
@@ -175,27 +152,34 @@ public class Space {
     }
 
     public void rotateSelectedModelToFaceView(Space.View view) {
-
         ModelMesh selectedModel = ideaSpace.modelHandler.getSelectedModel();
-
         if (selectedModel == null || selectedModel.getScene() == null) return;
 
         ModelInstance instance = selectedModel.getScene().modelInstance;
 
+        Vector3 translation = instance.transform.getTranslation(new Vector3());
+        Vector3 scale       = instance.transform.getScale(new Vector3());
+        Quaternion current  = instance.transform.getRotation(new Quaternion());
+        Quaternion delta    = new Quaternion();
+
         switch (view) {
             case FRONT_VIEW:
-                instance.transform.rotate(Vector3.X, 90f);
+                delta.setEulerAngles(0, 0, 0);
                 break;
             case TOP_VIEW:
-                instance.transform.rotate(Vector3.X, -90f);
+                delta.setEulerAngles(0, 90, 0);
                 break;
             case LEFT_VIEW:
-                instance.transform.rotate(Vector3.Y, -90f);
+                delta.setEulerAngles(270, 0, 0);
                 break;
             case RIGHT_VIEW:
-                instance.transform.rotate(Vector3.Y, 90f);
+                delta.setEulerAngles(90, 0, 0);
                 break;
+            default:
+                return;
         }
+
+        instance.transform.set(translation, current.mul(delta), scale);
     }
 
     public void dispose() {

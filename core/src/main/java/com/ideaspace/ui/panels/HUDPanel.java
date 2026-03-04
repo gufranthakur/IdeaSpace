@@ -72,7 +72,7 @@ public class HUDPanel extends Stage {
         defaultViewHUDButton.addListener(new ClickListener() {
            @Override
            public void clicked(InputEvent event, float x, float y) {
-               ideaSpace.modelHandler.rotateSelectedModelToFaceView(Space.View.NONE_VIEW);
+               ideaSpace.space.rotateSelectedModelToFaceView(Space.View.NONE_VIEW);
            }
         });
 
