@@ -82,10 +82,7 @@ public class IdeaSpace extends ApplicationAdapter {
         canvasThread = new Thread(canvasServer);
         coreGestureServerThread = new Thread(coreGesturesServer);
 
-//        coreGestureServerThread.start();
-
-
-
+        coreGestureServerThread.start();
     }
 
     @Override
