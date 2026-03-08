@@ -26,6 +26,7 @@ public class HomeScreen {
 
     private LectureScreen lectureScreen;
     private ModelsScreen modelsScreen;
+    private SettingsScreen settingsScreen;
 
     private ISTable navigationTable;
 
@@ -36,8 +37,10 @@ public class HomeScreen {
 
 
         DEBUG_MODE = ideaSpace.getDebugMode();
+
         lectureScreen = new LectureScreen(this, DEBUG_MODE);
         modelsScreen = new ModelsScreen(this, DEBUG_MODE);
+        settingsScreen = new SettingsScreen(this);
 
         stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
             Gdx.graphics.getWidth() + 400, Gdx.graphics.getHeight() + 200));
@@ -109,8 +112,7 @@ public class HomeScreen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Add your settings screen here when ready
-                deselectAllButtons();
-                settingsButton.setChecked(true);
+                switchScreen(settingsScreen, settingsButton);
             }
         });
 

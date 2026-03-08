@@ -5,12 +5,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.*;
 import com.ideaspace.core.Decoder;
+import com.ideaspace.core.Settings;
 import com.ideaspace.handlers.*;
 import com.ideaspace.models.Server;
 import com.ideaspace.core.Space;
 import com.ideaspace.ui.panels.ControlPanel;
 import com.ideaspace.ui.panels.HUDPanel;
 import com.ideaspace.ui.screens.HomeScreen;
+import com.ideaspace.ui.screens.SettingsScreen;
 import com.kotcrab.vis.ui.VisUI;
 
 public class IdeaSpace extends ApplicationAdapter {
@@ -18,6 +20,7 @@ public class IdeaSpace extends ApplicationAdapter {
     private LectureHandler lectureHandler;
 
     public HomeScreen homeScreen;
+
     public Space space;
     public ControlPanel controlPanel;
     public HUDPanel hudPanel;
@@ -26,6 +29,7 @@ public class IdeaSpace extends ApplicationAdapter {
     private Server canvasServer;
 
     public Decoder decoder;
+    public Settings settings;
 
     public ModelHandler modelHandler;
     public AnimationHandler animationHandler;
@@ -55,11 +59,12 @@ public class IdeaSpace extends ApplicationAdapter {
 
         space = new Space(this);
 
-        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, false);
+        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, true);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
 
 
         decoder = new Decoder(this);
+        settings = new Settings(this);
 
         modelHandler = new ModelHandler(this);
         animationHandler = new AnimationHandler(this);
