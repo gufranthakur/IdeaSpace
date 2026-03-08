@@ -357,3 +357,5 @@ finally:
     cap.release()
     if DEBUG_MODE:
         cv2.destroyAllWindows()
+
+#The correct file should end at line 361, not above 400. If you see this line, means it is correct
