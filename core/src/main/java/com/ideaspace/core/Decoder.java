@@ -43,7 +43,9 @@ public class Decoder {
     }
 
     public void decode(String command) {
-        System.out.println("Decoder received: " + command);
+
+        if (ideaSpace.gestureLock) return;
+
         // Reset targets
         targetMoveX = 0f;
         targetMoveY = 0f;
@@ -52,8 +54,6 @@ public class Decoder {
         targetLookY = 0f;
         targetRotationX = 0f;
         targetRotationY = 0f;
-
-
 
         // Handle CANVAS commands
         if (command.startsWith("CANVAS ")) {
@@ -67,27 +67,6 @@ public class Decoder {
             case "ZOOM IN" -> targetMoveZ = zoomSpeed;
             case "ZOOM OUT" -> targetMoveZ = -zoomSpeed;
 
-            case "ROTATE RIGHT" -> targetRotationY = -rotationSpeed;
-            case "ROTATE LEFT" -> targetRotationY = rotationSpeed;
-            case "ROTATE TOP" -> targetRotationX = -rotationSpeed;
-            case "ROTATE BOTTOM" -> targetRotationX = rotationSpeed;
-
-            case "ROTATE TOP-RIGHT" -> {
-                targetRotationY = -rotationSpeed * 0.707f;
-                targetRotationX = -rotationSpeed * 0.707f;
-            }
-            case "ROTATE TOP-LEFT" -> {
-                targetRotationY = rotationSpeed * 0.707f;
-                targetRotationX = -rotationSpeed * 0.707f;
-            }
-            case "ROTATE BOTTOM-RIGHT" -> {
-                targetRotationY = -rotationSpeed * 0.707f;
-                targetRotationX = rotationSpeed * 0.707f;
-            }
-            case "ROTATE BOTTOM-LEFT" -> {
-                targetRotationY = rotationSpeed * 0.707f;
-                targetRotationX = rotationSpeed * 0.707f;
-            }
 
             case "SWIPED LEFT" -> {
                 System.out.println("Swiped left");

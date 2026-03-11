@@ -45,8 +45,9 @@ public class IdeaSpace extends ApplicationAdapter {
 
     private final boolean DEBUG_MODE = false;
     private boolean lectureFlag = true;
-    private boolean panelFlag = true;
+    private boolean panelFlag = false;
     public boolean menuFlag = false;
+    public boolean gestureLock = false;
 
 
     @Override
@@ -90,7 +91,7 @@ public class IdeaSpace extends ApplicationAdapter {
         canvasThread = new Thread(canvasServer);
         coreGestureServerThread = new Thread(coreGesturesServer);
 
-       // coreGestureServerThread.start();
+        coreGestureServerThread.start();
     }
 
     @Override
@@ -158,6 +159,10 @@ public class IdeaSpace extends ApplicationAdapter {
 
     public void toggleMenuFlag() {
         this.menuFlag = !menuFlag;
+    }
+
+    public void toggleGestureLock() {
+        this.gestureLock = !gestureLock;
     }
 
     public void setPanelFlag(boolean panelFlag) {

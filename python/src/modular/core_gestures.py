@@ -51,7 +51,7 @@ left_rotate_was_active   = {"Right": False}
 # Left hand: RIGHT_ROTATE
 right_rotate_was_active  = {"Left": False}
 
-ROTATE_HOLD_FRAMES  = 3
+ROTATE_HOLD_FRAMES  = 6
 rotate_hold_counter = {"Left": 0, "Right": 0}
 rotate_hold_type    = {"Left": None, "Right": None}
 
