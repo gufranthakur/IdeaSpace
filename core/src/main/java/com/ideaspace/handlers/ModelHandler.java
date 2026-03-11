@@ -65,9 +65,10 @@ public class ModelHandler {
         addModelToLibrary("DDR4", "models/components/ddr4.glb");
         addModelToLibrary("Laptop Fan", "models/components/laptop_fan.glb");
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanicalkeyboard_split.glb");
+        addModelToLibrary("Duck", "models/misc/rubber_duck.glb");
 
-
-        loadModel(modelLibrary.get("Iphone-17"));
+        loadModel(modelLibrary.get("Duck"));
+        getModelInstance("Duck").transform.idt().scale(0.0075f, 0.0075f, 0.0075f);
     }
 
     private void addModelToLibrary(String name, String path) {

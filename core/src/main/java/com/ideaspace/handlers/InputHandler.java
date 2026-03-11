@@ -20,7 +20,7 @@ public class InputHandler extends InputAdapter {
         switch (keycode) {
             case Input.Keys.P -> ideaSpace.setPanelFlag(!ideaSpace.getPanelFlag());
 
-            case Input.Keys.M -> ideaSpace.modelHandler.changeMap();
+            //case Input.Keys.M -> ideaSpace.modelHandler.changeMap();
 
             case Input.Keys.T -> ideaSpace.space.switchView(Space.Rotation.TOP_ROTATE);
 
@@ -30,9 +30,8 @@ public class InputHandler extends InputAdapter {
 
             case Input.Keys.L -> ideaSpace.space.switchView(Space.Rotation.LEFT_ROTATE);
 
+            case Input.Keys.M -> ideaSpace.toggleMenuFlag();
         }
-
-
 
         return false;
     }

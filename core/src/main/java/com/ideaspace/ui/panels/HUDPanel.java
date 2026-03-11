@@ -9,14 +9,21 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.ideaspace.IdeaSpace;
 import com.ideaspace.core.Space;
 import com.ideaspace.ui.components.ISButton;
+import com.ideaspace.ui.components.ISTable;
 
 public class HUDPanel extends Stage {
 
     private IdeaSpace ideaSpace;
 
     private Table root;
+    private ISTable menuTable;
     private ISButton homeHUDButton, settingsHUDButton, panelHUDButton, changeMapHUDButton, importModelHUDButton;
 
+    private ISButton arduinoButton, dcMotorButton, escButton, fcButton, iphone17Button, joystickButton,
+    l298Button, laptopFanButton, mechanicalKeyboardButton, ramButton, rpi_camButton, sd_cardButton,
+    servoMotorButton;
+
+    private final int menuButtonDimension = 100;
 
     public HUDPanel(IdeaSpace ideaSpace) {
         super(new ExtendViewport(Gdx.graphics.getWidth() - 450, Gdx.graphics.getHeight()));
@@ -54,6 +61,9 @@ public class HUDPanel extends Stage {
             "ui/png/importHUDButton_hovered.png"
         );
 
+        menuTable = new ISTable("ui/png/menu/menu_bg.png");
+
+
 
         float buttonSize = 40f;
 
@@ -62,6 +72,11 @@ public class HUDPanel extends Stage {
         root.add(panelHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(settingsHUDButton).width(buttonSize).height(buttonSize).pad(3);
         root.add(homeHUDButton).width(buttonSize).height(buttonSize).pad(3);
+
+        // root.row();
+
+     //   root.add(menuTable).row();
+
         this.addActor(root);
     }
 

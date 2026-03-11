@@ -11,6 +11,7 @@ import com.ideaspace.models.Server;
 import com.ideaspace.core.Space;
 import com.ideaspace.ui.panels.ControlPanel;
 import com.ideaspace.ui.panels.HUDPanel;
+import com.ideaspace.ui.panels.MenuPanel;
 import com.ideaspace.ui.screens.HomeScreen;
 import com.ideaspace.ui.screens.SettingsScreen;
 import com.kotcrab.vis.ui.VisUI;
@@ -24,6 +25,7 @@ public class IdeaSpace extends ApplicationAdapter {
     public Space space;
     public ControlPanel controlPanel;
     public HUDPanel hudPanel;
+    public MenuPanel menuPanel;
 
     private Server coreGesturesServer;
     private Server canvasServer;
@@ -44,6 +46,7 @@ public class IdeaSpace extends ApplicationAdapter {
     private final boolean DEBUG_MODE = false;
     private boolean lectureFlag = true;
     private boolean panelFlag = true;
+    public boolean menuFlag = false;
 
 
     @Override
@@ -54,21 +57,21 @@ public class IdeaSpace extends ApplicationAdapter {
 
         homeScreen = new HomeScreen(this);
 
+        modelHandler = new ModelHandler(this);
+        animationHandler = new AnimationHandler(this);
+        fileLoaderHandler = new FileLoaderHandler(this);
+
         controlPanel = new ControlPanel(this);
         hudPanel = new HUDPanel(this);
+        menuPanel = new MenuPanel(this);
 
         space = new Space(this);
 
         coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, true);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
 
-
         decoder = new Decoder(this);
         settings = new Settings(this);
-
-        modelHandler = new ModelHandler(this);
-        animationHandler = new AnimationHandler(this);
-        fileLoaderHandler = new FileLoaderHandler(this);
 
         inputHandler = new InputHandler(this);
 
@@ -87,7 +90,7 @@ public class IdeaSpace extends ApplicationAdapter {
         canvasThread = new Thread(canvasServer);
         coreGestureServerThread = new Thread(coreGesturesServer);
 
-        coreGestureServerThread.start();
+       // coreGestureServerThread.start();
     }
 
     @Override
@@ -97,7 +100,7 @@ public class IdeaSpace extends ApplicationAdapter {
         homeScreen.resize(width, height);
         controlPanel.resize(width, height);
         hudPanel.resize(width, height);
-
+        menuPanel.resize(width, height);
     }
     @Override
     public void render() {
@@ -111,6 +114,7 @@ public class IdeaSpace extends ApplicationAdapter {
             space.render(deltaTime);
 
             if (getPanelFlag() == true) controlPanel.render();
+            if (menuFlag) menuPanel.render();
 
             hudPanel.render();
             animationHandler.update();
@@ -129,6 +133,7 @@ public class IdeaSpace extends ApplicationAdapter {
 
         hudPanel.dispose();
         controlPanel.dispose();
+        menuPanel.dispose();
 
         VisUI.dispose();
     }
@@ -144,10 +149,15 @@ public class IdeaSpace extends ApplicationAdapter {
             multiplexer.addProcessor(controlPanel.getStage());
             multiplexer.addProcessor(space.getCameraController());
             multiplexer.addProcessor(hudPanel.getStage());
+            multiplexer.addProcessor(menuPanel);
         } else {
             multiplexer.addProcessor(homeScreen.getStage());
         }
 
+    }
+
+    public void toggleMenuFlag() {
+        this.menuFlag = !menuFlag;
     }
 
     public void setPanelFlag(boolean panelFlag) {
