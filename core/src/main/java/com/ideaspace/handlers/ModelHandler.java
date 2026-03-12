@@ -67,6 +67,8 @@ public class ModelHandler {
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanicalkeyboard_split.glb");
         addModelToLibrary("Duck", "models/misc/rubber_duck.glb");
 
+        loadModel(modelLibrary.get("Iphone-17"));
+
     }
 
     private void addModelToLibrary(String name, String path) {
