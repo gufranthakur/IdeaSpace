@@ -68,7 +68,6 @@ public class ModelHandler {
         addModelToLibrary("Duck", "models/misc/rubber_duck.glb");
 
         loadModel(modelLibrary.get("Iphone-17"));
-
     }
 
     private void addModelToLibrary(String name, String path) {
@@ -248,7 +247,6 @@ public class ModelHandler {
         unloadModel(currentMap, null);
     }
 
-
     public void loadCustomModel() {
         String os = System.getProperty("os.name").toLowerCase();
 
@@ -260,10 +258,10 @@ public class ModelHandler {
         if (isWindows) loadCustomModelWindows();
         if (isLinux) loadCustomModelLinux();
     }
+
     public void loadCustomModelMac() {
         Thread thread = new Thread(() -> {
             try {
-                // Use osascript to show a native macOS file picker
                 String[] cmd = {
                     "osascript", "-e",
                     "POSIX path of (choose file of type {\"glb\"} with prompt \"Select a GLB Model\")"
@@ -315,7 +313,6 @@ public class ModelHandler {
     }
 
     public void loadCustomModelLinux() {
-
         FileChooser fileChooser = new FileChooser(FileChooser.Mode.OPEN);
         fileChooser.setSelectionMode(FileChooser.SelectionMode.FILES);
 
@@ -324,21 +321,17 @@ public class ModelHandler {
         fileChooser.setListener(new FileChooserAdapter() {
             @Override
             public void selected(Array<FileHandle> files) {
-                // Do stuff with the selected file, e.g., load it
                 if (!files.isEmpty()) {
                     FileHandle file = files.first();
                     System.out.println("Selected file: " + file.path());
                 }
             }
         });
-
-
     }
 
     private void loadCustomModelFromFilePath(String filepath) {
 
     }
-
 
     // ────────────────────────────────────────────────────────────────────────────
 
@@ -347,6 +340,10 @@ public class ModelHandler {
             return true;
         }
         return false;
+    }
+
+    public void setSelectedModel(ModelMesh model) {
+        this.selectedModel = model;
     }
 
     public ModelMesh getSelectedModel() {

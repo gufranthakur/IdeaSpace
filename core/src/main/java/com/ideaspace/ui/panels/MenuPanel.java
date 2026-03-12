@@ -204,17 +204,6 @@ public class MenuPanel extends Stage {
             }
         });
 
-//        servoMotorButton.addListener(new ClickListener() {
-//            @Override
-//            public void clicked(InputEvent event, float x, float y) {
-//
-//            }
-//        });
-
-
-
-
-
     }
 
     public void render() {

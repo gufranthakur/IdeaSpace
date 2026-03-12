@@ -70,8 +70,8 @@ public class Space {
         rightHand = new SimulationHand(65000, camera, sceneManager);
         leftHand = new SimulationHand(65005, camera, sceneManager);
 
-        rightGrabHandler = new GrabHandler(rightHand, camera, true);
-        leftGrabHandler = new GrabHandler(leftHand, camera, false);
+        rightGrabHandler = new GrabHandler(rightHand, camera, true, ideaSpace.modelHandler);
+        leftGrabHandler = new GrabHandler(leftHand, camera, false, ideaSpace.modelHandler);
 
         rightHandLines = new HandLines(sceneManager);
         leftHandLines = new HandLines(sceneManager);

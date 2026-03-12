@@ -22,6 +22,7 @@ public class GrabHandler {
     private SimulationHand hand;
     private Camera camera;
     private Collection<ModelMesh> loadedModels;
+    private ModelHandler modelHandler;
 
     private boolean isGrabbing = false;
     private ModelMesh grabbedModel = null;
@@ -63,10 +64,11 @@ public class GrabHandler {
 
     private boolean isRightHand;
 
-    public GrabHandler(SimulationHand hand, Camera camera, boolean isRightHand) {
+    public GrabHandler(SimulationHand hand, Camera camera, boolean isRightHand, ModelHandler modelHandler) {
         this.hand = hand;
         this.camera = camera;
         this.isRightHand = isRightHand;
+        this.modelHandler = modelHandler;
     }
 
     public void setLoadedModels(Collection<ModelMesh> loadedModels) {
@@ -130,6 +132,10 @@ public class GrabHandler {
         if (closestModel != null) {
             grabbedModel = closestModel;
             isGrabbing   = true;
+
+            if (modelHandler != null) {
+                modelHandler.setSelectedModel(grabbedModel);
+            }
 
             if (!isRightHand) {
                 grabDistance = closestDistance;
