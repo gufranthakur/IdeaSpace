@@ -9,6 +9,7 @@ import com.ideaspace.core.Settings;
 import com.ideaspace.handlers.*;
 import com.ideaspace.models.Server;
 import com.ideaspace.core.Space;
+import com.ideaspace.simulationhand.CursorOverlay;
 import com.ideaspace.ui.panels.ControlPanel;
 import com.ideaspace.ui.panels.HUDPanel;
 import com.ideaspace.ui.panels.MenuPanel;
@@ -19,6 +20,7 @@ import com.kotcrab.vis.ui.VisUI;
 public class IdeaSpace extends ApplicationAdapter {
 
     private LectureHandler lectureHandler;
+    private CursorOverlay cursorOverlay;
 
     public HomeScreen homeScreen;
 
@@ -67,8 +69,9 @@ public class IdeaSpace extends ApplicationAdapter {
         menuPanel = new MenuPanel(this);
 
         space = new Space(this);
+        cursorOverlay = new CursorOverlay(65010);
 
-        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, true);
+        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, false);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
 
         decoder = new Decoder(this);
@@ -116,6 +119,9 @@ public class IdeaSpace extends ApplicationAdapter {
 
             if (getPanelFlag() == true) controlPanel.render();
             if (menuFlag) menuPanel.render();
+
+            cursorOverlay.update();
+            cursorOverlay.render();
 
             hudPanel.render();
             animationHandler.update();

@@ -44,6 +44,8 @@ public class Decoder {
 
     public void decode(String command) {
 
+        System.out.println("Command received : " + command);
+
         if (ideaSpace.gestureLock) return;
 
         // Reset targets

@@ -47,7 +47,7 @@ public class MenuPanel extends Stage {
         escButton = new ISButton("ui/png/menu/esp32.png");
         fcButton = new ISButton("ui/png/menu/fc.png");
         iphone17Button = new ISButton("ui/png/menu/iphone17.png");
-        joystickButton = new ISButton("ui/png/menu/joystick_controller.png");
+        joystickButton = new ISButton("ui/png/menu/joystick_module.png");
         l298Button = new ISButton("ui/png/menu/l298_motor.png");
         laptopFanButton = new ISButton("ui/png/menu/laptop_fan.png");
         mechanicalKeyboardButton = new ISButton("ui/png/menu/mechanical_keyboard.png");

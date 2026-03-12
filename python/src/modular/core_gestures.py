@@ -11,6 +11,7 @@ from gesture_config import *
 from flick_gesture import FlickGesture
 from drag_gesture import DragGesture
 from swipe_utils import detect_swipe_gesture
+from drag_menu import DragMenu          # ← NEW
 
 # ── Args ──────────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description='Unified Gesture + Simulation System')
@@ -25,8 +26,9 @@ server = Server(PORT)
 
 # ── Simulation UDP Socket ─────────────────────────────────────────────────────
 sim_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-SIM_RIGHT_PORT = ("127.0.0.1", 65000)
-SIM_LEFT_PORT  = ("127.0.0.1", 65005)
+SIM_RIGHT_PORT  = ("127.0.0.1", 65000)
+SIM_LEFT_PORT   = ("127.0.0.1", 65005)
+SIM_CURSOR_PORT = ("127.0.0.1", 65010)   # cursor x,y + menu_open flag
 
 # ── Detector ──────────────────────────────────────────────────────────────────
 detector = handDetector(maxHands=2, detectionConfidence=0.8, trackConfidence=0.8)
@@ -35,6 +37,8 @@ detector = handDetector(maxHands=2, detectionConfidence=0.8, trackConfidence=0.8
 left_flick_gesture  = FlickGesture(return_command="REMOVE")
 right_flick_gesture = FlickGesture(return_command="ANIMATE")
 right_drag_gesture  = DragGesture()
+
+drag_menu = DragMenu()              # ← NEW
 
 core_left_last_command_time  = 0
 core_left_last_sent_command  = None
@@ -51,7 +55,7 @@ left_rotate_was_active   = {"Right": False}
 # Left hand: RIGHT_ROTATE
 right_rotate_was_active  = {"Left": False}
 
-ROTATE_HOLD_FRAMES  = 6
+ROTATE_HOLD_FRAMES  = 3
 rotate_hold_counter = {"Left": 0, "Right": 0}
 rotate_hold_type    = {"Left": None, "Right": None}
 
@@ -148,6 +152,10 @@ try:
         right_action = None
         zoom_action  = None
 
+        # Index-finger tip coords for the finger-mouse (pixels in full-res frame)
+        finger_cursor_x = None
+        finger_cursor_y = None
+
         if detector.results and detector.results.multi_hand_landmarks:
             for hand_idx in range(len(detector.results.multi_hand_landmarks)):
                 handedness = detector.get_handedness(hand_idx)
@@ -165,6 +173,11 @@ try:
                         for lm in right_lms:
                             cv2.circle(img, (lm[1], lm[2]), 5, (0, 255, 255), -1)
 
+                # ── Track right-hand index finger for finger-mouse ─────────────
+                if handedness == "Right" and len(lms_scaled) > INDEX_FINGER:
+                    finger_cursor_x = lms_scaled[INDEX_FINGER][1]
+                    finger_cursor_y = lms_scaled[INDEX_FINGER][2]
+
                 # ── Send simulation landmark data via UDP ─────────────────────
                 hand_landmarks_raw = detector.results.multi_hand_landmarks[hand_idx]
                 sim_data = []
@@ -175,6 +188,43 @@ try:
                     sim_sock.sendto(str.encode(str(sim_data)), SIM_RIGHT_PORT)
                 elif handedness == "Left":
                     sim_sock.sendto(str.encode(str(sim_data)), SIM_LEFT_PORT)
+
+        # ══════════════════════════════════════════════════════════════════════
+        # ── DRAG MENU MODE  (intercepts normal gesture processing) ────────────
+        # ══════════════════════════════════════════════════════════════════════
+        # ── Send cursor + menu state every frame via UDP ─────────────────
+        # Format: "CURSOR:x,y,menu_open"   Java listens on port 65010
+        if len(right_lms) > INDEX_FINGER:
+            cx = right_lms[INDEX_FINGER][1]
+            cy = right_lms[INDEX_FINGER][2]
+            menu_flag = 1 if drag_menu.is_open() else 0
+            sim_sock.sendto(f"CURSOR:{cx},{cy},{menu_flag}".encode(), SIM_CURSOR_PORT)
+        else:
+            sim_sock.sendto(b"CURSOR:-1,-1,0", SIM_CURSOR_PORT)
+
+        if drag_menu.is_open():
+            selected = drag_menu.update(img, right_lms)
+            if selected:
+                print(f"[DragMenu] Selected: {selected}")
+                server.send_command(f"DEVICE:{selected}")
+
+            # ESC key closes menu without selecting
+            key = cv2.waitKey(1) & 0xFF
+            if key == 27:   # ESC
+                drag_menu.close()
+
+            # Always show the window when menu is open (even in non-debug mode)
+            cv2.namedWindow("Gestures", cv2.WINDOW_AUTOSIZE)
+            cv2.imshow("Gestures", img)
+
+            elapsed = time.time() - current_time
+            if elapsed < FRAME_TIME:
+                time.sleep(FRAME_TIME - elapsed)
+            continue   # skip normal gesture handling while menu is open
+
+        # ══════════════════════════════════════════════════════════════════════
+        # ── Normal gesture handling ───────────────────────────────────────────
+        # ══════════════════════════════════════════════════════════════════════
 
         # ── LEFT hand gestures (RIGHT_ROTATE + flick + swipe) ─────────────────
         if len(left_lms) > 0:
@@ -238,7 +288,10 @@ try:
                     right_action = flick_action
                 if not right_action and not right_flick_gesture.is_active():
                     drag_action = right_drag_gesture.detect(right_lms, img)
-                    if drag_action:
+                    if drag_action == "DRAG":
+                        drag_menu.open()           # ← OPEN MENU on DRAG
+                        right_action = None        # don't forward DRAG as a command
+                    elif drag_action:
                         right_action = drag_action
         else:
             top_rotate_was_active["Right"]    = False
