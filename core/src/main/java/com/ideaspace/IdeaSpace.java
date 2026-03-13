@@ -71,7 +71,7 @@ public class IdeaSpace extends ApplicationAdapter {
         space = new Space(this);
         cursorOverlay = new CursorOverlay(65010);
 
-        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, false);
+        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, true);
         canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
 
         decoder = new Decoder(this);
@@ -120,8 +120,8 @@ public class IdeaSpace extends ApplicationAdapter {
             if (getPanelFlag() == true) controlPanel.render();
             if (menuFlag) menuPanel.render();
 
-            cursorOverlay.update();
-            cursorOverlay.render();
+//            cursorOverlay.update();
+//            cursorOverlay.render();
 
             hudPanel.render();
             animationHandler.update();
