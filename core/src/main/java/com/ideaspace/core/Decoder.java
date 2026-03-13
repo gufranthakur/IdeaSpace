@@ -94,10 +94,10 @@ public class Decoder {
                 });
             }
 
-            case "TOP_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.TOP_ROTATE);
-            case "BOTTOM_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.BOTTOM_ROTATE);
-            case "RIGHT_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.RIGHT_ROTATE);
-            case "LEFT_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.LEFT_ROTATE);
+//            case "TOP_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.TOP_ROTATE);
+//            case "BOTTOM_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.BOTTOM_ROTATE);
+//            case "RIGHT_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.RIGHT_ROTATE);
+//            case "LEFT_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.LEFT_ROTATE);
 
             case "NULL" -> {
                 // Let smoothing naturally decay to zero

@@ -40,15 +40,14 @@ public class ModelHandler {
     }
 
     public void loadInitialModels() {
-        addModelToLibrary("Spaceship", "models/backgrounds/spaceship.glb", maps);
-        loadModel(modelLibrary.get("Spaceship"));
-        getModelInstance("Spaceship").transform.idt()
-            .scale(5f, 5f, 5f)
-            .translate(0.3f, -0.95f, 0.6f);
 
-        addModelToLibrary("Vintage", "models/backgrounds/vintage.glb", maps);
-        addModelToLibrary("Office", "models/backgrounds/office.glb", maps);
-        addModelToLibrary("Classroom", "models/backgrounds/classroom.glb", maps);
+        addModelToLibrary("Light", "models/backgrounds/light_background.glb", maps);
+        addModelToLibrary("Dark", "models/backgrounds/dark_background.glb", maps);
+        addModelToLibrary("Spaceship", "models/backgrounds/spaceship.glb", maps);
+
+
+        loadModel(modelLibrary.get("Light"));
+        getModelInstance("Light").transform.idt().scale(30f, 30f, 30f);
     }
 
     public void createModels() {
@@ -65,7 +64,9 @@ public class ModelHandler {
         addModelToLibrary("DDR4", "models/components/ddr4.glb");
         addModelToLibrary("Laptop Fan", "models/components/laptop_fan.glb");
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanicalkeyboard_split.glb");
-        addModelToLibrary("Duck", "models/misc/rubber_duck.glb");
+        addModelToLibrary("Drone", "models/misc/drone_split.glb");
+        addModelToLibrary("Drone", "models/misc/drone_split.glb");
+        addModelToLibrary("Drone", "models/misc/drone_split.glb");
 
         loadModel(modelLibrary.get("Iphone-17"));
     }
@@ -228,20 +229,13 @@ public class ModelHandler {
             getModelInstance("Spaceship").transform.idt()
                 .scale(5f, 5f, 5f)
                 .translate(0.3f, -0.75f, 0.6f);
-        } else if (nextMap.modelName.equals("Vintage")) {
-            getModelInstance("Vintage").transform.idt()
-                .scale(0.20f, 0.20f, 0.20f)
-                .rotate(0f, 1f, 0f, 180f)
-                .translate(-37.5f, -25f, 70f);
-        } else if (nextMap.modelName.equals("Office")) {
-            getModelInstance("Office").transform.idt()
-                .scale(5f, 5f, 5f)
-                .rotate(0f, 1f, 0f, 270f)
-                .translate(0f, 0.75f, 0f);
-        } else if (nextMap.modelName.equals("Classroom")) {
-            getModelInstance("Classroom").transform.idt()
-                .translate(0f, -5f, -18.5f)
-                .scale(0.05f, 0.05f, 0.05f);
+        } else if (nextMap.modelName.equals("Light")) {
+            getModelInstance("Light").transform.idt()
+                .scale(30f, 30f, 30f);
+
+        } else if (nextMap.modelName.equals("Dark")) {
+            getModelInstance("Dark").transform.idt()
+                .scale(30f, 30f, 30f);
         }
 
         unloadModel(currentMap, null);

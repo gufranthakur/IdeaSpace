@@ -27,7 +27,7 @@ public class GrabHandler {
     private boolean isGrabbing = false;
     private ModelMesh grabbedModel = null;
 
-    // --- Left hand only ---
+    // --- Right hand only (was Left) ---
     public float maxGrabDistance = 20.0f;
     private float grabDistance;
     private Vector3 grabOffset = new Vector3();
@@ -35,7 +35,7 @@ public class GrabHandler {
     public float positionMultiplier = 3.0f;
     private Vector3 targetPosition = new Vector3();
 
-    // --- Right hand only ---
+    // --- Left hand only (was Right) ---
     public float rotationMultiplier = 120f;
     private Vector3 lastPinchCenter = new Vector3();
     private boolean hasLastPinchCenter = false;
@@ -89,8 +89,8 @@ public class GrabHandler {
         } else if (!isIndexPinching && isGrabbing) {
             release();
         } else if (isGrabbing && grabbedModel != null && isIndexPinching) {
-            if (isRightHand) updateRotation();
-            else             updateGrabbedObjectPosition();
+            if (isRightHand) updateGrabbedObjectPosition(); // swapped: right hand moves
+            else             updateRotation();              // swapped: left hand rotates
         }
 
         if (isIndexPinching) {
@@ -110,10 +110,8 @@ public class GrabHandler {
 
         for (ModelMesh model : loadedModels) {
             if (model.modelName.equals("Spaceship")
-                || model.modelName.equals("Vintage")
-                || model.modelName.equals("Office")
-                || model.modelName.equals("Classroom")
-                || model.modelName.equals("Cube")) continue;
+                || model.modelName.equals("Light")
+                || model.modelName.equals("Dark") )continue;
             if (model.getScene() == null || model.getScene().modelInstance == null) continue;
 
             Vector3 modelPos = model.getScene().modelInstance.transform.getTranslation(new Vector3());
@@ -137,13 +135,13 @@ public class GrabHandler {
                 modelHandler.setSelectedModel(grabbedModel);
             }
 
-            if (!isRightHand) {
+            if (isRightHand) { // swapped: right hand sets up position grab
                 grabDistance = closestDistance;
                 tempVec.set(rayDir).scl(grabDistance).add(camera.position);
                 Vector3 objectPos = grabbedModel.getScene().modelInstance.transform.getTranslation(new Vector3());
                 grabOffset.set(objectPos).sub(tempVec);
                 targetPosition.set(objectPos);
-            } else {
+            } else {           // swapped: left hand sets up rotation grab
                 grabbedModel.getScene().modelInstance.transform.getRotation(rotationAtGrabStart);
                 sessionYaw   = 0f;
                 sessionPitch = 0f;
