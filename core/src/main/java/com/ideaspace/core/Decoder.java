@@ -44,7 +44,7 @@ public class Decoder {
 
     public void decode(String command) {
 
-        System.out.println("Command received : " + command);
+       // System.out.println("Command received : " + command);
 
         if (ideaSpace.gestureLock) return;
 
@@ -94,7 +94,7 @@ public class Decoder {
                 });
             }
 
-//            case "TOP_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.TOP_ROTATE);
+            case "TOP_ROTATE" -> ideaSpace.modelHandler.breakdown();
 //            case "BOTTOM_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.BOTTOM_ROTATE);
 //            case "RIGHT_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.RIGHT_ROTATE);
 //            case "LEFT_ROTATE" -> ideaSpace.space.switchView(Space.Rotation.LEFT_ROTATE);
@@ -105,7 +105,7 @@ public class Decoder {
 
             default -> {
                 if (!command.equals("NULL")) {
-                    System.out.println("Unknown command received: " + command);
+                   // System.out.println("Unknown command received: " + command);
                 }
             }
         }

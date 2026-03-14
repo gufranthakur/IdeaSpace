@@ -71,8 +71,8 @@ public class IdeaSpace extends ApplicationAdapter {
         space = new Space(this);
         cursorOverlay = new CursorOverlay(65010);
 
-        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, true);
-        canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, true);
+        coreGesturesServer = new Server(this, "src/modular/core_gestures.py", 64000, false);
+        canvasServer = new Server(this, "src/modular/canvas_main.py", 65005, false);
 
         decoder = new Decoder(this);
         settings = new Settings(this);

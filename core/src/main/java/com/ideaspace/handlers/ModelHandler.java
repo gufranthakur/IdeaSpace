@@ -3,14 +3,14 @@ package com.ideaspace.handlers;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.ideaspace.IdeaSpace;
-import com.ideaspace.core.Space;
 import com.ideaspace.models.ModelMesh;
+import com.ideaspace.models.SplitPiece;
 import com.ideaspace.ui.components.ModelCard;
-import com.kotcrab.vis.ui.util.OsUtils;
 import com.kotcrab.vis.ui.widget.file.FileChooser;
 import com.kotcrab.vis.ui.widget.file.FileChooserAdapter;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
@@ -29,6 +29,7 @@ public class ModelHandler {
 
     public HashMap<String, ModelMesh> loadedModels;
     public HashMap<String, ModelMesh> modelLibrary;
+    public HashMap<String, SplitPiece> splitPieces;
     public ArrayList<ModelMesh> maps;
     private int mapIndex = 0;
 
@@ -36,15 +37,14 @@ public class ModelHandler {
         this.ideaSpace = ideaSpace;
         loadedModels = new HashMap<>();
         modelLibrary = new HashMap<>();
+        splitPieces  = new HashMap<>();
         maps = new ArrayList<>();
     }
 
     public void loadInitialModels() {
-
         addModelToLibrary("Light", "models/backgrounds/light_background.glb", maps);
         addModelToLibrary("Dark", "models/backgrounds/dark_background.glb", maps);
         addModelToLibrary("Spaceship", "models/backgrounds/spaceship.glb", maps);
-
 
         loadModel(modelLibrary.get("Light"));
         getModelInstance("Light").transform.idt().scale(30f, 30f, 30f);
@@ -64,6 +64,7 @@ public class ModelHandler {
         addModelToLibrary("DDR4", "models/components/ddr4.glb");
         addModelToLibrary("Laptop Fan", "models/components/laptop_fan.glb");
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanicalkeyboard_split.glb");
+        addModelToLibrary("Servo Process", "models/components/servo_working.glb");
         addModelToLibrary("Drone", "models/misc/drone_split.glb");
         addModelToLibrary("Drone", "models/misc/drone_split.glb");
         addModelToLibrary("Drone", "models/misc/drone_split.glb");
@@ -74,9 +75,7 @@ public class ModelHandler {
     private void addModelToLibrary(String name, String path) {
         ModelMesh modelMesh = new ModelMesh(name, path);
         modelLibrary.put(name, modelMesh);
-
         if (isBackground(name)) return;
-
         ModelCard modelCard = new ModelCard(this, modelMesh, false);
         ideaSpace.controlPanel.addModelCardToLibrary(modelCard);
     }
@@ -85,9 +84,7 @@ public class ModelHandler {
         ModelMesh modelMesh = new ModelMesh(name, path);
         modelLibrary.put(name, modelMesh);
         maps.add(modelMesh);
-
         if (isBackground(name)) return;
-
         ModelCard modelCard = new ModelCard(this, modelMesh, false);
         ideaSpace.controlPanel.addModelCardToLibrary(modelCard);
     }
@@ -132,7 +129,6 @@ public class ModelHandler {
 
         if (modelMesh != null) {
             ModelInstance modelInstance = modelMesh.getScene().modelInstance;
-
             final String finalNameToRemove = nameToRemove;
             final ModelMesh finalModelMesh = modelMesh;
 
@@ -158,40 +154,70 @@ public class ModelHandler {
         }
     }
 
-    public ModelInstance getModelInstance(String name) {
-        return loadedModels.get(name).getScene().modelInstance;
-    }
-
-    public void dispose() {
-        for (ModelMesh modelMesh : loadedModels.values()) {
-            modelMesh.dispose();
-        }
-    }
-
-    public void loadRandomModel() {
-        if (modelLibrary.isEmpty()) {
-            System.out.println("Model library is empty!");
+    public void breakdown() {
+        if (selectedModel == null) {
+            System.out.println("[BREAKDOWN] No model selected, aborting.");
             return;
         }
 
-        java.util.List<String> availableModels = new java.util.ArrayList<>();
-        for (String modelName : modelLibrary.keySet()) {
-            if (!isBackground(modelName)) {
-                availableModels.add(modelName);
+        System.out.println("[BREAKDOWN] Starting breakdown of: " + selectedModel.modelName);
+
+        // Clear any existing split pieces first
+        clearBreakdown();
+
+        com.badlogic.gdx.graphics.g3d.Model rawModel =
+            selectedModel.getModelSceneAsset().scene.model;
+
+        System.out.println("[BREAKDOWN] Total nodes in raw model: " + rawModel.nodes.size);
+
+        // Hide the original model
+        ideaSpace.space.getSceneManager().removeScene(selectedModel.getScene());
+        System.out.println("[BREAKDOWN] Original model hidden.");
+
+        int pieceCount = 0;
+
+        for (Node node : rawModel.nodes) {
+            if (node.parts.size == 0) {
+                System.out.println("[BREAKDOWN] Skipping node with no parts: " + node.id);
+                continue;
             }
+
+            // Create a piece with no transform manipulation — leave it exactly as is
+            ModelInstance pieceInstance = new ModelInstance(rawModel, node.id);
+            Scene pieceScene = new Scene(pieceInstance);
+            SplitPiece piece = new SplitPiece(node.id, selectedModel.modelName, pieceScene);
+
+            splitPieces.put(node.id, piece);
+            ideaSpace.space.getSceneManager().addScene(pieceScene);
+
+            System.out.println("[BREAKDOWN] Piece added: " + node.id);
+            pieceCount++;
         }
 
-        if (availableModels.isEmpty()) {
-            System.out.println("No models available to load!");
-            return;
+        ideaSpace.space.getRightGrabHandler().setSplitPieces(splitPieces.values());
+        ideaSpace.space.getLeftGrabHandler().setSplitPieces(splitPieces.values());
+
+        System.out.println("[BREAKDOWN] Done. Total pieces: " + pieceCount);
+    }
+
+    public void clearBreakdown() {
+        if (splitPieces.isEmpty()) return;
+
+        System.out.println("[BREAKDOWN] Clearing " + splitPieces.size() + " pieces.");
+
+        for (SplitPiece piece : splitPieces.values()) {
+            ideaSpace.space.getSceneManager().removeScene(piece.getScene());
         }
+        splitPieces.clear();
 
-        int randomIndex = (int) (Math.random() * availableModels.size());
-        String randomModelName = availableModels.get(randomIndex);
+        ideaSpace.space.getRightGrabHandler().setSplitPieces(null);
+        ideaSpace.space.getLeftGrabHandler().setSplitPieces(null);
 
-        ModelMesh randomModel = modelLibrary.get(randomModelName);
-        loadModel(randomModel);
-        selectedModel = randomModel;
+        // Restore the original model
+        if (selectedModel != null && selectedModel.getScene() != null) {
+            ideaSpace.space.getSceneManager().addScene(selectedModel.getScene());
+            System.out.println("[BREAKDOWN] Original model restored.");
+        }
     }
 
     public void splitModel() {
@@ -219,7 +245,6 @@ public class ModelHandler {
 
     public void changeMap() {
         String currentMap = maps.get(mapIndex).modelName;
-
         mapIndex = (mapIndex + 1) % maps.size();
 
         ModelMesh nextMap = maps.get(mapIndex);
@@ -230,27 +255,41 @@ public class ModelHandler {
                 .scale(5f, 5f, 5f)
                 .translate(0.3f, -0.75f, 0.6f);
         } else if (nextMap.modelName.equals("Light")) {
-            getModelInstance("Light").transform.idt()
-                .scale(30f, 30f, 30f);
-
+            getModelInstance("Light").transform.idt().scale(30f, 30f, 30f);
         } else if (nextMap.modelName.equals("Dark")) {
-            getModelInstance("Dark").transform.idt()
-                .scale(30f, 30f, 30f);
+            getModelInstance("Dark").transform.idt().scale(30f, 30f, 30f);
         }
 
         unloadModel(currentMap, null);
     }
 
+    public void loadRandomModel() {
+        if (modelLibrary.isEmpty()) return;
+
+        java.util.List<String> availableModels = new java.util.ArrayList<>();
+        for (String modelName : modelLibrary.keySet()) {
+            if (!isBackground(modelName)) availableModels.add(modelName);
+        }
+
+        if (availableModels.isEmpty()) return;
+
+        int randomIndex = (int) (Math.random() * availableModels.size());
+        String randomModelName = availableModels.get(randomIndex);
+
+        ModelMesh randomModel = modelLibrary.get(randomModelName);
+        loadModel(randomModel);
+        selectedModel = randomModel;
+    }
+
     public void loadCustomModel() {
         String os = System.getProperty("os.name").toLowerCase();
-
         boolean isMac     = os.contains("mac");
         boolean isWindows = os.contains("win");
         boolean isLinux   = os.contains("nux") || os.contains("nix");
 
-        if (isMac) loadCustomModelMac();
+        if (isMac)     loadCustomModelMac();
         if (isWindows) loadCustomModelWindows();
-        if (isLinux) loadCustomModelLinux();
+        if (isLinux)   loadCustomModelLinux();
     }
 
     public void loadCustomModelMac() {
@@ -260,11 +299,9 @@ public class ModelHandler {
                     "osascript", "-e",
                     "POSIX path of (choose file of type {\"glb\"} with prompt \"Select a GLB Model\")"
                 };
-
                 Process process = Runtime.getRuntime().exec(cmd);
                 String filePath = new String(process.getInputStream().readAllBytes()).trim();
                 process.waitFor();
-
                 if (!filePath.isEmpty()) {
                     Gdx.app.postRunnable(() -> addModelToLibrary(
                         filePath.substring(filePath.lastIndexOf("/") + 1, filePath.lastIndexOf(".")),
@@ -290,11 +327,9 @@ public class ModelHandler {
                         "$f.Title = 'Select a GLB Model';" +
                         "if ($f.ShowDialog() -eq 'OK') { $f.FileName }"
                 };
-
                 Process process = Runtime.getRuntime().exec(cmd);
                 String filePath = new String(process.getInputStream().readAllBytes()).trim();
                 process.waitFor();
-
                 if (!filePath.isEmpty()) {
                     Gdx.app.postRunnable(() -> System.out.println(filePath));
                 }
@@ -309,9 +344,7 @@ public class ModelHandler {
     public void loadCustomModelLinux() {
         FileChooser fileChooser = new FileChooser(FileChooser.Mode.OPEN);
         fileChooser.setSelectionMode(FileChooser.SelectionMode.FILES);
-
         ideaSpace.hudPanel.getStage().addActor(fileChooser.fadeIn());
-
         fileChooser.setListener(new FileChooserAdapter() {
             @Override
             public void selected(Array<FileHandle> files) {
@@ -323,28 +356,22 @@ public class ModelHandler {
         });
     }
 
-    private void loadCustomModelFromFilePath(String filepath) {
-
+    public ModelInstance getModelInstance(String name) {
+        return loadedModels.get(name).getScene().modelInstance;
     }
-
-    // ────────────────────────────────────────────────────────────────────────────
 
     public boolean isBackground(String name) {
-        if (name.equals("Spaceship") || name.equals("Vintage") || name.equals("Office") || name.equals("Classroom")) {
-            return true;
+        return name.equals("Spaceship") || name.equals("Light") || name.equals("Dark");
+    }
+
+    public void setSelectedModel(ModelMesh model) { this.selectedModel = model; }
+    public ModelMesh getSelectedModel()            { return selectedModel; }
+    public IdeaSpace getIdeaSpace()                { return ideaSpace; }
+
+    public void dispose() {
+        clearBreakdown();
+        for (ModelMesh modelMesh : loadedModels.values()) {
+            modelMesh.dispose();
         }
-        return false;
-    }
-
-    public void setSelectedModel(ModelMesh model) {
-        this.selectedModel = model;
-    }
-
-    public ModelMesh getSelectedModel() {
-        return selectedModel;
-    }
-
-    public IdeaSpace getIdeaSpace() {
-        return ideaSpace;
     }
 }

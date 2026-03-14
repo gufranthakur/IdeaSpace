@@ -5,8 +5,10 @@ import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.Ray;
 import com.ideaspace.models.ModelMesh;
+import com.ideaspace.models.SplitPiece;
 import com.ideaspace.simulationhand.SimulationHand;
 
 import java.util.Collection;
@@ -22,46 +24,41 @@ public class GrabHandler {
     private SimulationHand hand;
     private Camera camera;
     private Collection<ModelMesh> loadedModels;
+    private Collection<SplitPiece> splitPieces = null;
     private ModelHandler modelHandler;
 
     private boolean isGrabbing = false;
     private ModelMesh grabbedModel = null;
+    private SplitPiece grabbedPiece = null;
 
-    // --- Right hand only (was Left) ---
     public float maxGrabDistance = 20.0f;
     private float grabDistance;
     private Vector3 grabOffset = new Vector3();
-    private float positionLerpFactor = 0.15f;
     public float positionMultiplier = 3.0f;
     private Vector3 targetPosition = new Vector3();
 
-    // --- Left hand only (was Right) ---
     public float rotationMultiplier = 120f;
     private Vector3 lastPinchCenter = new Vector3();
     private boolean hasLastPinchCenter = false;
 
-    // Snapshot of object rotation at grab start
     private Quaternion rotationAtGrabStart = new Quaternion();
-    // Accumulated delta since this grab session started
     private float sessionYaw   = 0f;
     private float sessionPitch = 0f;
 
-    // Sphere grab radius — increase to make selection more forgiving
     public float grabSphereRadius = 0.5f;
 
     // Temp
-    private Vector3 thumbPos = new Vector3();
-    private Vector3 indexPos = new Vector3();
-    private Vector3 pinchCenter = new Vector3();
-    private Vector3 rayDir = new Vector3();
-    private Vector3 tempVec = new Vector3();
+    private Vector3 thumbPos      = new Vector3();
+    private Vector3 indexPos      = new Vector3();
+    private Vector3 pinchCenter   = new Vector3();
+    private Vector3 rayDir        = new Vector3();
+    private Vector3 tempVec       = new Vector3();
     private Matrix4 tempTransform = new Matrix4();
-    private Quaternion yawQuat   = new Quaternion();
-    private Quaternion pitchQuat = new Quaternion();
-    private Quaternion tempQuat  = new Quaternion();
+    private Quaternion yawQuat    = new Quaternion();
+    private Quaternion pitchQuat  = new Quaternion();
+    private Quaternion tempQuat   = new Quaternion();
 
     private Ray ray = new Ray();
-
     private boolean isRightHand;
 
     public GrabHandler(SimulationHand hand, Camera camera, boolean isRightHand, ModelHandler modelHandler) {
@@ -73,6 +70,12 @@ public class GrabHandler {
 
     public void setLoadedModels(Collection<ModelMesh> loadedModels) {
         this.loadedModels = loadedModels;
+    }
+
+    public void setSplitPieces(Collection<SplitPiece> splitPieces) {
+        this.splitPieces = splitPieces;
+        System.out.println("[GRAB] splitPieces updated: "
+            + (splitPieces == null ? "null" : splitPieces.size() + " pieces"));
     }
 
     public void update() {
@@ -88,9 +91,9 @@ public class GrabHandler {
             tryGrabWithRaycast();
         } else if (!isIndexPinching && isGrabbing) {
             release();
-        } else if (isGrabbing && grabbedModel != null && isIndexPinching) {
-            if (isRightHand) updateGrabbedObjectPosition(); // swapped: right hand moves
-            else             updateRotation();              // swapped: left hand rotates
+        } else if (isGrabbing && isIndexPinching) {
+            if (isRightHand) updateGrabbedObjectPosition();
+            else             updateRotation();
         }
 
         if (isIndexPinching) {
@@ -105,13 +108,13 @@ public class GrabHandler {
         rayDir.set(pinchCenter).sub(camera.position).nor();
         ray.set(camera.position, rayDir);
 
-        ModelMesh closestModel = null;
-        float closestDistance  = Float.MAX_VALUE;
+        ModelMesh closestModel  = null;
+        SplitPiece closestPiece = null;
+        float closestDistance   = Float.MAX_VALUE;
 
+        // --- Check whole models ---
         for (ModelMesh model : loadedModels) {
-            if (model.modelName.equals("Spaceship")
-                || model.modelName.equals("Light")
-                || model.modelName.equals("Dark") )continue;
+            if (isBackground(model.modelName)) continue;
             if (model.getScene() == null || model.getScene().modelInstance == null) continue;
 
             Vector3 modelPos = model.getScene().modelInstance.transform.getTranslation(new Vector3());
@@ -127,32 +130,104 @@ public class GrabHandler {
             }
         }
 
-        if (closestModel != null) {
-            grabbedModel = closestModel;
-            isGrabbing   = true;
+        // --- Check split pieces ---
+        if (splitPieces != null) {
+            for (SplitPiece piece : splitPieces) {
+                if (piece.getModelInstance() == null) continue;
 
-            if (modelHandler != null) {
-                modelHandler.setSelectedModel(grabbedModel);
+                // Use bounding box center — GLB bakes offsets into vertices
+                BoundingBox bbox = new BoundingBox();
+                piece.getModelInstance().calculateBoundingBox(bbox);
+                bbox.mul(piece.getModelInstance().transform);
+
+                Vector3 piecePos = new Vector3();
+                bbox.getCenter(piecePos);
+
+                float distance = camera.position.dst(piecePos);
+                if (distance > maxGrabDistance) continue;
+
+                if (Intersector.intersectRaySphere(ray, piecePos, grabSphereRadius, null)) {
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestPiece    = piece;
+                        closestModel    = null; // piece wins
+                    }
+                }
+            }
+        }
+
+        // --- Grab a split piece ---
+        if (closestPiece != null) {
+            grabbedPiece = closestPiece;
+            grabbedModel = null;
+            isGrabbing   = true;
+            hasLastPinchCenter = false;
+            System.out.println("[GRAB] Grabbed piece: " + grabbedPiece.nodeName);
+
+            if (!isRightHand) {
+                grabbedPiece.getModelInstance().transform.getRotation(rotationAtGrabStart);
+                sessionYaw   = 0f;
+                sessionPitch = 0f;
             }
 
-            if (isRightHand) { // swapped: right hand sets up position grab
+            // --- Grab a whole model ---
+        } else if (closestModel != null) {
+            grabbedModel = closestModel;
+            grabbedPiece = null;
+            isGrabbing   = true;
+            hasLastPinchCenter = false;
+            System.out.println("[GRAB] Grabbed model: " + grabbedModel.modelName);
+
+            if (modelHandler != null) modelHandler.setSelectedModel(grabbedModel);
+
+            if (isRightHand) {
                 grabDistance = closestDistance;
                 tempVec.set(rayDir).scl(grabDistance).add(camera.position);
                 Vector3 objectPos = grabbedModel.getScene().modelInstance.transform.getTranslation(new Vector3());
                 grabOffset.set(objectPos).sub(tempVec);
                 targetPosition.set(objectPos);
-            } else {           // swapped: left hand sets up rotation grab
+            } else {
                 grabbedModel.getScene().modelInstance.transform.getRotation(rotationAtGrabStart);
                 sessionYaw   = 0f;
                 sessionPitch = 0f;
             }
-
-            hasLastPinchCenter = false;
         }
     }
 
+    private void updateGrabbedObjectPosition() {
+        if (!hasLastPinchCenter) return;
+
+        // --- Move a split piece ---
+        if (grabbedPiece != null) {
+            Vector3 delta = tempVec.set(pinchCenter).sub(lastPinchCenter).scl(positionMultiplier);
+            Vector3 currentPos = grabbedPiece.getModelInstance().transform.getTranslation(new Vector3());
+            currentPos.add(delta);
+            tempTransform.set(grabbedPiece.getModelInstance().transform);
+            tempTransform.setTranslation(currentPos);
+            grabbedPiece.getModelInstance().transform.set(tempTransform);
+            return;
+        }
+
+        // --- Move a whole model ---
+        if (grabbedModel == null || grabbedModel.getScene() == null) return;
+        if (isBackground(grabbedModel.modelName)) return;
+
+        Vector3 delta = tempVec.set(pinchCenter).sub(lastPinchCenter).scl(positionMultiplier);
+        Vector3 currentPos = grabbedModel.getScene().modelInstance.transform.getTranslation(new Vector3());
+        currentPos.add(delta);
+        tempTransform.set(grabbedModel.getScene().modelInstance.transform);
+        tempTransform.setTranslation(currentPos);
+        grabbedModel.getScene().modelInstance.transform.set(tempTransform);
+    }
+
     private void updateRotation() {
-        if (grabbedModel == null || !hasLastPinchCenter) return;
+        if (!hasLastPinchCenter) return;
+
+        // Works for both split pieces and whole models
+        com.badlogic.gdx.graphics.g3d.ModelInstance target = grabbedPiece != null
+            ? grabbedPiece.getModelInstance()
+            : (grabbedModel != null ? grabbedModel.getScene().modelInstance : null);
+        if (target == null) return;
 
         float deltaX = pinchCenter.x - lastPinchCenter.x;
         float deltaY = pinchCenter.y - lastPinchCenter.y;
@@ -165,43 +240,30 @@ public class GrabHandler {
 
         yawQuat.set(Vector3.Y, sessionYaw);
         pitchQuat.set(Vector3.X, sessionPitch);
-        tempQuat.set(yawQuat).mul(pitchQuat);
-        tempQuat.mul(rotationAtGrabStart);
+        tempQuat.set(yawQuat).mul(pitchQuat).mul(rotationAtGrabStart);
 
-        Vector3 currentPos = grabbedModel.getScene().modelInstance.transform.getTranslation(tempVec);
+        Vector3 currentPos = target.transform.getTranslation(tempVec);
         tempTransform.set(currentPos, tempQuat);
-        grabbedModel.getScene().modelInstance.transform.set(tempTransform);
-    }
-
-    private void updateGrabbedObjectPosition() {
-        if (grabbedModel == null || grabbedModel.getScene() == null) return;
-
-        if (grabbedModel.modelName.equals("Spaceship") ||
-            grabbedModel.modelName.equals("Office") ||
-            grabbedModel.modelName.equals("Vintage")) {
-            return;
-        }
-
-        if (!hasLastPinchCenter) return;
-
-        Vector3 delta = tempVec.set(pinchCenter).sub(lastPinchCenter).scl(positionMultiplier);
-
-        Vector3 currentPos = grabbedModel.getScene().modelInstance.transform.getTranslation(new Vector3());
-        currentPos.add(delta);
-
-        tempTransform.set(grabbedModel.getScene().modelInstance.transform);
-        tempTransform.setTranslation(currentPos);
-        grabbedModel.getScene().modelInstance.transform.set(tempTransform);
+        target.transform.set(tempTransform);
     }
 
     private void release() {
+        System.out.println("[GRAB] Released: "
+            + (grabbedPiece != null ? "piece " + grabbedPiece.nodeName
+            : grabbedModel  != null ? "model " + grabbedModel.modelName
+            : "nothing"));
         grabbedModel       = null;
+        grabbedPiece       = null;
         isGrabbing         = false;
         hasLastPinchCenter = false;
         grabOffset.setZero();
         lastPinchCenter.setZero();
         sessionYaw   = 0f;
         sessionPitch = 0f;
+    }
+
+    private boolean isBackground(String name) {
+        return name.equals("Spaceship") || name.equals("Light") || name.equals("Dark");
     }
 
     public boolean isGrabbing()          { return isGrabbing; }
