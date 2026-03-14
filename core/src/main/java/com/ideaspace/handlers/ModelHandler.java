@@ -17,8 +17,6 @@ import net.mgsx.gltf.loaders.glb.GLBLoader;
 import net.mgsx.gltf.scene3d.scene.Scene;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -42,12 +40,12 @@ public class ModelHandler {
     }
 
     public void loadInitialModels() {
-        addModelToLibrary("Light", "models/backgrounds/light_background.glb", maps);
         addModelToLibrary("Dark", "models/backgrounds/dark_background.glb", maps);
+        addModelToLibrary("Light", "models/backgrounds/light_background.glb", maps);
         addModelToLibrary("Spaceship", "models/backgrounds/spaceship.glb", maps);
 
-        loadModel(modelLibrary.get("Light"));
-        getModelInstance("Light").transform.idt().scale(30f, 30f, 30f);
+        loadModel(modelLibrary.get("Dark"));
+        getModelInstance("Dark").transform.idt().scale(30f, 30f, 30f);
     }
 
     public void createModels() {
@@ -65,8 +63,6 @@ public class ModelHandler {
         addModelToLibrary("Laptop Fan", "models/components/laptop_fan.glb");
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanicalkeyboard_split.glb");
         addModelToLibrary("Servo Process", "models/components/servo_working.glb");
-        addModelToLibrary("Drone", "models/misc/drone_split.glb");
-        addModelToLibrary("Drone", "models/misc/drone_split.glb");
         addModelToLibrary("Drone", "models/misc/drone_split.glb");
 
         loadModel(modelLibrary.get("Iphone-17"));
@@ -103,6 +99,11 @@ public class ModelHandler {
 
         loadedModels.put(modelMesh.modelName, modelMesh);
         ideaSpace.space.getSceneManager().addScene(modelMesh.getScene());
+
+        // Spawn animation — skip for background maps
+        if (!isBackground(modelMesh.modelName)) {
+            ideaSpace.animationHandler.spawnModelAnimation(scene.modelInstance);
+        }
 
         ideaSpace.space.getRightGrabHandler().setLoadedModels(loadedModels.values());
         ideaSpace.space.getLeftGrabHandler().setLoadedModels(loadedModels.values());
@@ -162,7 +163,6 @@ public class ModelHandler {
 
         System.out.println("[BREAKDOWN] Starting breakdown of: " + selectedModel.modelName);
 
-        // Clear any existing split pieces first
         clearBreakdown();
 
         com.badlogic.gdx.graphics.g3d.Model rawModel =
@@ -170,7 +170,6 @@ public class ModelHandler {
 
         System.out.println("[BREAKDOWN] Total nodes in raw model: " + rawModel.nodes.size);
 
-        // Hide the original model
         ideaSpace.space.getSceneManager().removeScene(selectedModel.getScene());
         System.out.println("[BREAKDOWN] Original model hidden.");
 
@@ -182,7 +181,6 @@ public class ModelHandler {
                 continue;
             }
 
-            // Create a piece with no transform manipulation — leave it exactly as is
             ModelInstance pieceInstance = new ModelInstance(rawModel, node.id);
             Scene pieceScene = new Scene(pieceInstance);
             SplitPiece piece = new SplitPiece(node.id, selectedModel.modelName, pieceScene);
@@ -213,7 +211,6 @@ public class ModelHandler {
         ideaSpace.space.getRightGrabHandler().setSplitPieces(null);
         ideaSpace.space.getLeftGrabHandler().setSplitPieces(null);
 
-        // Restore the original model
         if (selectedModel != null && selectedModel.getScene() != null) {
             ideaSpace.space.getSceneManager().addScene(selectedModel.getScene());
             System.out.println("[BREAKDOWN] Original model restored.");

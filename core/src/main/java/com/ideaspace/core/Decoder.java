@@ -85,6 +85,7 @@ public class Decoder {
             case "REMOVE" -> {
                 Gdx.app.postRunnable(() -> {
                     ideaSpace.modelHandler.unloadModel(null, null);
+                    ideaSpace.modelHandler.clearBreakdown();
                 });
             }
 

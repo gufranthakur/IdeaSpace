@@ -1,7 +1,6 @@
 package com.ideaspace.handlers;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
@@ -10,23 +9,45 @@ import com.ideaspace.IdeaSpace;
 public class AnimationHandler {
 
     private IdeaSpace ideaSpace;
+
+    // -- Remove animation --
     private boolean isAnimating = false;
     private ModelInstance animatingModel;
-    private Vector3 direction;
-    private Vector3 startPosition;
     private float animationTime;
     private Runnable onComplete;
+    private Matrix4 removeOriginalTransform = new Matrix4();
 
-    // Configurable settings for testing
-    public float REMOVE_ANIMATION_DURATION = 2f; // Duration in seconds
-    public float REMOVE_ANIMATION_DISTANCE = 70f;  // Distance to travel
-    public float REMOVE_ANIMATION_ROTATION_SPEED = 0f; // Degrees per second
-    public float REMOVE_ANIMATION_SPEED_SCALE = 20f; // Speed multiplier (1.0 = normal, higher = faster)
+    public float POP_DURATION      = 0.12f;
+    public float COLLAPSE_DURATION = 0.22f;
+    public float POP_SCALE         = 1.30f;
+
+    // -- Spawn animation --
+    private boolean isSpawnAnimating = false;
+    private ModelInstance spawnModel;
+    private float spawnTime;
+    private Matrix4 spawnOriginalTransform = new Matrix4();
+
+    public float SPAWN_GROW_DURATION   = 0.18f;
+    public float SPAWN_SETTLE_DURATION = 0.12f;
+    public float SPAWN_OVERSHOOT_SCALE = 1.20f;
 
     public AnimationHandler(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
-        this.direction = new Vector3();
-        this.startPosition = new Vector3();
+    }
+
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
+
+    public void spawnModelAnimation(ModelInstance modelInstance) {
+        if (isSpawnAnimating) return;
+
+        spawnModel = modelInstance;
+        isSpawnAnimating = true;
+        spawnTime = 0f;
+
+        spawnOriginalTransform.set(spawnModel.transform);
+        applyScaleTo(spawnModel, spawnOriginalTransform, 0f); // start invisible
     }
 
     public void removeModelAnimation(ModelInstance modelInstance, Runnable onComplete) {
@@ -35,76 +56,92 @@ public class AnimationHandler {
             return;
         }
 
-        this.animatingModel = modelInstance;
+        animatingModel = modelInstance;
         this.onComplete = onComplete;
-        this.isAnimating = true;
-        this.animationTime = 0f;
+        isAnimating = true;
+        animationTime = 0f;
 
-        // Store starting position
-        startPosition.set(animatingModel.transform.getTranslation(new Vector3()));
-
-        // Get camera direction
-        Camera camera = ideaSpace.space.camera;
-        direction.set(camera.direction).nor();
+        removeOriginalTransform.set(animatingModel.transform);
     }
+
+    // -------------------------------------------------------------------------
+    // Update — call every frame
+    // -------------------------------------------------------------------------
 
     public void update() {
+        updateSpawn();
+        updateRemove();
+    }
+
+    // -------------------------------------------------------------------------
+    // Internal
+    // -------------------------------------------------------------------------
+
+    private void updateSpawn() {
+        if (!isSpawnAnimating || spawnModel == null) return;
+
+        spawnTime += Gdx.graphics.getDeltaTime();
+        float total = SPAWN_GROW_DURATION + SPAWN_SETTLE_DURATION;
+        float scale;
+
+        if (spawnTime < SPAWN_GROW_DURATION) {
+            // Phase 1: 0 → SPAWN_OVERSHOOT_SCALE  (easeOutQuart — fast burst)
+            float t = spawnTime / SPAWN_GROW_DURATION;
+            float eased = 1f - (1f - t) * (1f - t) * (1f - t) * (1f - t);
+            scale = SPAWN_OVERSHOOT_SCALE * eased;
+
+        } else if (spawnTime < total) {
+            // Phase 2: SPAWN_OVERSHOOT_SCALE → 1.0  (easeOutQuad — soft settle)
+            float t = (spawnTime - SPAWN_GROW_DURATION) / SPAWN_SETTLE_DURATION;
+            float eased = 1f - (1f - t) * (1f - t);
+            scale = SPAWN_OVERSHOOT_SCALE + (1f - SPAWN_OVERSHOOT_SCALE) * eased;
+
+        } else {
+            applyScaleTo(spawnModel, spawnOriginalTransform, 1f);
+            isSpawnAnimating = false;
+            spawnModel = null;
+            spawnTime = 0f;
+            return;
+        }
+
+        applyScaleTo(spawnModel, spawnOriginalTransform, scale);
+    }
+
+    private void updateRemove() {
         if (!isAnimating || animatingModel == null) return;
 
-        float delta = Gdx.graphics.getDeltaTime();
-        animationTime += delta;
+        animationTime += Gdx.graphics.getDeltaTime();
+        float total = POP_DURATION + COLLAPSE_DURATION;
+        float scale;
 
-        // Calculate progress (0 to 1)
-        float progress = Math.min(animationTime / REMOVE_ANIMATION_DURATION, 1f);
+        if (animationTime < POP_DURATION) {
+            // Phase 1: 1.0 → POP_SCALE  (easeOutQuad — snaps to peak)
+            float t = animationTime / POP_DURATION;
+            float eased = 1f - (1f - t) * (1f - t);
+            scale = 1f + (POP_SCALE - 1f) * eased;
 
-        // Ease out effect for smoother animation
-        float eased = 1f - (1f - progress) * (1f - progress);
+        } else if (animationTime < total) {
+            // Phase 2: POP_SCALE → 0  (easeInQuart — hard implosion)
+            float t = (animationTime - POP_DURATION) / COLLAPSE_DURATION;
+            float eased = t * t * t * t;
+            scale = POP_SCALE * (1f - eased);
 
-        // Calculate speed based on distance and duration, with speed scaling
-        float speed = (REMOVE_ANIMATION_DISTANCE / REMOVE_ANIMATION_DURATION) * REMOVE_ANIMATION_SPEED_SCALE;
-
-        // Move model in camera direction
-        animatingModel.transform.translate(
-            direction.x * speed * delta,
-            direction.y * speed * delta,
-            direction.z * speed * delta
-        );
-
-        // Rotate the model around its own center
-        // Create rotation axis perpendicular to direction (for tumbling effect)
-        Vector3 rotationAxis = new Vector3(direction).crs(Vector3.Y).nor();
-        if (rotationAxis.len() < 0.1f) { // If direction is parallel to Y, use X axis
-            rotationAxis.set(Vector3.X);
-        }
-
-        // Get current position
-        Vector3 position = new Vector3();
-        animatingModel.transform.getTranslation(position);
-
-        // Rotate around the model's center
-        animatingModel.transform.translate(-position.x, -position.y, -position.z); // Move to origin
-        animatingModel.transform.rotate(rotationAxis, REMOVE_ANIMATION_ROTATION_SPEED * delta); // Rotate
-        animatingModel.transform.translate(position.x, position.y, position.z); // Move back
-
-        // Check if animation is complete
-        Vector3 currentPosition = animatingModel.transform.getTranslation(new Vector3());
-        float distanceTraveled = currentPosition.dst(startPosition);
-
-        if (animationTime >= REMOVE_ANIMATION_DURATION || distanceTraveled >= REMOVE_ANIMATION_DISTANCE) {
+        } else {
             isAnimating = false;
             animatingModel = null;
-            direction.set(0, 0, 0);
-            startPosition.set(0, 0, 0);
             animationTime = 0f;
-
-            // Execute the callback to actually remove the model
-            if (onComplete != null) {
-                onComplete.run();
-            }
+            if (onComplete != null) onComplete.run();
+            return;
         }
+
+        applyScaleTo(animatingModel, removeOriginalTransform, scale);
     }
 
-    public boolean isAnimating() {
-        return isAnimating;
+    /** Rebuilds transform from snapshot then applies uniform scale — no drift. */
+    private void applyScaleTo(ModelInstance target, Matrix4 originalTransform, float scale) {
+        target.transform.set(originalTransform).scale(scale, scale, scale);
     }
+
+    public boolean isAnimating()      { return isAnimating; }
+    public boolean isSpawnAnimating() { return isSpawnAnimating; }
 }
