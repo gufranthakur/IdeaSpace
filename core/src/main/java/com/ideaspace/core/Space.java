@@ -47,16 +47,23 @@ public class Space {
 
     public CanvasRenderer canvasRenderer;
 
-    private Quaternion slerpFrom = new Quaternion();
-    private Quaternion slerpTo   = new Quaternion();
+    private Quaternion slerpFrom        = new Quaternion();
+    private Quaternion slerpTo          = new Quaternion();
     private Vector3    slerpTranslation = new Vector3();
     private Vector3    slerpScale       = new Vector3();
-    private float      slerpAlpha = 1f;
+    private float      slerpAlpha       = 1f;
 
     private SimulationHand rightHand, leftHand;
     private HandLines rightHandLines, leftHandLines;
     private GrabHandler rightGrabHandler, leftGrabHandler;
 
+    // Camera pan state
+    public float cameraPanMultiplier    = 5f;
+    public float panLerpFactor          = 0.1f;
+    private Vector3 lastFistPosition    = new Vector3();
+    private boolean hasLastFistPosition = false;
+    private Vector3 targetPan           = new Vector3();
+    private Vector3 currentPan          = new Vector3();
 
     public Space(IdeaSpace ideaSpace) {
         this.ideaSpace = ideaSpace;
@@ -68,13 +75,13 @@ public class Space {
         setupSceneManager();
 
         rightHand = new SimulationHand(65000, camera, sceneManager);
-        leftHand = new SimulationHand(65005, camera, sceneManager);
+        leftHand  = new SimulationHand(65005, camera, sceneManager);
 
-        rightGrabHandler = new GrabHandler(rightHand, camera, true, ideaSpace.modelHandler);
-        leftGrabHandler = new GrabHandler(leftHand, camera, false, ideaSpace.modelHandler);
+        rightGrabHandler = new GrabHandler(rightHand, camera, true,  ideaSpace.modelHandler);
+        leftGrabHandler  = new GrabHandler(leftHand,  camera, false, ideaSpace.modelHandler);
 
         rightHandLines = new HandLines(sceneManager);
-        leftHandLines = new HandLines(sceneManager);
+        leftHandLines  = new HandLines(sceneManager);
 
         canvasRenderer = new CanvasRenderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
@@ -82,7 +89,7 @@ public class Space {
     private void setupCamera() {
         camera = new PerspectiveCamera(80f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 20f / 1000f;
-        camera.far = 1000f;
+        camera.far  = 1000f;
         sceneManager.setCamera(camera);
         camera.position.set(-0.036988314f, 0.20096034f, 3.1463299f);
         camera.lookAt(0.008157247f, -0.18134354f, -0.9833858f);
@@ -90,7 +97,6 @@ public class Space {
         camera.update();
 
         currentRotation = Rotation.BOTTOM_ROTATE;
-
         cameraController = new FirstPersonCameraController(camera);
     }
 
@@ -98,18 +104,14 @@ public class Space {
         light = new DirectionalLightEx();
         light.direction.set(1, -3, 1).nor();
         light.color.set(Color.WHITE);
-
-       // sceneManager.environment.add(light);
     }
 
     private void setupIBL() {
         IBLBuilder builder = IBLBuilder.createOutdoor(light);
         environmentCubeMap = builder.buildEnvMap(1024);
-        diffuseCubeMap = builder.buildIrradianceMap(256);
-        specularCubeMap = builder.buildRadianceMap(10);
-
+        diffuseCubeMap     = builder.buildIrradianceMap(256);
+        specularCubeMap    = builder.buildRadianceMap(10);
         builder.dispose();
-
         brdfLUT = new Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"));
     }
 
@@ -117,17 +119,7 @@ public class Space {
         sceneManager.setAmbientLight(3f);
         sceneManager.environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
         sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubeMap));
-
         skybox = new SceneSkybox(environmentCubeMap);
-      //  sceneManager.setSkyBox(skybox);
-    }
-
-    public GrabHandler getRightGrabHandler() {
-        return rightGrabHandler;
-    }
-
-    public GrabHandler getLeftGrabHandler() {
-        return leftGrabHandler;
     }
 
     public void render(float deltaTime) {
@@ -144,6 +136,8 @@ public class Space {
         rightHandLines.update(rightHand);
         leftHandLines.update(leftHand);
 
+        updateCameraPan();
+
         sceneManager.update(deltaTime);
         sceneManager.render();
 
@@ -159,13 +153,46 @@ public class Space {
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
 
+    private void updateCameraPan() {
+        if (!rightHand.hasData) {
+            hasLastFistPosition = false;
+            return;
+        }
+
+        if (!rightGrabHandler.isFist()) {
+            hasLastFistPosition = false;
+            targetPan.setZero();
+            currentPan.lerp(targetPan, panLerpFactor);
+            return;
+        }
+
+        Vector3 fistPos = rightHand.getPosition(0);
+
+        if (!hasLastFistPosition) {
+            lastFistPosition.set(fistPos);
+            hasLastFistPosition = true;
+            return;
+        }
+
+        float deltaX = fistPos.x - lastFistPosition.x;
+        float deltaY = fistPos.y - lastFistPosition.y;
+
+        targetPan.set(-deltaX * cameraPanMultiplier, -deltaY * cameraPanMultiplier, 0f);
+        currentPan.lerp(targetPan, panLerpFactor);
+
+        camera.position.x += currentPan.x;
+        camera.position.y += currentPan.y;
+        camera.update();
+
+        lastFistPosition.set(fistPos);
+    }
+
     public void switchView(Rotation rotation) {
         currentRotation = rotation;
         rotateSelectedModelToFaceView(rotation);
     }
 
     public void rotateSelectedModelToFaceView(Rotation rotation) {
-
         if (ideaSpace.space.leftGrabHandler.isGrabbing()) return;
 
         ModelMesh selectedModel = ideaSpace.modelHandler.getSelectedModel();
@@ -180,20 +207,11 @@ public class Space {
         Quaternion delta = new Quaternion();
 
         switch (rotation) {
-            case BOTTOM_ROTATE:
-                delta.setEulerAngles(0, 90, 0);
-                break;
-            case TOP_ROTATE:
-                delta.setEulerAngles(0, -90, 0);
-                break;
-            case LEFT_ROTATE:
-                delta.setEulerAngles(270, 0, 0);
-                break;
-            case RIGHT_ROTATE:
-                delta.setEulerAngles(90, 0, 0);
-                break;
-            default:
-                return;
+            case BOTTOM_ROTATE: delta.setEulerAngles(0,   90, 0); break;
+            case TOP_ROTATE:    delta.setEulerAngles(0,  -90, 0); break;
+            case LEFT_ROTATE:   delta.setEulerAngles(270,  0, 0); break;
+            case RIGHT_ROTATE:  delta.setEulerAngles(90,   0, 0); break;
+            default: return;
         }
 
         slerpTo.set(slerpFrom).mul(delta);
@@ -216,11 +234,8 @@ public class Space {
         canvasRenderer.resize(width, height);
     }
 
-    public FirstPersonCameraController getCameraController() {
-        return cameraController;
-    }
-
-    public SceneManager getSceneManager() {
-        return sceneManager;
-    }
+    public FirstPersonCameraController getCameraController() { return cameraController; }
+    public SceneManager getSceneManager()                    { return sceneManager; }
+    public GrabHandler getRightGrabHandler()                 { return rightGrabHandler; }
+    public GrabHandler getLeftGrabHandler()                  { return leftGrabHandler; }
 }

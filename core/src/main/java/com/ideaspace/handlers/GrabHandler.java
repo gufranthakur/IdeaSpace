@@ -16,10 +16,15 @@ import java.util.Collection;
 public class GrabHandler {
 
     private static final float PINCH_THRESHOLD = 0.25f;
-    private static final float RAY_LENGTH = 100f;
+    private static final float FIST_THRESHOLD  = 0.6f;
+    private static final float RAY_LENGTH      = 100f;
 
-    private static final int THUMB_TIP = 4;
-    private static final int INDEX_TIP = 8;
+    private static final int WRIST      = 0;
+    private static final int THUMB_TIP  = 4;
+    private static final int INDEX_TIP  = 8;
+    private static final int MIDDLE_TIP = 12;
+    private static final int RING_TIP   = 16;
+    private static final int PINKY_TIP  = 20;
 
     private SimulationHand hand;
     private Camera camera;
@@ -30,6 +35,7 @@ public class GrabHandler {
     private boolean isGrabbing = false;
     private ModelMesh grabbedModel = null;
     private SplitPiece grabbedPiece = null;
+    private boolean wasFist = false;
 
     public float maxGrabDistance = 20.0f;
     private float grabDistance;
@@ -84,6 +90,30 @@ public class GrabHandler {
         thumbPos.set(hand.getPosition(THUMB_TIP));
         indexPos.set(hand.getPosition(INDEX_TIP));
 
+        // Fist detection — right hand only, runs first
+        if (isRightHand) {
+            Vector3 wristPos  = hand.getPosition(WRIST);
+            Vector3 indexTip  = hand.getPosition(INDEX_TIP);
+            Vector3 middleTip = hand.getPosition(MIDDLE_TIP);
+            Vector3 ringTip   = hand.getPosition(RING_TIP);
+            Vector3 pinkyTip  = hand.getPosition(PINKY_TIP);
+
+            boolean isFist = wristPos.dst(indexTip)  < FIST_THRESHOLD
+                && wristPos.dst(middleTip) < FIST_THRESHOLD
+                && wristPos.dst(ringTip)   < FIST_THRESHOLD
+                && wristPos.dst(pinkyTip)  < FIST_THRESHOLD;
+
+            if (isFist && !wasFist) {
+                System.out.println("[FIST] Fist detected on right hand.");
+                // Release any active grab when fist starts
+                if (isGrabbing) release();
+            }
+            wasFist = isFist;
+
+            // Block pinch logic entirely while fist is active
+            if (wasFist) return;
+        }
+
         boolean isIndexPinching = thumbPos.dst(indexPos) < PINCH_THRESHOLD;
         pinchCenter.set(thumbPos).add(indexPos).scl(0.5f);
 
@@ -135,7 +165,6 @@ public class GrabHandler {
             for (SplitPiece piece : splitPieces) {
                 if (piece.getModelInstance() == null) continue;
 
-                // Use bounding box center — GLB bakes offsets into vertices
                 BoundingBox bbox = new BoundingBox();
                 piece.getModelInstance().calculateBoundingBox(bbox);
                 bbox.mul(piece.getModelInstance().transform);
@@ -150,7 +179,7 @@ public class GrabHandler {
                     if (distance < closestDistance) {
                         closestDistance = distance;
                         closestPiece    = piece;
-                        closestModel    = null; // piece wins
+                        closestModel    = null;
                     }
                 }
             }
@@ -223,7 +252,6 @@ public class GrabHandler {
     private void updateRotation() {
         if (!hasLastPinchCenter) return;
 
-        // Works for both split pieces and whole models
         com.badlogic.gdx.graphics.g3d.ModelInstance target = grabbedPiece != null
             ? grabbedPiece.getModelInstance()
             : (grabbedModel != null ? grabbedModel.getScene().modelInstance : null);
@@ -266,6 +294,7 @@ public class GrabHandler {
         return name.equals("Spaceship") || name.equals("Light") || name.equals("Dark");
     }
 
+    public boolean isFist()              { return wasFist; }
     public boolean isGrabbing()          { return isGrabbing; }
     public ModelMesh getGrabbedModel()   { return grabbedModel; }
     public void dispose()                { if (isGrabbing) release(); }
