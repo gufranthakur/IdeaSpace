@@ -12,6 +12,7 @@ public class ModelMesh {
     private Scene modelScene;
     private SceneAsset modelSceneAsset;
     private boolean isLoaded = false;
+    public boolean isSplit = false;
 
     // Bullet physics components
 

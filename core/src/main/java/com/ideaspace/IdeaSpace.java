@@ -46,7 +46,7 @@ public class IdeaSpace extends ApplicationAdapter {
     private InputMultiplexer multiplexer;
 
     private final boolean DEBUG_MODE = false;
-    private boolean lectureFlag = true;
+    private boolean lectureFlag = false;
     private boolean panelFlag = false;
     public boolean menuFlag = false;
     public boolean gestureLock = false;

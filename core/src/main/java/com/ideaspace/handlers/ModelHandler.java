@@ -41,11 +41,11 @@ public class ModelHandler {
 
     public void loadInitialModels() {
         addModelToLibrary("Dark", "models/backgrounds/dark_background.glb", maps);
-        addModelToLibrary("Light", "models/backgrounds/light_background.glb", maps);
+        addModelToLibrary("Light", "models/backgrounds/white_bg.glb", maps);
         addModelToLibrary("Spaceship", "models/backgrounds/spaceship.glb", maps);
 
-        loadModel(modelLibrary.get("Dark"));
-        getModelInstance("Dark").transform.idt().scale(30f, 30f, 30f);
+        loadModel(modelLibrary.get("Light"));
+        getModelInstance("Light").transform.idt().scale(30f, 30f, 30f);
     }
 
     public void createModels() {
@@ -64,6 +64,8 @@ public class ModelHandler {
         addModelToLibrary("Mechanical-Keyboard", "models/misc/mechanicalkeyboard_split.glb");
         addModelToLibrary("Servo Process", "models/components/servo_working.glb");
         addModelToLibrary("Drone", "models/misc/drone_split.glb");
+        addModelToLibrary("Controller", "models/misc/controller.glb");
+        addModelToLibrary("Controller", "models/misc/controller.glb");
 
         loadModel(modelLibrary.get("Iphone-17"));
     }
@@ -223,6 +225,14 @@ public class ModelHandler {
             return;
         }
 
+        if (selectedModel.isSplit) {
+            unsplitModel();
+            return;
+        }
+
+        selectedModel.isSplit = true;
+
+
         Scene scene = selectedModel.getScene();
 
         try {
@@ -238,6 +248,33 @@ public class ModelHandler {
                 System.out.println("Model has no split animation");
             }
         }
+    }
+
+    public void unsplitModel() {
+        if (selectedModel == null) {
+            System.out.println("No model selected!");
+            return;
+        }
+
+        Scene scene = selectedModel.getScene();
+        if (scene.animationController == null) return;
+
+        String[] names = { "split", "Split" };
+
+        for (String name : names) {
+            try {
+                scene.animationController.animate(name, 1, -1f, null, 0f);
+                //                                        ^    ^^^
+                //                                        |    negative speed = reverse
+                //                                        1 play count
+                selectedModel.isSplit = false;
+                return;
+            } catch (GdxRuntimeException ignored) {}
+        }
+
+
+
+        System.out.println("Model has no split animation");
     }
 
     public void changeMap() {
