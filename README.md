@@ -3,6 +3,10 @@
 A prototype 3D learning platform where users can view 3D models, break them down and control them in the virtual space using hand gestures. A project that was made for learning purposes.
 The project can be used as a learning / demonstration tool, showcasing inner workins of a topic or breakdowns. 
 
+It uses the desktop camera to capture video feed using a python process (being executed by Java). The python process uses websockets to send gestures to the Java libGDX applciation, and it responds accordingly. 
+
+The project is mostly incomplete (and abandoned) but could be continued later. If anything, I hope the existing source code of the Virtual hand implementation could be really helpful. If there's enough demand I will create a seperate repo/tutorial just for it :D 
+
 ## Technical Specifications
 
 - Programming Langugage : Java 21 + Python 3.11
