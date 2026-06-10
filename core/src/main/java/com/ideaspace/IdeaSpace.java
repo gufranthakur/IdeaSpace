@@ -17,6 +17,7 @@ import com.ideaspace.ui.screens.HomeScreen;
 import com.ideaspace.ui.screens.SettingsScreen;
 import com.kotcrab.vis.ui.VisUI;
 
+
 public class IdeaSpace extends ApplicationAdapter {
 
     private LectureHandler lectureHandler;

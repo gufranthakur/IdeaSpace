@@ -41,11 +41,11 @@ public class ModelHandler {
 
     public void loadInitialModels() {
         addModelToLibrary("Dark", "models/backgrounds/dark_background.glb", maps);
-        addModelToLibrary("Light", "models/backgrounds/white_bg.glb", maps);
+
         addModelToLibrary("Spaceship", "models/backgrounds/spaceship.glb", maps);
 
-        loadModel(modelLibrary.get("Light"));
-        getModelInstance("Light").transform.idt().scale(30f, 30f, 30f);
+        loadModel(modelLibrary.get("Dark"));
+        getModelInstance("Dark").transform.idt().scale(30f, 30f, 30f);
     }
 
     public void createModels() {
